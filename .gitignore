@@ -1,0 +1,8 @@
+# Variáveis de ambiente
+*.env
+
+# Configurações do VSCode
+.vscode/
+
+# Arquivos Compilados
+*.exe
