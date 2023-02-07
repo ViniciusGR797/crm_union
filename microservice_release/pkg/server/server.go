@@ -4,8 +4,8 @@ import (
 	"log"
 
 	// Import interno de packages do próprio sistema
-	"crm/config"
-	"crm/pkg/service"
+	"microservice_release/config"
+	"microservice_release/pkg/service"
 
 	// Import externo do github
 	"github.com/gin-gonic/gin"
