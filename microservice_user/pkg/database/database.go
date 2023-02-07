@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	// Import interno de packages do próprio sistema
-	"crm/config"
+	"microservice_user/config"
 )
 
 // Cria ponteiro como variável global - armazena Database
