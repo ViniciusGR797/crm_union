@@ -49,7 +49,7 @@ func (ps *User_service) GetUsers() *[]entity.User {
 		user := entity.User{}
 
 		// pega dados da query e atribui a variável produto, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&user.User_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+		if err := rows.Scan(&user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
 			fmt.Println(err.Error())
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs

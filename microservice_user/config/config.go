@@ -22,7 +22,7 @@ const (
 // Estrutura para armazenar as configurações da aplicação - Config
 type Config struct {
 	// Porta do servidor - Ex: 8080
-	USER_PORT int `json:"user_port"`
+	USER_PORT uint64 `json:"user_port"`
 	// Modo de uso da API - DEVELOPER, HOMOLOGATION ou PRODUCTION
 	Mode string `json:"mode"`
 	// Configurações do DataBase
@@ -48,19 +48,20 @@ type DBConfig struct {
 }
 
 // NewConfig - Cria uma nova configuração - passada por parâmetro
-func NewConfig() *Config {
+func NewConfig() Config {
 	// Variável que armazenará as novas configurações
-	var conf *Config
+	var conf Config
 
 	var err error
 
 	if err = godotenv.Load(); err != nil {
 		conf = DefaultConfig()
 	}
-	fmt.Print(err, " ||||||||||||")
+
+	fmt.Print(strconv.ParseUint(os.Getenv("USER_PORT"), 10, 64))
 
 	// Atribui uma variável de ambiente para porta do servidor
-	USER_PORT, _ := strconv.Atoi(os.Getenv("USER_PORT"))
+	USER_PORT, _ := strconv.ParseUint(os.Getenv("USER_PORT"), 10, 64)
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
 	if USER_PORT != 0 {
 		conf.USER_PORT = USER_PORT
@@ -120,7 +121,7 @@ func NewConfig() *Config {
 }
 
 // Configurações padrão da aplicação - defaultConf
-func DefaultConfig() *Config {
+func DefaultConfig() Config {
 	// Cria e atribui já valores para a configuração padrão
 	default_config := Config{
 		USER_PORT: 8081,
@@ -136,5 +137,5 @@ func DefaultConfig() *Config {
 	}
 
 	// retorna o endereço de memória da configuração padrão (aumentar eficiência evitando copias)
-	return &default_config
+	return default_config
 }

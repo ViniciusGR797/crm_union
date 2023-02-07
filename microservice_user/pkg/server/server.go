@@ -15,14 +15,14 @@ import (
 // Estrutura de dados para armazenar o servidor HTTP
 type Server struct {
 	// Porta do servidor
-	SRV_PORT int
+	SRV_PORT uint64
 
 	// Ponteiro de servidor do framework gin
 	SERVER *gin.Engine
 }
 
 // Cria novo servidor HTTP, de acordo com as config passadas por parâmetro
-func NewServer(conf *config.Config) Server {
+func NewServer(conf config.Config) Server {
 	return Server{
 		SRV_PORT: conf.USER_PORT,
 		SERVER:   gin.Default(),

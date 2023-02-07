@@ -14,7 +14,7 @@ import (
 // Função principal (primeira executada) - chama config para fazer conexão BD, service, server, router e roda servidor http
 func main() {
 	// Atribui o endereço da estrutura de uma configuração padrão do sistema
-	conf := &config.Config{}
+	conf := config.Config{}
 
 	// Atribui para conf as novas configurações do sistema
 	conf = config.NewConfig()
