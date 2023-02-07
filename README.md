@@ -45,11 +45,21 @@ Grupo é composto por várias equipes que são Back-End, Front-End, UX/UI, DataB
 ---
 
 * **Back-End** - *Desenvolvedor* - [Vinícius Gomes Ribeiro](https://github.com/ViniciusGR797)
-* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
-* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
-* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
-* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
-* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Luis Guilherme Fegueredo de Oliveira](https://github.com/GuilhermeFegueredo)
+* **Back-End** - *Desenvolvedor* - [Leonardo Lima de Araujo](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Breno de Ávila Almeida](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Eduardo Henrique  Lisboa Alves](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Erich Iago Knoor de Almeida](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Guilherme Alvarenga Morassutti](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Gustavo Emanuel Braga de Carvalho](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Jefferson Bortoluzzi de Oliveira Gordo](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Luis Felipe Rodrigo da Silva ](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Marcos Felipe dos Santos](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Mariany Secundini de Almeida Siqueira](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Raytsson Martini de Moraes ](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Taglys Henrique Costacurta de Oliveira](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Thiago Augusto Avelar da Silva](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Vinícius Augusto Dos Santos Silva](https://github.com)
 
 ---
 
