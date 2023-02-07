@@ -1,20 +1,6 @@
-# Título do projeto
+# UNION
 
-Um parágrafo da descrição do projeto vai aqui
-
-## 🚀 Começando
-
-Essas instruções permitirão que você obtenha uma cópia do projeto em operação na sua máquina local para fins de desenvolvimento e teste.
-
-Consulte **[Implantação](#-implanta%C3%A7%C3%A3o)** para saber como implantar o projeto.
-
-### 📋 Pré-requisitos
-
-De que coisas você precisa para instalar o software e como instalá-lo?
-
-```
-Dar exemplos
-```
+Union é um sistema de CRM (Customer Relationship Management) no qual faz gestão de relacionamento com o cliente.
 
 ### 🔧 Instalação
 
@@ -36,7 +22,7 @@ Termine com um exemplo de como obter dados do sistema ou como usá-los para uma 
 
 ## ⚙️ Executando os testes
 
-Explicar como executar os testes automatizados para este sistema.
+Usaremos testes automatizados com Swagger.
 
 ### 🔩 Analise os testes de ponta a ponta
 
@@ -46,40 +32,61 @@ Explique que eles verificam esses testes e porquê.
 Dar exemplos
 ```
 
-### ⌨️ E testes de estilo de codificação
-
-Explique que eles verificam esses testes e porquê.
-
-```
-Dar exemplos
-```
-
-## 📦 Implantação
-
-Adicione notas adicionais sobre como implantar isso em um sistema ativo
-
 ## 🛠️ Construído com
 
 Mencione as ferramentas que você usou para criar seu projeto
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - O framework web usado
-* [Maven](https://maven.apache.org/) - Gerente de Dependência
-* [ROME](https://rometools.github.io/rome/) - Usada para gerar RSS
+* [Gin Gonic](github.com/gin-gonic/gin) - O framework web usado em Go
 
-## 🖇️ Colaborando
+## 👥 Grupo
 
-Por favor, leia o [COLABORACAO.md](https://gist.github.com/usuario/linkParaInfoSobreContribuicoes) para obter detalhes sobre o nosso código de conduta e o processo para nos enviar pedidos de solicitação.
+Grupo é composto por várias equipes que são Back-End, Front-End, UX/UI, DataBase, AWS e Test.
 
-## 📌 Versão
+---
 
-Nós usamos [SemVer](http://semver.org/) para controle de versão. Para as versões disponíveis, observe as [tags neste repositório](https://github.com/suas/tags/do/projeto). 
+* **Back-End** - *Desenvolvedor* - [Vinícius Gomes Ribeiro](https://github.com/ViniciusGR797)
+* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Pessoa](https://github.com)
 
-## ✒️ Autores
+---
 
-Mencione todos aqueles que ajudaram a levantar o projeto desde o seu início
+* **Front-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Front-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Front-End** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Front-End** - *Desenvolvedor* - [Pessoa](https://github.com)
 
-* **Um desenvolvedor** - *Trabalho Inicial* - [umdesenvolvedor](https://github.com/linkParaPerfil)
-* **Fulano De Tal** - *Documentação* - [fulanodetal](https://github.com/linkParaPerfil)
+---
+
+* **UX/UI** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **UX/UI** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **UX/UI** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **UX/UI** - *Desenvolvedor* - [Pessoa](https://github.com)
+
+---
+
+* **DataBase** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **DataBase** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **DataBase** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **DataBase** - *Desenvolvedor* - [Pessoa](https://github.com)
+
+---
+
+* **AWS** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **AWS** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **AWS** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **AWS** - *Desenvolvedor* - [Pessoa](https://github.com)
+
+---
+
+* **Test** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Test** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Test** - *Desenvolvedor* - [Pessoa](https://github.com)
+* **Test** - *Desenvolvedor* - [Pessoa](https://github.com)
+
+
 
 Você também pode ver a lista de todos os [colaboradores](https://github.com/usuario/projeto/colaboradores) que participaram deste projeto.
 
@@ -89,11 +96,6 @@ Este projeto está sob a licença (sua licença) - veja o arquivo [LICENSE.md](h
 
 ## 🎁 Expressões de gratidão
 
-* Conte a outras pessoas sobre este projeto 📢;
-* Convide alguém da equipe para uma cerveja 🍺;
-* Um agradecimento publicamente 🫂;
-* etc.
-
+* Agradeço ao Giba
 
 ---
-⌨️ com ❤️ por [Armstrong Lohãns](https://gist.github.com/lohhans) 😊
