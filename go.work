@@ -1,0 +1,15 @@
+go 1.19
+
+use (
+	.
+	./microservice_business
+	./microservice_client
+	./microservice_customer
+	./microservice_group
+	./microservice_login
+	./microservice_planner
+	./microservice_release
+	./microservice_remark
+	./microservice_subject
+	./microservice_user
+)

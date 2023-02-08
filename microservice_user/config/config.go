@@ -132,16 +132,16 @@ func NewConfig(config *Config) *Config {
 func DefaultConfig() *Config {
 	// Cria e atribui já valores para a configuração padrão
 	default_config := Config{
-		SRV_PORT:    "8080",
+		SRV_PORT:    "8081",
 		WEB_UI:      true,
 		OpenBrowser: true,
 		DBConfig: DBConfig{
 			DB_DRIVE: "mysql",
 			DB_HOST:  "localhost",
 			DB_PORT:  "3306",
-			DB_USER:  "grupob",
-			DB_PASS:  "Rapadura745",
-			DB_NAME:  "golangdb",
+			DB_USER:  "",
+			DB_PASS:  "",
+			DB_NAME:  "",
 		},
 		Mode: PRODUCTION,
 	}
