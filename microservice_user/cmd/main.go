@@ -2,16 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
 
 	// Import interno de packages do próprio sistema
-	"crm/config"
-	"crm/pkg/database"
-	"crm/pkg/routes"
-	"crm/pkg/server"
-	"crm/pkg/service"
-	"crm/webui"
+	"microservice_user/config"
+	"microservice_user/pkg/database"
+	"microservice_user/pkg/routes"
+	"microservice_user/pkg/server"
+	"microservice_user/pkg/service"
 )
 
 // Função principal (primeira executada) - chama config para fazer conexão BD, service, server, router e roda servidor http
@@ -19,10 +19,21 @@ func main() {
 	// Atribui o endereço da estrutura de uma configuração padrão do sistema
 	default_conf := &config.Config{}
 
-	// Atribui arquivo Json com configurações externas para file_config, verifica se não está vazia para virar novas configurações
-	if file_config := "test_db.json"; file_config != "" {
-		file, _ := os.ReadFile(file_config)
-		_ = json.Unmarshal(file, &default_conf)
+	// Abre o arquivo JSON com as variáveis de ambiente
+	file, err := os.Open("microservice_user/env.json") // file.json has the json content
+	if err != nil {
+		log.Print(err)
+	}
+
+	// Lé todo JSON e transforma em um JSON byte
+	jsonByte, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Print(err)
+	}
+
+	// Converte JSON byte em uma struct, no caso a struct default_conf
+	if err := json.Unmarshal(jsonByte, &default_conf); err != nil {
+		log.Print(err)
 	}
 
 	// Atribui para conf as novas configurações do sistema
@@ -35,20 +46,20 @@ func main() {
 		log.Print("Successfully connected")
 	}
 
-	// Cria serviços de um produto (CRUD) com a pool de conexão passada por parâmetro
-	service := service.NewProdutoService(dbpool)
+	// Cria serviços de um user (CRUD) com a pool de conexão passada por parâmetro
+	service := service.NewUserService(dbpool)
 
 	// Cria servidor HTTP com as config passadas por parâmetro
 	serv := server.NewServer(conf)
 
-	// Cria rotas passsando o servidor HTTP e os serviços do produto (CRUD)
+	// Cria rotas passsando o servidor HTTP e os serviços do user (CRUD)
 	router := routes.ConfigRoutes(serv.SERVER, service)
 
 	// Se tiver ativada a interface de usuário, criar as rotas para o front end (WEB UI)
-	if conf.WEB_UI {
-		webui.RegisterUIHandlers(router)
-	}
+	// if conf.WEB_UI {
+	// 	webui.RegisterUIHandlers(router)
+	// }
 
-	// Coloca servidor para rodar passando as rotas, servidor HTTP e serviços do produto (CRUD) como parâmetro
+	// Coloca servidor para rodar passando as rotas, servidor HTTP e serviços do user (CRUD) como parâmetro
 	server.Run(router, serv, service)
 }

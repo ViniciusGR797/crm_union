@@ -1,5 +1,5 @@
 # Variáveis de ambiente
-*.env
+#*.env
 
 # Configurações do VSCode
 .vscode/
