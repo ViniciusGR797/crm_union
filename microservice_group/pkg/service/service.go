@@ -26,7 +26,7 @@ func (ps *Group_service) GetGroups() *entity.GroupList {
 
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("select g.group_id, g.group_name, g.status_id, s.status_description, g.created_at,g.costumer_id, c.costumer_name from tblGroup g inner join tblCostumer c on g.costumer_id = c.costumer_id inner join tblStatus s on g.status_id = s.status_id")
+	rows, err := database.Query("select g.group_id, g.group_name, g.status_id, s.status_description, g.created_at,g.customer_id, c.customer_name from tblGroup g inner join tblCustomer c on g.customer_id = c.customer_id inner join tblStatus s on g.status_id = s.status_id")
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
@@ -46,8 +46,8 @@ func (ps *Group_service) GetGroups() *entity.GroupList {
 			&group.Status.Status_id,
 			&group.Status.Status_description,
 			&group.Created_at,
-			&group.Costumer.Costumer_id,
-			&group.Costumer.Costumer_name); err != nil {
+			&group.Customer.Customer_id,
+			&group.Customer.Customer_name); err != nil {
 			fmt.Println(err.Error())
 		} else {
 

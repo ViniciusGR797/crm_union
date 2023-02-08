@@ -10,12 +10,12 @@ type Group struct {
 	Group_name string `json:"group_name, omitempty"`
 	Created_at string `json:"created_at, omitempty"`
 	Status     Status
-	Costumer   Costumer
+	Customer   Customer
 }
 
-type Costumer struct {
-	Costumer_id   int    `json:"costumer_id,omitempty"`
-	Costumer_name string `json:"costumer_name,omitempty"`
+type Customer struct {
+	Customer_id   int    `json:"customer_id,omitempty"`
+	Customer_name string `json:"customer_name,omitempty"`
 }
 type Status struct {
 	Status_id          int    `json:"status_id,omitempty"`
@@ -50,12 +50,12 @@ func (pl *GroupList) String() string {
 	return string(data)
 }
 
-func NewGroup(group_name, created_at string, status_id, constumer_id int, group_id uint64) *Group {
+func NewGroup(group_name, created_at string, status_id, customer_id int, group_id uint64) *Group {
 	return &Group{
 		Group_id:   group_id,
 		Group_name: group_name,
 		Status:     Status{Status_id: status_id},
 		Created_at: created_at,
-		Costumer:   Costumer{Costumer_id: constumer_id},
+		Customer:   Customer{Customer_id: customer_id},
 	}
 }
