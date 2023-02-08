@@ -98,6 +98,7 @@ func (ps *User_service) GetUserByID(ID *int) *entity.User {
 // Função que retorna user
 func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 	*name = fmt.Sprintf("%%%s%%", *name)
+
 	// pega database
 	database := ps.dbp.GetDB()
 
@@ -110,16 +111,16 @@ func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 	// fecha linha da query, quando sair da função
 	defer stmt.Close()
 
-	if _, err = stmt.Exec(name); err != nil {
-		return &entity.UserList{}
-	}
-
 	// variável do tipo UserList (vazia)
 	lista_users := &entity.UserList{}
-	rows, err := stmt.Query()
+
+	// manda uma query para ser executada no database
+	rows, err := stmt.Query(*name)
+	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
 	}
+
 	// Pega todo resultado da query linha por linha
 	for rows.Next() {
 		// variável do tipo User (vazia)
@@ -134,6 +135,7 @@ func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 		}
 
 	}
-	// retorna user
+
+	// retorna lista de users
 	return lista_users
 }
