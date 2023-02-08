@@ -95,31 +95,25 @@ func (ps *User_service) GetUserByID(ID *int) *entity.User {
 	return &user
 }
 
-// Função que retorna user
+// Função que retorna lista de users
 func (ps *User_service) GetUserByName(name *string) *entity.UserList {
-	*name = fmt.Sprintf("%%%s%%", *name)
-
+	text := "%'"
+	query := fmt.Sprint("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE '%", *name, text)
 	// pega database
 	database := ps.dbp.GetDB()
 
-	// prepara query para ser executada no database
-	stmt, err := database.Prepare("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ? ")
+	// manda uma query para ser executada no database
+	rows, err := database.Query(query)
 	// verifica se teve erro
 	if err != nil {
-		log.Println(err.Error())
+		fmt.Println(err.Error())
 	}
+
 	// fecha linha da query, quando sair da função
-	defer stmt.Close()
+	defer rows.Close()
 
 	// variável do tipo UserList (vazia)
 	lista_users := &entity.UserList{}
-
-	// manda uma query para ser executada no database
-	rows, err := stmt.Query(*name)
-	// verifica se teve erro
-	if err != nil {
-		log.Println(err.Error())
-	}
 
 	// Pega todo resultado da query linha por linha
 	for rows.Next() {
@@ -130,7 +124,7 @@ func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 		if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
 			fmt.Println(err.Error())
 		} else {
-			// caso não tenha erro, adiciona a variável log na lista de logs
+			// caso não tenha erro, adiciona a lista de users
 			lista_users.List = append(lista_users.List, &user)
 		}
 
