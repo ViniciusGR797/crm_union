@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	"crm/config"
+	"microservice_user/config"
 
 	_ "github.com/go-sql-driver/mysql"
 )

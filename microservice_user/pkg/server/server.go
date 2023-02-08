@@ -4,8 +4,8 @@ import (
 	"log"
 
 	// Import interno de packages do próprio sistema
-	"crm/config"
-	"crm/pkg/service"
+	"microservice_user/config"
+	"microservice_user/pkg/service"
 
 	// Import externo do github
 	"github.com/gin-gonic/gin"
@@ -28,8 +28,8 @@ func NewServer(conf *config.Config) Server {
 	}
 }
 
-// Rodar servidor HTTP, tendo as rotas do framework gin, servidor HTTP, serviço CRUD de produto
-func Run(router *gin.Engine, server Server, service service.ProdutoServiceInterface) {
+// Rodar servidor HTTP, tendo as rotas do framework gin, servidor HTTP, serviço CRUD de user
+func Run(router *gin.Engine, server Server, service service.UserServiceInterface) {
 	// Imprime que servidor HTTP está rodando na porta tal
 	log.Print("Server is running at port: ", server.SRV_PORT)
 
