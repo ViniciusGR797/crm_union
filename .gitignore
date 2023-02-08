@@ -1,19 +1,6 @@
 # Variáveis de ambiente
+*.env
 *.json
-**/*.json
-**/user.json
-**/subject.json
-**/remark.json
-**/release.json
-**/group.json
-**/login.json
-**/customer.json
-**/client.json
-**/business.json
-
-
-*.Env
-
 
 # Configurações do VSCode
 .vscode/
