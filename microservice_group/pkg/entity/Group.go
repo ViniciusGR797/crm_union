@@ -13,6 +13,7 @@ type Group struct {
 	Customer   Customer
 }
 
+// tabela customer
 type Customer struct {
 	Customer_id   int    `json:"customer_id,omitempty"`
 	Customer_name string `json:"customer_name,omitempty"`
