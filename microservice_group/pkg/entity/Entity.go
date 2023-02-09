@@ -11,6 +11,7 @@ type Group struct {
 	Created_at string `json:"created_at, omitempty"`
 	Status     Status
 	Customer   Customer
+	User       User
 }
 
 // tabela customer
@@ -18,6 +19,12 @@ type Customer struct {
 	Customer_id   int    `json:"customer_id,omitempty"`
 	Customer_name string `json:"customer_name,omitempty"`
 }
+
+type User struct {
+	User_id   int    `json:"user_id,omitempty"`
+	User_name string `json:"user_name,omitempty"`
+}
+
 type Status struct {
 	Status_id          int    `json:"status_id,omitempty"`
 	Status_description string `json:"status_name,omitempty"`

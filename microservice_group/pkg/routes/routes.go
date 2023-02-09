@@ -16,6 +16,10 @@ func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gi
 				controller.GetGroups(c, service)
 			})
 
+			Group.GET("/groups/:id", func(c *gin.Context) {
+				controller.GetGroupByID(c, service)
+			})
+
 		}
 	}
 
