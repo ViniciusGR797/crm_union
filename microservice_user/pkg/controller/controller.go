@@ -172,6 +172,6 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	c.JSON(200, gin.H{
-		"response": "Client Status Updated",
+		"response": "User Status Updated",
 	})
 }
