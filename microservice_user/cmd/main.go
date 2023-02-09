@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 
@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Lé todo JSON e transforma em um JSON byte
-	jsonByte, err := ioutil.ReadAll(file)
+	jsonByte, err := io.ReadAll(file)
 	if err != nil {
 		log.Print(err)
 	}

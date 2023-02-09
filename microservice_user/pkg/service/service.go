@@ -13,13 +13,13 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD User (tudo que tiver os métodos abaixo do CRUD são serviços de user)
 type UserServiceInterface interface {
 	// Pega todos os users, logo lista todos os users
-	GetUsers() *entity.UserList
+	GetUsers() (*entity.UserList, error)
 	// Pega user em específico passando o id dele como parâmetro
-	GetUserByID(ID *int) *entity.User
+	GetUserByID(ID *int) (*entity.User, error)
 	// Pega users em específico passando o name dele como parâmetro
-	GetUserByName(name *string) *entity.UserList
+	GetUserByName(name *string) (*entity.UserList, error)
 	// Pega users submissos passando o id de um user como parâmetro
-	GetSubmissiveUsers(ID *int) *entity.UserList
+	GetSubmissiveUsers(ID *int) (*entity.UserList, error)
 	// Cadastra users passando suas informações
 	CreateUser(user *entity.User) (uint64, error)
 	// Altera status do user
@@ -41,7 +41,7 @@ func NewUserService(dabase_pool database.DatabaseInterface) *User_service {
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetUsers() *entity.UserList {
+func (ps *User_service) GetUsers() (*entity.UserList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
@@ -49,7 +49,8 @@ func (ps *User_service) GetUsers() *entity.UserList {
 	rows, err := database.Query("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id")
 	// verifica se teve erro
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
+		return &entity.UserList{}, errors.New("error fetching users")
 	}
 
 	// fecha linha da query, quando sair da função
@@ -65,7 +66,7 @@ func (ps *User_service) GetUsers() *entity.UserList {
 
 		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
 		if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs
 			lista_users.List = append(lista_users.List, &user)
@@ -74,11 +75,11 @@ func (ps *User_service) GetUsers() *entity.UserList {
 	}
 
 	// retorna lista de users
-	return lista_users
+	return lista_users, nil
 }
 
 // Função que retorna user
-func (ps *User_service) GetUserByID(ID *int) *entity.User {
+func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
@@ -87,6 +88,7 @@ func (ps *User_service) GetUserByID(ID *int) *entity.User {
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
+		return &entity.User{}, errors.New("error preparing statement")
 	}
 	// fecha linha da query, quando sair da função
 	defer stmt.Close()
@@ -97,17 +99,17 @@ func (ps *User_service) GetUserByID(ID *int) *entity.User {
 	err = stmt.QueryRow(ID).Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status)
 	// verifica se teve erro
 	if err != nil {
-		log.Println("error: cannot find user", err.Error())
+		return &entity.User{}, nil
 	}
 
 	// retorna user
-	return &user
+	return &user, nil
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetUserByName(name *string) *entity.UserList {
+func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 	nameString := fmt.Sprint("%", *name, "%")
-	query := fmt.Sprint("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ?")
+	query := "SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ?"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -116,7 +118,8 @@ func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 	rows, err := database.Query(query, nameString)
 	// verifica se teve erro
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
+		return &entity.UserList{}, errors.New("error fetching users")
 	}
 
 	// fecha linha da query, quando sair da função
@@ -132,7 +135,7 @@ func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 
 		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
 		if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 		} else {
 			// caso não tenha erro, adiciona a lista de users
 			lista_users.List = append(lista_users.List, &user)
@@ -141,12 +144,12 @@ func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 	}
 
 	// retorna lista de users
-	return lista_users
+	return lista_users, nil
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetSubmissiveUsers(ID *int) *entity.UserList {
-	query := fmt.Sprint("SELECT group_id FROM tblUserGroup WHERE user_id = ?")
+func (ps *User_service) GetSubmissiveUsers(ID *int) (*entity.UserList, error) {
+	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -156,6 +159,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int) *entity.UserList {
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
+		return &entity.UserList{}, errors.New("error fetching user's groups")
 	}
 
 	// variável do tipo UserList (vazia)
@@ -179,7 +183,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int) *entity.UserList {
 	lista_users := &entity.UserList{}
 
 	for _, groupID := range groupIDList.List {
-		query := fmt.Sprint("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < (SELECT user_level FROM tblUser WHERE user_id = ?)")
+		query := "SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < (SELECT user_level FROM tblUser WHERE user_id = ?)"
 
 		// manda uma query para ser executada no database
 		rows, err := database.Query(query, groupID.ID, ID)
@@ -207,7 +211,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int) *entity.UserList {
 	defer rows.Close()
 
 	// retorna lista de users
-	return lista_users
+	return lista_users, nil
 }
 
 // Função que retorna user

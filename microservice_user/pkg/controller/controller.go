@@ -4,6 +4,7 @@ import (
 	"microservice_user/pkg/entity"
 	"microservice_user/pkg/security"
 	"microservice_user/pkg/service"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -14,16 +15,22 @@ import (
 // Função que chama método GetUsers do service e retorna json com lista de users
 func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 	// Chama método GetUsers e retorna list de users
-	list := service.GetUsers()
+	list, err := service.GetUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not fetch users",
+		})
+		return
+	}
 	// Verifica se a lista está vazia (tem tamanho zero)
 	if len(list.List) == 0 {
-		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "no users found",
 		})
 		return
 	}
 	//retorna sucesso 200 e retorna json da lista de users
-	c.JSON(200, list)
+	c.JSON(http.StatusOK, list)
 }
 
 // Função que chama método GetUserByID do service e retorna json com user
@@ -35,22 +42,28 @@ func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID has to be interger",
 		})
 		return
 	}
 	// Chama método GetUserByID passando id como parâmetro
-	user := service.GetUserByID(&newId)
+	user, err := service.GetUserByID(&newId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not fetch users",
+		})
+		return
+	}
 	if user.ID == 0 {
-		c.JSON(404, gin.H{
-			"error": "user not found, 404",
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "user not found",
 		})
 		return
 	}
 
 	// Retorno json com user
-	c.JSON(200, user)
+	c.JSON(http.StatusOK, user)
 }
 
 // Função que chama método GetUserByName do service e retorna json com user
@@ -58,16 +71,22 @@ func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 	// Pega id passada como parâmetro na URL da rota
 	name := c.Param("user_name")
 	// Chama método GetUserByName passando id como parâmetro
-	list := service.GetUserByName(&name)
+	list, err := service.GetUserByName(&name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not fetch users",
+		})
+		return
+	}
 	if len(list.List) == 0 {
-		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "no users found",
 		})
 		return
 	}
 
 	// Retorno json com user
-	c.JSON(200, list)
+	c.JSON(http.StatusOK, list)
 }
 
 // Função que chama método GetSubmissiveUsers do service e retorna json com user
@@ -79,22 +98,26 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID has to be interger",
 		})
 		return
 	}
 	// Chama método GetUserByName passando id como parâmetro
-	list := service.GetSubmissiveUsers(&newId)
-	if len(list.List) == 0 {
-		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
+	list, err := service.GetSubmissiveUsers(&newId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not fetch users",
 		})
+		return
+	}
+	if len(list.List) == 0 {
+		c.Status(http.StatusNotFound)
 		return
 	}
 
 	// Retorno json com user
-	c.JSON(200, list)
+	c.JSON(http.StatusOK, list)
 }
 
 func CreateUser(c *gin.Context, service service.UserServiceInterface) {
@@ -105,7 +128,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	err := c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "cannot bind JSON user" + err.Error(),
 		})
 		return
@@ -113,7 +136,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// valida email
 	if err := checkmail.ValidateFormat(user.Email); err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid email",
 		})
 		return
@@ -121,7 +144,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// validação de senha
 	if len(user.Password) < 8 {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "password too short",
 		})
 		return
@@ -130,7 +153,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	// hash da senha
 	user.Password, err = security.HashPassword(user.Password)
 	if err != nil {
-		c.JSON(500, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "could not hash password: " + err.Error(),
 		})
 		return
@@ -140,14 +163,14 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	_, err = service.CreateUser(user)
 	// Verifica se o id é zero (caso for deu erro ao criar produto no banco)
 	if err != nil {
-		c.JSON(500, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "cannot create user",
 		})
 		return
 	}
 
 	// Retorno json com o produto
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"message": "user registered successfully",
 	})
 }

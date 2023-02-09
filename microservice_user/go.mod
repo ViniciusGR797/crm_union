@@ -3,13 +3,13 @@ module microservice_user
 go 1.19
 
 require (
+	github.com/badoux/checkmail v1.2.1
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-sql-driver/mysql v1.7.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 )
 
 require (
-	github.com/badoux/checkmail v1.2.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
