@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -20,7 +21,7 @@ type UserServiceInterface interface {
 	// Pega users submissos passando o id de um user como parâmetro
 	GetSubmissiveUsers(ID *int) *entity.UserList
 	// Cadastra users passando suas informações
-	CreateUser(user *entity.User) uint64
+	CreateUser(user *entity.User) (uint64, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -206,7 +207,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int) *entity.UserList {
 }
 
 // Função que retorna user
-func (ps *User_service) CreateUser(user *entity.User) uint64 {
+func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
@@ -215,7 +216,7 @@ func (ps *User_service) CreateUser(user *entity.User) uint64 {
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
-		return 0
+		return 0, errors.New("error preparing statement")
 	}
 	// fecha linha da query, quando sair da função
 	defer stmt.Close()
@@ -224,7 +225,7 @@ func (ps *User_service) CreateUser(user *entity.User) uint64 {
 	result, err := stmt.Exec(user.Name, user.Email, user.Password, 9) // TODO implement status
 	if err != nil {
 		log.Println(err.Error())
-		return 0
+		return 0, errors.New("error executing statement")
 	}
 
 	// pega id do último usuário inserido
@@ -232,12 +233,12 @@ func (ps *User_service) CreateUser(user *entity.User) uint64 {
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
-		return 0
+		return 0, errors.New("error fetching last id")
 	}
 
 	// coloca o id do usuário de volta no modelo
 	user.ID = uint64(lastId)
 
 	// retorna user
-	return uint64(lastId)
+	return uint64(lastId), nil
 }

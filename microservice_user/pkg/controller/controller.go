@@ -137,9 +137,9 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	// Chama método Create passando produto como parâmetro que retorna id novo
-	id := service.CreateUser(user)
+	_, err = service.CreateUser(user)
 	// Verifica se o id é zero (caso for deu erro ao criar produto no banco)
-	if id == 0 {
+	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "cannot create user",
 		})
