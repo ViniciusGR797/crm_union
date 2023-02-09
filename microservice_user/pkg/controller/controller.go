@@ -2,6 +2,7 @@ package controller
 
 import (
 	"microservice_user/pkg/entity"
+	"microservice_user/pkg/security"
 	"microservice_user/pkg/service"
 	"strconv"
 	"strings"
@@ -110,9 +111,27 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	// valida email
 	if err := checkmail.ValidateFormat(user.Email); err != nil {
 		c.JSON(400, gin.H{
 			"error": "Invalid email",
+		})
+		return
+	}
+
+	// validação de senha
+	if len(user.Password) < 8 {
+		c.JSON(400, gin.H{
+			"error": "password too short",
+		})
+		return
+	}
+
+	// hash da senha
+	user.Password, err = security.HashPassword(user.Password)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "could not hash password: " + err.Error(),
 		})
 		return
 	}
@@ -129,6 +148,6 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// Retorno json com o produto
 	c.JSON(200, gin.H{
-		"message": "user regostred successfully",
+		"message": "user registered successfully",
 	})
 }
