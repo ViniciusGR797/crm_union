@@ -325,5 +325,15 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
-	c.Status(http.StatusOK)
+	token, err := security.NewToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "cannot create token",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+	})
 }
