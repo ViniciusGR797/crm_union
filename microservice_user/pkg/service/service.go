@@ -202,3 +202,37 @@ func (ps *User_service) GetSubmissiveUsers(ID *int) *entity.UserList {
 	// retorna lista de users
 	return lista_users
 }
+
+// Função que retorna user
+func (ps *User_service) CreateUser(user *entity.User) uint64 {
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// prepara query para ser executada no database
+	stmt, err := database.Prepare("INSERT INTO tblUser (user_name, user_email, user_pwd, status_id) VALUES (?, ?, ?, ?);")
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+	}
+	// fecha linha da query, quando sair da função
+	defer stmt.Close()
+
+	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
+	result, err := database.Exec(user.Name, user.Email, user.Password, 9) // TODO implement status
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	// pega id do último product inserido
+	lastId, err := result.LastInsertId()
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	// coloca o id do usuário de volta no modelo
+	user.ID = uint64(lastId)
+
+	// retorna user
+	return uint64(lastId)
+}

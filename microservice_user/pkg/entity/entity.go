@@ -17,6 +17,7 @@ type User struct {
 	Level      int    `json:"level,omitempty"`
 	Created_At string `json:"created_at,omitempty"`
 	Status     string `json:"status,omitempty"`
+	Password   string `json:"-"`
 }
 
 // Método de user - retorna string com json do user ou erro
