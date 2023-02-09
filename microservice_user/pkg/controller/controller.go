@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"microservice_user/pkg/entity"
 	"microservice_user/pkg/service"
 	"strconv"
 	"strings"
 
+	"github.com/badoux/checkmail"
 	"github.com/gin-gonic/gin"
 )
 
@@ -92,4 +94,39 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 
 	// Retorno json com user
 	c.JSON(200, list)
+}
+
+func CreateUser(c *gin.Context, service service.UserServiceInterface) {
+	// Cria variável do tipo usuario (inicialmente vazia)
+	var user *entity.User
+
+	// Converte json em usuario
+	err := c.ShouldBind(&user)
+	// Verifica se tem erro
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "cannot bind JSON user" + err.Error(),
+		})
+		return
+	}
+
+	if err := checkmail.ValidateFormat(user.Email); err == nil {
+		c.JSON(400, gin.H{
+			"error": "Invalid email",
+		})
+		return
+	}
+
+	// Chama método Create passando produto como parâmetro que retorna id novo
+	id := service.CreateUser(user)
+	// Verifica se o id é zero (caso for deu erro ao criar produto no banco)
+	if id == 0 {
+		c.JSON(500, gin.H{
+			"error": "cannot create user: " + err.Error(),
+		})
+		return
+	}
+
+	// Retorno json com o produto
+	c.JSON(200, nil)
 }

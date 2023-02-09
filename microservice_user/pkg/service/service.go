@@ -19,6 +19,8 @@ type UserServiceInterface interface {
 	GetUserByName(name *string) *entity.UserList
 	// Pega users submissos passando o id de um user como parâmetro
 	GetSubmissiveUsers(ID *int) *entity.UserList
+	// Cadastra users passando suas informações
+	CreateUser(user *entity.User) uint64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -223,7 +225,7 @@ func (ps *User_service) CreateUser(user *entity.User) uint64 {
 		log.Println(err.Error())
 	}
 
-	// pega id do último product inserido
+	// pega id do último usuário inserido
 	lastId, err := result.LastInsertId()
 	// verifica se teve erro
 	if err != nil {
