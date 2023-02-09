@@ -175,3 +175,65 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 		"response": "User Status Updated",
 	})
 }
+
+// Função que chama método Update do service e retorna json com o usuário alterado
+func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
+	// Pega id passada como parâmetro na URL da rota
+	id := c.Param("user_id")
+	// Cria variável do tipo user (inicialmente vazia)
+	var user *entity.User
+
+	// Converter ":id" string para int id (newid)
+	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
+	// Verifica se teve erro na conversão
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400" + err.Error(),
+		})
+		return
+	}
+	// Converte json em user
+	err = c.ShouldBind(&user)
+	// Verifica se tem erro
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "cannot bind JSON produto, 400" + err.Error(),
+		})
+		return
+	}
+	// valida email
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Invalid email",
+		})
+		return
+	}
+
+	// validação de senha
+	if len(user.Password) < 8 {
+		c.JSON(400, gin.H{
+			"error": "password too short",
+		})
+		return
+	}
+
+	// hash da senha
+	user.Password, err = security.HashPassword(user.Password)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "could not hash password: " + err.Error(),
+		})
+		return
+	}
+	// Chama método Update passando user e id editado como parâmetro
+	idResult := service.UpdateUser(&newId, user)
+	// Verifica se o id é zero (caso for deu erro ao editar o usuário no banco)
+	if idResult == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update user, 400",
+		})
+		return
+	}
+	// Retorna json com o user
+	c.Status(200)
+}

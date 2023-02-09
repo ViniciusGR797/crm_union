@@ -37,9 +37,12 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 			produtos.PUT("/users/update/status/:user_id", func(c *gin.Context) {
 				controller.UpdateStatusUser(c, service)
 			})
+			// Rota que retorna usuário editado (PUT que dispara método Update controller)
+			produtos.PUT("/users/update/:user_id", func(c *gin.Context) {
+				controller.UpdateUser(c, service)
+			})
 		}
 	}
-
 	// retorna rota
 	return router
 }

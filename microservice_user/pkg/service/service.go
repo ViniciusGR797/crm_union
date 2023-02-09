@@ -24,6 +24,8 @@ type UserServiceInterface interface {
 	CreateUser(user *entity.User) (uint64, error)
 	// Altera status do user
 	UpdateStatusUser(ID *uint64) int64
+	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
+	UpdateUser(ID *int, user *entity.User) int
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -284,4 +286,36 @@ func (ps *User_service) UpdateStatusUser(ID *uint64) int64 {
 	}
 
 	return rowsaff
+}
+
+// Função que altera o usuário
+func (ps *User_service) UpdateUser(ID *int, user *entity.User) int {
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// prepara query para ser executada no database
+	stmt, err := database.Prepare("UPDATE tblUser SET user_name = ?, user_email = ?, user_pwd = ? WHERE user_id = ? ")
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+	}
+	// fecha linha da query, quando sair da função
+	defer stmt.Close()
+
+	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
+	result, err := stmt.Exec(user.Name, user.Email, user.Password, ID)
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	// RowsAffected retorna número de linhas afetadas com update
+	rowsaff, err := result.RowsAffected()
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	// retorna rowsaff (converte int64 para int)
+	return int(rowsaff)
 }
