@@ -13,8 +13,11 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 	{
 		clients := main.Group("/v1")
 		{
-			clients.GET("/clients/mygroup/{user_id}", func(c *gin.Context) {
+			clients.GET("/clients/mygroups/:user_id", func(c *gin.Context) {
 				controller.GetClientsMyGroups(c, service)
+			})
+			clients.PUT("/clients/update/status/:client_id", func(c *gin.Context) {
+				controller.UpdateStatusClient(c, service)
 			})
 		}
 	}

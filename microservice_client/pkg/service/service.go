@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 
 	// Import interno de packages do próprio sistema
 	"microservice_client/pkg/database"
@@ -10,8 +11,8 @@ import (
 
 // Estrutura interface para padronizar comportamento de CRUD Client (tudo que tiver os métodos abaixo do CRUD são serviços de client)
 type ClientServiceInterface interface {
-	// Pega todos os clients, logo lista todos os clients
-	GetClientsMyGroups(id uint64) *entity.ClientList
+	GetClientsMyGroups(ID *uint64) *entity.ClientList
+	UpdateStatusClient(ID *uint64) int64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -27,38 +28,69 @@ func NewClientService(dabase_pool database.DatabaseInterface) *Client_service {
 }
 
 // Função que retorna lista de client
-func (ps *Client_service) GetClientsMyGroups(id uint64) *entity.ClientList {
-	// pega database
+func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 	database := ps.dbp.GetDB()
 
-	// manda uma query para ser executada no database
-	rows, err := database.Query("call SelectAllClients (?)", id)
-	// verifica se teve erro
+	rows, err := database.Query("call pcGetAllClientsGroup (?)", ID)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	// fecha linha da query, quando sair da função
 	defer rows.Close()
 
-	// variável do tipo ClientList (vazia)
 	list_client := &entity.ClientList{}
 
-	// Pega todo resultado da query linha por linha
 	for rows.Next() {
-		// variável do tipo Client (vazia)
 		client := entity.Client{}
 
-		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&client.Name, &client.Email, &client.Role, &client.Costumer_ID, &client.Business_ID, &client.Relase_ID, &client.Status_ID); err != nil {
+		if err := rows.Scan(&client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.Status_Description); err != nil {
 			fmt.Println(err.Error())
 		} else {
-			// caso não tenha erro, adiciona a variável log na lista de logs
 			list_client.List = append(list_client.List, &client)
 		}
 
 	}
 
-	// retorna lista de client
 	return list_client
+}
+
+func (ps *Client_service) UpdateStatusClient(ID *uint64) int64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("SELECT status_id FROM tblClient WHERE client_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	if statusID == 11 {
+		statusID = 12
+	} else {
+		statusID = 11
+	}
+
+	updt, err := database.Prepare("UPDATE tblClient SET status_id = ? WHERE client_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := updt.Exec(statusID, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return rowsaff
 }

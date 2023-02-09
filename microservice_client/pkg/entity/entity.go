@@ -12,35 +12,38 @@ type ClienteInteface interface {
 
 // Estrutura de dados de Client
 type Client struct {
-	ID          uint64    `json:"client_id,omitempty"`
-	Name        string    `json:"client_name,omitempty"`
-	Email       string    `json:"client_email,omitempty"`
-	Role        string    `json:"client_role,omitempty"`
-	Costumer_ID string    `json:"costumer_id,omitempty"`
-	Relase_ID   string    `json:"relase_id,omitempty"`
-	Business_ID string    `json:"business_id,omitempty"`
-	User_ID     string    `json:"user_id,omitempty"`
-	Created_At  time.Time `json:"created_at,omitempty"`
-	Status_ID   string    `json:"status_id,omitempty"`
+	ID                 uint64    `json:"client_id,omitempty"`
+	Name               string    `json:"client_name,omitempty"`
+	Email              string    `json:"client_email,omitempty"`
+	Role               string    `json:"client_role,omitempty"`
+	Customer_Name      string    `json:"customer_name,omitempty"`
+	Release_Name       string    `json:"release_name,omitempty"`
+	Business_Name      string    `json:"business_name,omitempty"`
+	User_Name          string    `json:"user_name,omitempty"`
+	Created_At         time.Time `json:"created_at,omitempty"`
+	Status_Description string    `json:"status_description,omitempty"`
+	Tags               []string  `json:"tags,omitempty"`
 }
 
+// Estrutura de dados de Client para softdelete, create e update
 type ClientUpdate struct {
-	ID          uint64 `json:"client_id,omitempty"`
-	Name        string `json:"client_name,omitempty"`
-	Email       string `json:"client_email,omitempty"`
-	Role        uint64 `json:"client_role,omitempty"`
-	Costumer_ID uint64 `json:"costumer_id,omitempty"`
-	Relase_ID   uint64 `json:"relase_id,omitempty"`
-	Business_ID uint64 `json:"business_id,omitempty"`
-	User_ID     uint64 `json:"user_id,omitempty"`
-	Status_ID   uint64 `json:"status_id,omitempty"`
+	ID          uint64   `json:"client_id,omitempty"`
+	Name        string   `json:"client_name,omitempty"`
+	Email       string   `json:"client_email,omitempty"`
+	Role        uint64   `json:"client_role,omitempty"`
+	Customer_ID uint64   `json:"customer_id,omitempty"`
+	Release_ID  uint64   `json:"release_id,omitempty"`
+	Business_ID uint64   `json:"business_id,omitempty"`
+	User_ID     uint64   `json:"user_id,omitempty"`
+	Status_ID   uint64   `json:"status_id,omitempty"`
+	Tags        []uint64 `json:"tags,omitempty"`
 }
 
 // retorna string com json do client ou err
 func (c *Client) String() string {
 	data, err := json.Marshal(c)
 	if err != nil {
-		log.Println("error to convert Client to JASON")
+		log.Println("error to convert Client to JSON")
 		log.Println(err.Error())
 		return ""
 	}
@@ -67,13 +70,13 @@ func (cl *ClientList) String() string {
 }
 
 // NewClient Construtor de Client - recebe dados no parâmetro e transforma em um client
-func NewClient(client_id uint64, client_name string, client_email string, client_role uint64, costumer_id uint64, relase_id uint64) *ClientUpdate {
+func NewClient(client_id uint64, client_name string, client_email string, client_role uint64, customer_id uint64, release_id uint64) *ClientUpdate {
 	return &ClientUpdate{
 		ID:          client_id,
 		Name:        client_name,
 		Email:       client_email,
 		Role:        client_role,
-		Costumer_ID: costumer_id,
-		Relase_ID:   relase_id,
+		Customer_ID: customer_id,
+		Release_ID:  release_id,
 	}
 }
