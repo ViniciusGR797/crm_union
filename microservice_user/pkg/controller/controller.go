@@ -180,21 +180,27 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "ID has to be interger, 400" + err.Error(),
 		})
 		return
 	}
 
-	result := service.UpdateStatusUser(&newID)
+	result, err := service.UpdateStatusUser(&newID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "cannot update JSON",
+		})
+		return
+	}
 	if result == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "user not found",
 		})
 		return
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"response": "User Status Updated",
 	})
 }
@@ -210,7 +216,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "ID has to be interger, 400" + err.Error(),
 		})
 		return
@@ -219,14 +225,14 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	err = c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "cannot bind JSON produto, 400" + err.Error(),
 		})
 		return
 	}
 	// valida email
 	if err := checkmail.ValidateFormat(user.Email); err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid email",
 		})
 		return
@@ -234,7 +240,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// validação de senha
 	if len(user.Password) < 8 {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "password too short",
 		})
 		return
@@ -249,14 +255,20 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 	// Chama método Update passando user e id editado como parâmetro
-	idResult := service.UpdateUser(&newId, user)
+	idResult, err := service.UpdateUser(&newId, user)
 	// Verifica se o id é zero (caso for deu erro ao editar o usuário no banco)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "user not found",
+		})
+		return
+	}
 	if idResult == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot update user, 400",
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "cannot update user",
 		})
 		return
 	}
 	// Retorna json com o user
-	c.Status(200)
+	c.Status(http.StatusOK)
 }

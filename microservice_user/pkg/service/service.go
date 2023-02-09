@@ -23,9 +23,9 @@ type UserServiceInterface interface {
 	// Cadastra users passando suas informações
 	CreateUser(user *entity.User) (uint64, error)
 	// Altera status do user
-	UpdateStatusUser(ID *uint64) int64
+	UpdateStatusUser(ID *uint64) (int64, error)
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
-	UpdateUser(ID *int, user *entity.User) int
+	UpdateUser(ID *int, user *entity.User) (int, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -251,12 +251,13 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	return uint64(lastId), nil
 }
 
-func (ps *User_service) UpdateStatusUser(ID *uint64) int64 {
+func (ps *User_service) UpdateStatusUser(ID *uint64) (int64, error) {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblUser WHERE user_id = ?")
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
+		return 0, errors.New("error preparing statement")
 	}
 
 	var statusID uint64
@@ -264,6 +265,7 @@ func (ps *User_service) UpdateStatusUser(ID *uint64) int64 {
 	err = stmt.QueryRow(ID).Scan(&statusID)
 	if err != nil {
 		log.Println(err.Error())
+		return 0, nil
 	}
 
 	if statusID == 9 {
@@ -275,6 +277,7 @@ func (ps *User_service) UpdateStatusUser(ID *uint64) int64 {
 	updt, err := database.Prepare("UPDATE tblUser SET status_id = ? WHERE user_id = ?")
 	if err != nil {
 		log.Println(err.Error())
+		return 0, errors.New("error preparing statement")
 	}
 
 	defer stmt.Close()
@@ -282,18 +285,20 @@ func (ps *User_service) UpdateStatusUser(ID *uint64) int64 {
 	result, err := updt.Exec(statusID, ID)
 	if err != nil {
 		log.Println(err.Error())
+		return 0, nil
 	}
 
 	rowsaff, err := result.RowsAffected()
 	if err != nil {
 		log.Println(err.Error())
+		return 0, errors.New("error fetching rows affected")
 	}
 
-	return rowsaff
+	return rowsaff, nil
 }
 
 // Função que altera o usuário
-func (ps *User_service) UpdateUser(ID *int, user *entity.User) int {
+func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
@@ -302,6 +307,7 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) int {
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
+		return 0, errors.New("error preparing statement")
 	}
 	// fecha linha da query, quando sair da função
 	defer stmt.Close()
@@ -311,6 +317,7 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) int {
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
+		return 0, nil
 	}
 
 	// RowsAffected retorna número de linhas afetadas com update
@@ -318,8 +325,9 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) int {
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
+		return 0, errors.New("error fetching rows affected")
 	}
 
 	// retorna rowsaff (converte int64 para int)
-	return int(rowsaff)
+	return int(rowsaff), nil
 }
