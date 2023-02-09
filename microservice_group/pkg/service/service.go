@@ -7,8 +7,9 @@ import (
 )
 
 type GroupServiceInterface interface {
-	GetGroups() *entity.GroupList
+	GetGroups(id uint64) (*entity.GroupList, error)
 	GetGroupByID(id uint64) (*entity.Group, error)
+	SoftDelete(id uint64) error
 }
 
 type Group_service struct {
@@ -23,11 +24,11 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Group_service {
 	}
 }
 
-func (ps *Group_service) GetGroups() *entity.GroupList {
+func (ps *Group_service) GetGroups(id uint64) (*entity.GroupList, error) {
 
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("select g.group_id, g.group_name, g.status_id, s.status_description, g.created_at,g.customer_id, c.customer_name, u.user_name, u.user_id from tblGroup g inner join tblCustomer c on g.customer_id = c.customer_id inner join tblStatus s on g.status_id = s.status_id inner join tblUser u on g.group_id = u.user_id")
+	rows, err := database.Query("call pcGetAllUserGroup (?)", id)
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
@@ -35,7 +36,7 @@ func (ps *Group_service) GetGroups() *entity.GroupList {
 
 	defer rows.Close()
 
-	lista_groups := &entity.GroupList{}
+	list_groups := &entity.GroupList{}
 
 	for rows.Next() {
 
@@ -44,20 +45,21 @@ func (ps *Group_service) GetGroups() *entity.GroupList {
 		if err := rows.Scan(
 			&group.Group_id,
 			&group.Group_name,
-			&group.Status.Status_id,
+			&group.Customer.Customer_name,
+			&group.User.User_id,
+			&group.User.User_name,
 			&group.Status.Status_description,
-			&group.Created_at,
-			&group.Customer.Customer_id,
-			&group.Customer.Customer_name); err != nil {
+		); err != nil {
 			fmt.Println(err.Error())
 		} else {
 
-			lista_groups.List = append(lista_groups.List, &group)
+			list_groups.List = append(list_groups.List, &group)
+
 		}
 
 	}
 
-	return lista_groups
+	return list_groups, nil
 
 }
 
@@ -82,10 +84,26 @@ func (ps *Group_service) GetGroupByID(id uint64) (*entity.Group, error) {
 			&group.Customer.Customer_name,
 			&group.User.User_name,
 			&group.User.User_id); err != nil {
+
 			return &entity.Group{}, err
 		}
 	}
 
 	return group, nil
+
+}
+
+func (ps *Group_service) SoftDelete(id uint64) error {
+
+	database := ps.dbp.GetDB()
+
+	_, err := database.Exec("update tblGroup set status_id = 6 if( ) where group_id = ?", id)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+
+	return nil
 
 }
