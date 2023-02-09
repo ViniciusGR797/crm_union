@@ -22,6 +22,8 @@ type UserServiceInterface interface {
 	GetSubmissiveUsers(ID *int) *entity.UserList
 	// Cadastra users passando suas informações
 	CreateUser(user *entity.User) (uint64, error)
+	// Altera status do user
+	UpdateStatusUser(ID *uint64) int64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -241,4 +243,45 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 
 	// retorna user
 	return uint64(lastId), nil
+}
+
+func (ps *User_service) UpdateStatusUser(ID *uint64) int64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("SELECT status_id FROM tblUser WHERE user_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	if statusID == 9 {
+		statusID = 10
+	} else {
+		statusID = 9
+	}
+
+	updt, err := database.Prepare("UPDATE tblUser SET status_id = ? WHERE user_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := updt.Exec(statusID, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return rowsaff
 }
