@@ -17,13 +17,17 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 			produtos.GET("/users", func(c *gin.Context) {
 				controller.GetUsers(c, service)
 			})
-			// Rota que retorna product (GET que dispara método GetProduto controller)
-			produtos.GET("/users/id/:id", func(c *gin.Context) {
+			// Rota que retorna user pelo ID (GET que dispara método GetUserByID controller)
+			produtos.GET("/users/id/:user_id", func(c *gin.Context) {
 				controller.GetUserByID(c, service)
 			})
-			// Rota que retorna product (GET que dispara método GetProduto controller)
-			produtos.GET("/users/name/:name", func(c *gin.Context) {
+			// Rota que retorna users pelo nome (GET que dispara método GetUserByName controller)
+			produtos.GET("/users/name/:user_name", func(c *gin.Context) {
 				controller.GetUserByName(c, service)
+			})
+			// Rota que retorna lista de users submissos do seus grupos (GET que dispara método GetUsers controller)
+			produtos.GET("/users/submissives/:user_id", func(c *gin.Context) {
+				controller.GetSubmissiveUsers(c, service)
 			})
 		}
 	}

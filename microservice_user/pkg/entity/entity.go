@@ -61,3 +61,13 @@ func NewUser(name, email, created_at, status string, level int, id uint64) *User
 		Status:     status,
 	}
 }
+
+// Estrutura de dados de groupID
+type GroupID struct {
+	ID uint64
+}
+
+// Estrutura de dados para lista de groupID
+type GroupIDList struct {
+	List []*GroupID
+}

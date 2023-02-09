@@ -13,10 +13,12 @@ import (
 type UserServiceInterface interface {
 	// Pega todos os users, logo lista todos os users
 	GetUsers() *entity.UserList
-	// Pega produto em específico passando o id dele como parâmetro
+	// Pega user em específico passando o id dele como parâmetro
 	GetUserByID(ID *int) *entity.User
-	// Pega produto em específico passando o name dele como parâmetro
+	// Pega users em específico passando o name dele como parâmetro
 	GetUserByName(name *string) *entity.UserList
+	// Pega users submissos passando o id de um user como parâmetro
+	GetSubmissiveUsers(ID *int) *entity.UserList
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -97,13 +99,14 @@ func (ps *User_service) GetUserByID(ID *int) *entity.User {
 
 // Função que retorna lista de users
 func (ps *User_service) GetUserByName(name *string) *entity.UserList {
-	text := "%'"
-	query := fmt.Sprint("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE '%", *name, text)
+	nameString := fmt.Sprint("%", *name, "%")
+	query := fmt.Sprint("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ?")
+
 	// pega database
 	database := ps.dbp.GetDB()
 
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query)
+	rows, err := database.Query(query, nameString)
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
@@ -129,6 +132,72 @@ func (ps *User_service) GetUserByName(name *string) *entity.UserList {
 		}
 
 	}
+
+	// retorna lista de users
+	return lista_users
+}
+
+// Função que retorna lista de users
+func (ps *User_service) GetSubmissiveUsers(ID *int) *entity.UserList {
+	query := fmt.Sprint("SELECT group_id FROM tblUserGroup WHERE user_id = ?")
+
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// manda uma query para ser executada no database
+	rows, err := database.Query(query, ID)
+	// verifica se teve erro
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	// variável do tipo UserList (vazia)
+	groupIDList := &entity.GroupIDList{}
+
+	// Pega todo resultado da query linha por linha
+	for rows.Next() {
+		// variável do tipo User (vazia)
+		groupID := entity.GroupID{}
+
+		// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&groupID.ID); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			// caso não tenha erro, adiciona a lista de users
+			groupIDList.List = append(groupIDList.List, &groupID)
+		}
+	}
+
+	// variável do tipo UserList (vazia)
+	lista_users := &entity.UserList{}
+
+	for _, groupID := range groupIDList.List {
+		query := fmt.Sprint("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < (SELECT user_level FROM tblUser WHERE user_id = ?)")
+
+		// manda uma query para ser executada no database
+		rows, err := database.Query(query, groupID.ID, ID)
+		// verifica se teve erro
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		// Pega todo resultado da query linha por linha
+		for rows.Next() {
+			// variável do tipo User (vazia)
+			user := entity.User{}
+
+			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
+			if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+				fmt.Println(err.Error())
+			} else {
+				// caso não tenha erro, adiciona a lista de users
+				lista_users.List = append(lista_users.List, &user)
+			}
+		}
+	}
+
+	// fecha linha da query, quando sair da função
+	defer rows.Close()
 
 	// retorna lista de users
 	return lista_users
