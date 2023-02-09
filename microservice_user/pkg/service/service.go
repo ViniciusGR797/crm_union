@@ -211,18 +211,20 @@ func (ps *User_service) CreateUser(user *entity.User) uint64 {
 	database := ps.dbp.GetDB()
 
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("INSERT INTO tblUser (user_name, user_email, user_pwd, status_id) VALUES (?, ?, ?, ?);")
+	stmt, err := database.Prepare("INSERT INTO tblUser (user_name, user_email, user_pwd, status_id) VALUES (?, ?, ?, ?)")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
+		return 0
 	}
 	// fecha linha da query, quando sair da função
 	defer stmt.Close()
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := database.Exec(user.Name, user.Email, user.Password, 9) // TODO implement status
+	result, err := stmt.Exec(user.Name, user.Email, user.Password, 9) // TODO implement status
 	if err != nil {
 		log.Println(err.Error())
+		return 0
 	}
 
 	// pega id do último usuário inserido
@@ -230,6 +232,7 @@ func (ps *User_service) CreateUser(user *entity.User) uint64 {
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
+		return 0
 	}
 
 	// coloca o id do usuário de volta no modelo

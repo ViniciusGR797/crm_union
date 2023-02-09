@@ -110,7 +110,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
-	if err := checkmail.ValidateFormat(user.Email); err == nil {
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
 		c.JSON(400, gin.H{
 			"error": "Invalid email",
 		})
@@ -122,11 +122,13 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	// Verifica se o id é zero (caso for deu erro ao criar produto no banco)
 	if id == 0 {
 		c.JSON(500, gin.H{
-			"error": "cannot create user: " + err.Error(),
+			"error": "cannot create user",
 		})
 		return
 	}
 
 	// Retorno json com o produto
-	c.JSON(200, nil)
+	c.JSON(200, gin.H{
+		"message": "user regostred successfully",
+	})
 }
