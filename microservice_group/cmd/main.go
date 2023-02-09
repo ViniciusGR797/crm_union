@@ -17,7 +17,7 @@ func main() {
 	default_conf := &config.Config{}
 
 	// Abre o arquivo JSON com as variáveis de ambiente
-	file, err := os.Open("microservice_user/env.json") // file.json has the json content
+	file, err := os.Open("microservice_group/env.json") // file.json has the json content
 	if err != nil {
 		log.Print(err)
 	}
