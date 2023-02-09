@@ -151,3 +151,27 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		"message": "user registered successfully",
 	})
 }
+
+func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
+	ID := c.Param("user_id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400" + err.Error(),
+		})
+		return
+	}
+
+	result := service.UpdateStatusUser(&newID)
+	if result == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update JSON, 400" + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"response": "Client Status Updated",
+	})
+}
