@@ -33,6 +33,10 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 			produtos.POST("/users", func(c *gin.Context) {
 				controller.CreateUser(c, service)
 			})
+			// Rota que altera status (PUT que dispara método UpdateStatusUser controller)
+			produtos.POST("/users/update/status/:user_id", func(c *gin.Context) {
+				controller.UpdateStatusUser(c, service)
+			})
 		}
 	}
 
