@@ -2,6 +2,7 @@ package controller
 
 import (
 	"microservice_user/pkg/entity"
+	"microservice_user/pkg/security"
 	"microservice_user/pkg/service"
 	"strconv"
 	"strings"
@@ -110,23 +111,43 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
-	if err := checkmail.ValidateFormat(user.Email); err == nil {
+	// valida email
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
 		c.JSON(400, gin.H{
 			"error": "Invalid email",
 		})
 		return
 	}
 
-	// Chama método Create passando produto como parâmetro que retorna id novo
-	id := service.CreateUser(user)
-	// Verifica se o id é zero (caso for deu erro ao criar produto no banco)
-	if id == 0 {
+	// validação de senha
+	if len(user.Password) < 8 {
+		c.JSON(400, gin.H{
+			"error": "password too short",
+		})
+		return
+	}
+
+	// hash da senha
+	user.Password, err = security.HashPassword(user.Password)
+	if err != nil {
 		c.JSON(500, gin.H{
-			"error": "cannot create user: " + err.Error(),
+			"error": "could not hash password: " + err.Error(),
+		})
+		return
+	}
+
+	// Chama método Create passando produto como parâmetro que retorna id novo
+	_, err = service.CreateUser(user)
+	// Verifica se o id é zero (caso for deu erro ao criar produto no banco)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "cannot create user",
 		})
 		return
 	}
 
 	// Retorno json com o produto
-	c.JSON(200, nil)
+	c.JSON(200, gin.H{
+		"message": "user registered successfully",
+	})
 }
