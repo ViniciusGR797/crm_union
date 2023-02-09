@@ -272,3 +272,58 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	// Retorna json com o user
 	c.Status(http.StatusOK)
 }
+
+func Login(c *gin.Context, service service.UserServiceInterface) {
+	// Cria variável do tipo usuario (inicialmente vazia)
+	var user *entity.User
+
+	// Converte json em usuario
+	err := c.ShouldBind(&user)
+	// Verifica se tem erro
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "cannot bind JSON user" + err.Error(),
+		})
+		return
+	}
+
+	// valida email
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid email",
+		})
+		return
+	}
+
+	// validação de senha
+	if len(user.Password) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "password too short",
+		})
+		return
+	}
+
+	hash, err := service.Login(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "cannot fetch credentials",
+		})
+		return
+	}
+	if hash == "" {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "email not found",
+		})
+		return
+	}
+	
+	err = security.ValidatePassword(hash, user.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "incorrect credentials",
+		})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}

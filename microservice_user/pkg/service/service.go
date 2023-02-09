@@ -26,6 +26,8 @@ type UserServiceInterface interface {
 	UpdateStatusUser(ID *uint64) (int64, error)
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
 	UpdateUser(ID *int, user *entity.User) (int, error)
+	// Busca o hash do usuário por email
+	Login(user *entity.User) (string, error) 
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -330,4 +332,30 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 
 	// retorna rowsaff (converte int64 para int)
 	return int(rowsaff), nil
+}
+
+func (ps *User_service) Login(user *entity.User) (string, error) {
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// prepara query para ser executada no database
+	stmt, err := database.Prepare("SELECT user_pwd FROM tblUser WHERE user_email = ?")
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+		return "", errors.New("error preparing statement")
+	}
+	// fecha linha da query, quando sair da função
+	defer stmt.Close()
+
+	hash := ""
+	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
+	err = stmt.QueryRow(user.Email).Scan(&hash)
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+		return "", nil
+	}
+
+	return hash, nil
 }
