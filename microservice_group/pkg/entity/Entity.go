@@ -6,12 +6,12 @@ import (
 )
 
 type Group struct {
-	Group_id   uint64 `json:"group_id, omitempty"`
-	Group_name string `json:"group_name, omitempty"`
-	Created_at string `json:"created_at, omitempty"`
-	Status     Status
-	Customer   Customer
-	User       User
+	Group_id   uint64   `json:"group_id,omitempty"`
+	Group_name string   `json:"group_name,omitempty"`
+	Created_at string   `json:"created_at,omitempty"`
+	Status     Status   `json:"-,omitempty"`
+	Customer   Customer `json:"customers,omitempty"`
+	User       User     `json:"users,omitempty"`
 }
 
 // tabela customer
@@ -44,6 +44,10 @@ func (p *Group) String() string {
 
 type GroupList struct {
 	List []*Group `json:"group_list"`
+}
+
+type UserList struct {
+	List []*User `json:"user_list"`
 }
 
 func (pl *GroupList) String() string {

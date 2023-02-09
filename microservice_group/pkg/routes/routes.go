@@ -12,7 +12,7 @@ func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gi
 	{
 		Group := main.Group("/v1")
 		{
-			Group.GET("/groups", func(c *gin.Context) {
+			Group.GET("/groups/user/:id", func(c *gin.Context) {
 				controller.GetGroups(c, service)
 			})
 
@@ -20,6 +20,9 @@ func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gi
 				controller.GetGroupByID(c, service)
 			})
 
+			Group.PUT("/groups/update/status/:id", func(c *gin.Context) {
+				controller.SoftDelete(c, service)
+			})
 		}
 	}
 
