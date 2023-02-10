@@ -150,17 +150,11 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		})
 		return
 	}
-
-	// Verifica se senha tem o tamanho mínimo de caracteres
-	if len(user.Password) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "password too short",
-		})
-		return
-	}
+	
+	user.Password = security.RandStringRunes(12)
 
 	// Faz hash com a senha
-	user.Password, err = security.HashPassword(user.Password)
+	user.Hash, err = security.HashPassword(user.Password)
 	// Verifica se teve erro ao fazer hash
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -181,7 +175,8 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// Retorno json com o user
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "user registered successfully",
+		"email": user.Email,
+		"password": user.Password,
 	})
 }
 
@@ -266,7 +261,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	// Verifica se senha tem o tamanho mínimo de caracteres
-	user.Password, err = security.HashPassword(user.Password)
+	user.Hash, err = security.HashPassword(user.Password)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "could not hash password: " + err.Error(),

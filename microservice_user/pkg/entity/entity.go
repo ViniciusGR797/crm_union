@@ -14,10 +14,11 @@ type User struct {
 	ID         uint64 `json:"id,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Email      string `json:"email,omitempty"`
-	Level      uint    `json:"level,omitempty"`
+	Level      uint   `json:"level,omitempty"`
 	Created_At string `json:"created_at,omitempty"`
 	Status     string `json:"status,omitempty"`
 	Password   string `json:"password,omitempty"`
+	Hash       string `json:"-"`
 }
 
 // Método de user - retorna string com json do user ou erro

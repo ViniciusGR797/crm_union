@@ -50,7 +50,7 @@ func ExtractToken(tokenString string) (jwt.MapClaims, error) {
 func keyFunc(t *jwt.Token) (interface{}, error) {
 	_, ok := t.Method.(*jwt.SigningMethodHMAC)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("invalid method: %v", t.Header["alg"]))
+		return nil, fmt.Errorf("invalid method: %v", t.Header["alg"])
 	}
 
 	return []byte(config.Secret), nil

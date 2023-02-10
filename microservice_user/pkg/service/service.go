@@ -232,7 +232,7 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	defer stmt.Close()
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.Level, 9) // TODO implement status
+	result, err := stmt.Exec(user.Name, user.Email, user.Hash, user.Level, 9) // TODO implement status
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error executing statement")
@@ -315,7 +315,7 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 	defer stmt.Close()
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.Level, ID)
+	result, err := stmt.Exec(user.Name, user.Email, user.Hash, user.Level, ID)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
