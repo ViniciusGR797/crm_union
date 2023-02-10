@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"microservice_business/pkg/entity"
 	"microservice_business/pkg/service"
 	"strconv"
 
@@ -49,4 +50,26 @@ func GetBusinessByID(c *gin.Context, service service.BusinessServiceInterface) {
 	}
 
 	c.JSON(200, Business)
+}
+
+func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
+
+	var business entity.CreateBusiness
+
+	if err := c.ShouldBindJSON(&business); err != nil {
+		c.JSON(400, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	service.CreateBusiness(&business)
+
+	c.JSON(200, gin.H{
+		"business_code":       business.Busines_code,
+		"business_name":       business.Business_name,
+		"business_Segment_id": business.Business_Segment_id,
+		"status_id":           business.Business_Status_id,
+	})
+
 }

@@ -50,3 +50,10 @@ func (pl *BusinessList) String() string {
 
 	return string(data)
 }
+
+type CreateBusiness struct {
+	Busines_code        string `json:"business_code,omitempty"`
+	Business_name       string `json:"business_name,omitempty"`
+	Business_Segment_id int64  `json:"business_Segment_id,omitempty"`
+	Business_Status_id  int64  `json:"status_id,omitempty"`
+}

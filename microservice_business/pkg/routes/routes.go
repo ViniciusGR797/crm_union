@@ -18,6 +18,9 @@ func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) 
 			Business.GET("/business/:id", func(c *gin.Context) {
 				controller.GetBusinessByID(c, service)
 			})
+			Business.POST("/business", func(c *gin.Context) {
+				controller.CreateBusiness(c, service)
+			})
 
 		}
 	}
