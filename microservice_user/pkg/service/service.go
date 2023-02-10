@@ -222,7 +222,7 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	database := ps.dbp.GetDB()
 
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("INSERT INTO tblUser (user_name, user_email, user_pwd, status_id) VALUES (?, ?, ?, ?)")
+	stmt, err := database.Prepare("INSERT INTO tblUser (user_name, user_email, user_pwd, user_level, status_id) VALUES (?, ?, ?, ?, ?)")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -232,7 +232,7 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	defer stmt.Close()
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.Name, user.Email, user.Password, 9) // TODO implement status
+	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.Level, 9) // TODO implement status
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error executing statement")
@@ -305,7 +305,7 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 	database := ps.dbp.GetDB()
 
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("UPDATE tblUser SET user_name = ?, user_email = ?, user_pwd = ? WHERE user_id = ? ")
+	stmt, err := database.Prepare("UPDATE tblUser SET user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ? ")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -315,7 +315,7 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 	defer stmt.Close()
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.Name, user.Email, user.Password, ID)
+	result, err := stmt.Exec(user.Name, user.Email, user.Password, user.Level, ID)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
