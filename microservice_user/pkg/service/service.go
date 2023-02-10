@@ -19,7 +19,7 @@ type UserServiceInterface interface {
 	// Pega users em específico passando o name dele como parâmetro
 	GetUserByName(name *string) (*entity.UserList, error)
 	// Pega users submissos passando o id de um user como parâmetro
-	GetSubmissiveUsers(ID *int) (*entity.UserList, error)
+	GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error)
 	// Cadastra users passando suas informações
 	CreateUser(user *entity.User) (uint64, error)
 	// Altera status do user
@@ -150,7 +150,7 @@ func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetSubmissiveUsers(ID *int) (*entity.UserList, error) {
+func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error) {
 	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
 
 	// pega database
@@ -185,10 +185,10 @@ func (ps *User_service) GetSubmissiveUsers(ID *int) (*entity.UserList, error) {
 	lista_users := &entity.UserList{}
 
 	for _, groupID := range groupIDList.List {
-		query := "SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < (SELECT user_level FROM tblUser WHERE user_id = ?)"
+		query := "SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ?"
 
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, groupID.ID, ID)
+		rows, err := database.Query(query, groupID.ID, level)
 		// verifica se teve erro
 		if err != nil {
 			fmt.Println(err.Error())

@@ -27,7 +27,7 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 				controller.GetUserByName(c, service)
 			})
 			// Rota que retorna lista de users submissos do seus grupos (GET que dispara método GetSubmissiveUsers controller)
-			users.GET("/users/submissives/:user_id", middlewares.Auth(), func(c *gin.Context) {
+			users.GET("/users/submissives", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetSubmissiveUsers(c, service)
 			})
 			// Rota que cadastra user (POST que dispara método CreateUser controller)

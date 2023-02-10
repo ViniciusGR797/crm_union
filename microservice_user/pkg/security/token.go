@@ -72,3 +72,17 @@ func GetToken(c *gin.Context) (string, error) {
 
 	return token, nil
 }
+
+func GetPermissions(c *gin.Context) (jwt.MapClaims, error) {
+	token, err := GetToken(c)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, err := ExtractToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
+}

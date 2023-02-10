@@ -97,11 +97,30 @@ func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método GetSubmissiveUsers do service e retorna json com user
 func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
-	// Pega id passada como parâmetro na URL da rota
-	id := c.Param("user_id")
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	level, err := strconv.Atoi(fmt.Sprint(permissions["level"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
-	// Converter ":id" string para int id (newid)
-	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -110,7 +129,7 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 	// Chama método GetSubmissiveUsers passando id como parâmetro
-	list, err := service.GetSubmissiveUsers(&newId)
+	list, err := service.GetSubmissiveUsers(&id, level)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -120,7 +139,7 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 	}
 	// Verifica se a lista de users tem tamanho zero (caso for user não tem users submissive)
 	if len(list.List) == 0 {
-		c.Status(http.StatusNotFound)
+		c.Status(http.StatusNoContent)
 		return
 	}
 
@@ -365,17 +384,10 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método GetUserMe do service e retorna json com user
 func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
-	token, err := security.GetToken(c)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	permissions, err := security.ExtractToken(token)
-	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
