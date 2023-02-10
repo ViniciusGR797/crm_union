@@ -19,6 +19,11 @@ const (
 	PRODUCTION = "production"
 )
 
+var (
+	// Secret - para fazer criptografia de chaves
+	Secret string
+)
+
 // Estrutura para armazenar as configurações da aplicação - Config
 type Config struct {
 	// Porta do servidor - Ex: 8080
@@ -27,6 +32,8 @@ type Config struct {
 	Mode string `json:"mode"`
 	// Configurações do DataBase
 	DBConfig `json:"dbconfig"`
+	// Secret de criptografia de Token
+	Secret string `json:"secret"`
 }
 
 // Estrutura para armazenar as configurações do banco de dados - DBConfig
@@ -115,6 +122,14 @@ func NewConfig() *Config {
 		conf.DBConfig.DB_NAME = DB_NAME
 	}
 
+	// Atribui uma variável de ambiente para nome do Database
+	SRV_SECRET := os.Getenv("SECRET")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_SECRET != "" {
+		conf.Secret = SRV_SECRET
+		Secret = SRV_SECRET
+	}
+
 	// Retorna a nova configuração
 	return conf
 }
@@ -136,6 +151,7 @@ func DefaultConfig() *Config {
 			DB_NAME:  "",
 		},
 		Mode: PRODUCTION,
+		Secret: "",
 	}
 
 	// retorna o endereço de memória da configuração padrão (aumentar eficiência evitando copias)
