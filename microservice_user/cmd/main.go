@@ -1,10 +1,11 @@
 package main
 
 import (
+<<<<<<< HEAD
+=======
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"os"
 
 	// Import interno de packages do próprio sistema
 	"microservice_user/config"
@@ -17,6 +18,9 @@ import (
 // Função principal (primeira executada) - chama config para fazer conexão BD, service, server, router e roda servidor http
 func main() {
 	// Atribui o endereço da estrutura de uma configuração padrão do sistema
+<<<<<<< HEAD
+	conf := &config.Config{}
+=======
 	default_conf := &config.Config{}
 
 	// Abre o arquivo JSON com as variáveis de ambiente
@@ -36,8 +40,14 @@ func main() {
 		log.Print(err)
 	}
 
+	// Converte JSON byte em uma struct, no caso a struct default_conf
+	if err := json.Unmarshal(jsonByte, &default_conf); err != nil {
+		log.Print(err)
+	}
+>>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
+
 	// Atribui para conf as novas configurações do sistema
-	conf := config.NewConfig(default_conf)
+	conf = config.NewConfig()
 
 	// Pega pool de conexão do Database (config passadas anteriorente pelo Json para Database)
 	dbpool := database.NewDB(conf)
