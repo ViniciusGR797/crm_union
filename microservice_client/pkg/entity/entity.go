@@ -22,7 +22,11 @@ type Client struct {
 	User_Name          string    `json:"user_name,omitempty"`
 	Created_At         time.Time `json:"created_at,omitempty"`
 	Status_Description string    `json:"status_description,omitempty"`
-	Tags               []string  `json:"tags,omitempty"`
+	Tags               []Tag     `json:"tags,omitempty"`
+}
+
+type Tag struct {
+	Tag_Name string `json:"tag_name,omitempty"`
 }
 
 // Estrutura de dados de Client para softdelete, create e update
