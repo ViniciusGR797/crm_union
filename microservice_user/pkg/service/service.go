@@ -339,7 +339,7 @@ func (ps *User_service) Login(user *entity.User) (string, error) {
 	database := ps.dbp.GetDB()
 
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("SELECT user_id, user_pwd FROM tblUser WHERE user_email = ?")
+	stmt, err := database.Prepare("SELECT user_id, user_pwd, user_level FROM tblUser WHERE user_email = ?")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -350,7 +350,7 @@ func (ps *User_service) Login(user *entity.User) (string, error) {
 
 	hash := ""
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	err = stmt.QueryRow(user.Email).Scan(&user.ID, &hash)
+	err = stmt.QueryRow(user.Email).Scan(&user.ID, &hash, &user.Level)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())

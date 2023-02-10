@@ -12,6 +12,7 @@ func Auth() gin.HandlerFunc {
 		header := c.GetHeader("Authorization")
 		if header == "" {
 			c.AbortWithStatus(401)
+			return
 		}
 
 		token := header[len(bearer_schema):]
@@ -19,6 +20,7 @@ func Auth() gin.HandlerFunc {
 		err := security.ValidateToken(token)
 		if err != nil {
 			c.AbortWithStatus(401)
+			return
 		}
 	}
 }

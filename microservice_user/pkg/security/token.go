@@ -8,9 +8,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func NewToken(userID uint64) (string, error) {
+func NewToken(userID uint64, level uint) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
+	permissions["level"] = level
 	permissions["exp"] = time.Now().Add(time.Hour * 6).Unix()
 	permissions["userID"] = userID
 
