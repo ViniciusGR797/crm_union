@@ -46,6 +46,10 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 			users.POST("/users/login", func(c *gin.Context) {
 				controller.Login(c, service)
 			})
+			// Rota que retorna user pelo ID do meeu token (GET que dispara método GetUserMe controller)
+			users.GET("/users/me", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetUserMe(c, service)
+			})
 		}
 	}
 	// retorna rota

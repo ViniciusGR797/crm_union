@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"microservice_user/pkg/entity"
 	"microservice_user/pkg/security"
 	"microservice_user/pkg/service"
@@ -365,4 +366,55 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 	})
+}
+
+// Função que chama método GetUserMe do service e retorna json com user
+func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
+	token, err := security.GetToken(c)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	permissions, err := security.ExtractToken(token)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	id := fmt.Sprint(permissions["userID"])
+
+	// Converter ":id" string para int id (newid)
+	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
+	// Verifica se teve erro na conversão
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID has to be interger",
+		})
+		return
+	}
+
+	// Chama método GetUserByID passando id como parâmetro
+	user, err := service.GetUserByID(&newId)
+	// Verifica se teve ao buscar user no banco
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not fetch users",
+		})
+		return
+	}
+	// Verifica se o id é zero (caso for deu erro ao buscar o user no banco)
+	if user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "user not found",
+		})
+		return
+	}
+
+	// Retorno json com user
+	c.JSON(http.StatusOK, user)
 }

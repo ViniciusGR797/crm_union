@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 )
 
 func NewToken(userID uint64, level uint) (string, error) {
@@ -53,4 +54,21 @@ func keyFunc(t *jwt.Token) (interface{}, error) {
 	}
 
 	return []byte(config.Secret), nil
+}
+
+func GetToken(c *gin.Context) (string, error) {
+	const bearer_schema = "Bearer "
+	header := c.GetHeader("Authorization")
+	if header == "" {
+		return "", errors.New("empty header")
+	}
+
+	token := header[len(bearer_schema):]
+
+	err := ValidateToken(token)
+	if err != nil {
+		return "", errors.New("invalid token")
+	}
+
+	return token, nil
 }
