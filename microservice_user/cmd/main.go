@@ -40,6 +40,11 @@ func main() {
 	if err := json.Unmarshal(jsonByte, &default_conf); err != nil {
 		log.Print(err)
 	}
+
+	// Converte JSON byte em uma struct, no caso a struct default_conf
+	if err := json.Unmarshal(jsonByte, &default_conf); err != nil {
+		log.Print(err)
+	}
 >>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
 
 	// Atribui para conf as novas configurações do sistema
@@ -52,11 +57,7 @@ func main() {
 		log.Print("Successfully connected")
 	}
 
-<<<<<<< HEAD
-	// Cria serviços de um produto (CRUD) com a pool de conexão passada por parâmetro
-=======
 	// Cria serviços de um user (CRUD) com a pool de conexão passada por parâmetro
->>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
 	service := service.NewUserService(dbpool)
 
 	// Cria servidor HTTP com as config passadas por parâmetro
@@ -65,15 +66,11 @@ func main() {
 	// Cria rotas passsando o servidor HTTP e os serviços do user (CRUD)
 	router := routes.ConfigRoutes(serv.SERVER, service)
 
-<<<<<<< HEAD
-	// Coloca servidor para rodar passando as rotas, servidor HTTP e serviços do produto (CRUD) como parâmetro
-=======
 	// Se tiver ativada a interface de usuário, criar as rotas para o front end (WEB UI)
 	// if conf.WEB_UI {
 	// 	webui.RegisterUIHandlers(router)
 	// }
 
 	// Coloca servidor para rodar passando as rotas, servidor HTTP e serviços do user (CRUD) como parâmetro
->>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
 	server.Run(router, serv, service)
 }

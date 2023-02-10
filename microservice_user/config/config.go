@@ -123,9 +123,6 @@ func NewConfig() *Config {
 func DefaultConfig() *Config {
 	// Cria e atribui já valores para a configuração padrão
 	default_config := Config{
-<<<<<<< HEAD
-		USER_PORT: 8081,
-=======
 		SRV_PORT:    "8081",
 		WEB_UI:      true,
 		OpenBrowser: true,
