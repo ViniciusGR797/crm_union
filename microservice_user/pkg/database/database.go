@@ -38,7 +38,7 @@ func NewDB(conf *config.Config) *dabase_pool {
 	return dbpool
 }
 
-// Método que fecha conesão com Database
+// Método que fecha conexão com Database
 func (d *dabase_pool) Close() error {
 
 	// Chama função para fechar a conexão que retorna feedback (erro ou não)

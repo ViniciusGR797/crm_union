@@ -29,7 +29,7 @@ func NewServer(conf *config.Config) Server {
 }
 
 // Rodar servidor HTTP, tendo as rotas do framework gin, servidor HTTP, serviço CRUD de produto
-func Run(router *gin.Engine, server Server, service service.ProdutoServiceInterface) {
+func Run(router *gin.Engine, server Server, service service.ReleaseServiceInterface) {
 	// Imprime que servidor HTTP está rodando na porta tal
 	log.Print("Server is running at port: ", server.SRV_PORT)
 

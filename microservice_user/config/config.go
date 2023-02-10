@@ -123,7 +123,13 @@ func NewConfig() *Config {
 func DefaultConfig() *Config {
 	// Cria e atribui já valores para a configuração padrão
 	default_config := Config{
+<<<<<<< HEAD
 		USER_PORT: 8081,
+=======
+		SRV_PORT:    "8081",
+		WEB_UI:      true,
+		OpenBrowser: true,
+>>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
 		DBConfig: DBConfig{
 			DB_DRIVE: "mysql",
 			DB_HOST:  "localhost",
