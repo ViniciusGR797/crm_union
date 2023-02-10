@@ -5,7 +5,6 @@ import (
 =======
 	"encoding/json"
 	"io/ioutil"
->>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
 	"log"
 
 	// Import interno de packages do próprio sistema

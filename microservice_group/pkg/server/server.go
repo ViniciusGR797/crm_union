@@ -5,10 +5,7 @@ import (
 
 	// Import interno de packages do próprio sistema
 	"microservice_group/config"
-<<<<<<< HEAD
-=======
 
->>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
 	"microservice_group/pkg/service"
 
 	// Import externo do github
