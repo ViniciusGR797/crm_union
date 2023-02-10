@@ -1,6 +1,6 @@
 # Variáveis de ambiente
-*.json
 *.env
+*.json
 
 # Configurações do VSCode
 .vscode/
