@@ -1,6 +1,7 @@
 package security
 
 import (
+	"errors"
 	"microservice_user/config"
 	"time"
 
@@ -15,4 +16,16 @@ func NewToken(userID uint64) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissions)
 	return token.SignedString([]byte(config.Secret))
+}
+
+func ValidateToken(token string) error {
+	_, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		_, isValid := t.Method.(*jwt.SigningMethodHMAC)
+		if !isValid {
+			return nil, errors.New("invalid token: " + token)
+		}
+
+		return []byte(config.Secret), nil
+	})
+	return err
 }
