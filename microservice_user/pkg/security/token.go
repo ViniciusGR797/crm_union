@@ -2,6 +2,7 @@ package security
 
 import (
 	"errors"
+	"fmt"
 	"microservice_user/config"
 	"time"
 
@@ -29,4 +30,27 @@ func ValidateToken(token string) error {
 		return []byte(config.Secret), nil
 	})
 	return err
+}
+
+func ExtractToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, keyFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("failed to get permissions")
+	}
+
+	return permissions, nil
+}
+
+func keyFunc(t *jwt.Token) (interface{}, error) {
+	_, ok := t.Method.(*jwt.SigningMethodHMAC)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("invalid method: %v", t.Header["alg"]))
+	}
+
+	return []byte(config.Secret), nil
 }
