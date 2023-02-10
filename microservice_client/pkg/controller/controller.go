@@ -56,3 +56,29 @@ func UpdateStatusClient(c *gin.Context, service service.ClientServiceInterface) 
 		"response": "Client Status Updated",
 	})
 }
+
+func GetClientByID(c *gin.Context, service service.ClientServiceInterface) {
+
+	ID := c.Param("client_id")
+
+	newId, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400",
+		})
+		return
+	}
+
+	// Chama método GetUsers e retorna list de users
+	client := service.GetClientByID(&newId)
+	// Verifica se a lista está vazia (tem tamanho zero)
+	if client.ID == 0 {
+		c.JSON(404, gin.H{
+			"error": "client not found, 404",
+		})
+		return
+	}
+
+	//retorna sucesso 200 e retorna json da lista de users
+	c.JSON(200, client)
+}
