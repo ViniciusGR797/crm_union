@@ -16,6 +16,9 @@ func ConfigRoutes(router *gin.Engine, service service.ReleaseServiceInterface) *
 			release.GET("/releasetrains", func(c *gin.Context) {
 				controller.GetReleasesTrain(c, service)
 			})
+			release.GET("/releasetrains/id/:releasetrain_id", func(c *gin.Context){
+				controller.GetReleaseTrainByID(c, service)
+			})
 
 		}
 	}
