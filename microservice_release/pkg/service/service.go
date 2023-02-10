@@ -4,6 +4,7 @@ import (
 
 	// Import interno de packages do próprio sistema
 	"fmt"
+	"log"
 	"microservice_release/pkg/database"
 	"microservice_release/pkg/entity"
 )
@@ -11,6 +12,7 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Release (tudo que tiver os métodos abaixo do CRUD são serviços de release)
 type ReleaseServiceInterface interface {
 	GetReleasesTrain() *entity.ReleaseList
+	GetReleaseTrainByID(ID *uint64) *entity.Release
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -68,4 +70,44 @@ func (ps *Release_service) GetReleasesTrain() *entity.ReleaseList {
 	}
 
 	return list_release
+}
+
+func (ps *Release_service) GetReleaseTrainByID(ID *uint64) *entity.Release {
+
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("select * from vwGetAllReleaseTrains where release_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	defer stmt.Close()
+
+	release := &entity.Release{}
+
+	err = stmt.QueryRow(ID).Scan(&release.ID, &release.Code, &release.Name, &release.Business_Name, &release.Status_Description)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsTags, err := database.Query("select tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ?", ID)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var tags []entity.Tag
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			tags = append(tags, tag)
+		}
+	}
+
+	release.Tags = tags
+
+	return release
+
 }
