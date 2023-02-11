@@ -60,6 +60,7 @@ Grupo é composto por várias equipes que são Back-End, Front-End, UX/UI, DataB
 * **Back-End** - *Desenvolvedor* - [Taglys Henrique Costacurta de Oliveira](https://github.com)
 * **Back-End** - *Desenvolvedor* - [Thiago Augusto Avelar da Silva](https://github.com)
 * **Back-End** - *Desenvolvedor* - [Vinícius Augusto Dos Santos Silva](https://github.com)
+* **Back-End** - *Desenvolvedor* - [Julio dos Santos Fávaro](https://github.com)
 
 ---
 
