@@ -27,7 +27,7 @@ type UserServiceInterface interface {
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
 	UpdateUser(ID *int, user *entity.User) (int, error)
 	// Busca o hash do usuário por email
-	Login(user *entity.User) (string, error) 
+	Login(user *entity.User) (string, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -48,7 +48,7 @@ func (ps *User_service) GetUsers() (*entity.UserList, error) {
 	database := ps.dbp.GetDB()
 
 	// manda uma query para ser executada no database
-	rows, err := database.Query("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id")
+	rows, err := database.Query("SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id ORDER BY U.user_name")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -111,7 +111,7 @@ func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 // Função que retorna lista de users
 func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 	nameString := fmt.Sprint("%", *name, "%")
-	query := "SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ?"
+	query := "SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ? ORDER BY U.user_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -185,7 +185,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 	lista_users := &entity.UserList{}
 
 	for _, groupID := range groupIDList.List {
-		query := "SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ?"
+		query := "SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
 
 		// manda uma query para ser executada no database
 		rows, err := database.Query(query, groupID.ID, level)
