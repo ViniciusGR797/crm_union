@@ -32,16 +32,16 @@ type Tag struct {
 
 // Estrutura de dados de Client para softdelete, create e update
 type ClientUpdate struct {
-	ID          uint64   `json:"client_id,omitempty"`
-	Name        string   `json:"client_name,omitempty"`
-	Email       string   `json:"client_email,omitempty"`
-	Role        uint64   `json:"client_role,omitempty"`
-	Customer_ID uint64   `json:"customer_id,omitempty"`
-	Release_ID  uint64   `json:"release_id,omitempty"`
-	Business_ID uint64   `json:"business_id,omitempty"`
-	User_ID     uint64   `json:"user_id,omitempty"`
-	Status_ID   uint64   `json:"status_id,omitempty"`
-	Tags        []uint64 `json:"tags,omitempty"`
+	ID          uint64 `json:"client_id,omitempty"`
+	Name        string `json:"client_name,omitempty"`
+	Email       string `json:"client_email,omitempty"`
+	Role        uint64 `json:"client_role,omitempty"`
+	Customer_ID uint64 `json:"customer_id,omitempty"`
+	Release_ID  uint64 `json:"release_id,omitempty"`
+	Business_ID uint64 `json:"business_id,omitempty"`
+	User_ID     uint64 `json:"user_id,omitempty"`
+	Status_ID   uint64 `json:"status_id,omitempty"`
+	Tags        []Tag  `json:"tags,omitempty"`
 }
 
 // retorna string com json do client ou err
