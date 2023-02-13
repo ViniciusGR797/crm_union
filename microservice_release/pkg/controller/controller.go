@@ -77,7 +77,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	_, err = service.InsertTagsReleaseTrain(newID,release.Tags)
+	_, err = service.InsertTagsReleaseTrain(newID, release.Tags)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "cannot update tags" + err.Error(),
@@ -111,43 +111,3 @@ func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface
 
 	c.JSON(200, tags)
 }
-/*
-func InsertTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	ID := c.Param("releasetrain_id")
-
-	newID, err := strconv.ParseUint(ID, 10, 64)
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
-		})
-		return
-	}
-
-	var release *entity.Release_Insert_Tag
-
-	
-	err = c.ShouldBindJSON(&release)
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bind JSON release, 400" + err.Error(),
-		})
-		return
-	}
-	
-	release.ID = newID
-	
-	_, err = service.InsertTagsReleaseTrain(&newID, release)
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
-		})
-		return
-	}
-
-
-	c.JSON(200, gin.H{
-		"result": "tags inserted successfully",
-	})
-
-}
-*/
