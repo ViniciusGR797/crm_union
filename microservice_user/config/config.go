@@ -139,6 +139,14 @@ func NewConfig(config *Config) *Config {
 		Secret = SRV_SECRET
 	}
 
+	// Atribui uma variável de ambiente para nome do Database
+	SRV_SECRET := os.Getenv("SECRET")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_SECRET != "" {
+		conf.Secret = SRV_SECRET
+		Secret = SRV_SECRET
+	}
+
 	// Retorna a nova configuração
 	return config
 }
