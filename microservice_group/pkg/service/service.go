@@ -13,7 +13,8 @@ type GroupServiceInterface interface {
 	UpdateStatusGroup(id uint64) int64
 	GetUsersGroup(id uint64) (*entity.UserList, error)
 	CreateGroup(group *entity.CreateGroup) int64
-	InsertUserGroup(user *entity.GroupIDList, id uint64) int64
+	AttachUserGroup(user *entity.GroupIDList, id uint64) int64
+	DetachUserGroup(user *entity.GroupIDList, id uint64) int64
 }
 
 type Group_service struct {
@@ -168,7 +169,29 @@ func (ps *Group_service) UpdateStatusGroup(id uint64) int64 {
 		log.Println(err.Error())
 	}
 
-	return rowsaff
+	if rowsaff == 0 {
+		return 0
+	}
+
+	currentStatus, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	if currentStatus.QueryRow("GROUP", "ATIVO").Scan(&statusID) == nil {
+		if statusID == statusGroup {
+			return 1
+		}
+	}
+
+	if currentStatus.QueryRow("GROUP", "INATIVO").Scan(&statusID) == nil {
+		if statusID == statusGroup {
+			return 2
+		}
+
+	}
+
+	return 0
 }
 
 func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
@@ -206,7 +229,6 @@ func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
 
 }
 
-// create group
 func (ps *Group_service) CreateGroup(group *entity.CreateGroup) int64 {
 
 	database := ps.dbp.GetDB()
@@ -244,12 +266,34 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup) int64 {
 
 }
 
-// insert user_list in group
-func (ps *Group_service) InsertUserGroup(users *entity.GroupIDList, id uint64) int64 {
+func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64) int64 {
 
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	for _, user := range users.List {
+		_, err := stmt.Exec(id, user.ID)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+	}
+
+	return int64(id)
+
+}
+
+func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64) int64 {
+
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("DELETE FROM tblUserGroup WHERE group_id = ? AND user_id = ?")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
