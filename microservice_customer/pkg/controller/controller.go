@@ -51,7 +51,7 @@ func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
 func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
 	var customer *entity.Customer
-	err := c.ShouldBind(&customer)
+	err := c.ShouldBindJSON(&customer)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "cannot bind JSON customer" + err.Error(),
@@ -68,4 +68,38 @@ func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
 	customer = service.GetCustomerByID(&id)
 	c.JSON(200, customer)
+}
+
+func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+	id := c.Param("id")
+
+	var customer *entity.Customer
+
+	newID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Id has to be integer, 400" + err.Error(),
+		})
+		return
+	}
+
+	err = c.ShouldBind(&customer)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "cannot bin JSON customer, 400" + err.Error(),
+		})
+		return
+	}
+
+	idResult := service.UpdateCustomer(&newID, customer)
+	if idResult == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update JSON, 400" + err.Error(),
+		})
+		return
+	}
+
+	customer = service.GetCustomerByID(&newID)
+	c.JSON(200, customer)
+
 }
