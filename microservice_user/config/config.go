@@ -2,31 +2,39 @@ package config
 
 import (
 	// Package "os" - usado para manipulação de arquivos
-
-	"fmt"
 	"os"
-
 	// Package "strconv" - implementa conversões de tipos primitivos, ex: String para int
 	"strconv"
-
-	"github.com/joho/godotenv"
 )
 
 const (
 	// DEVELOPER - Modo de desenvolvimento - Ambiente programável
 	DEVELOPER = "developer"
+	// HOMOLOGATION - Modo de homologação - Fase de testes
+	HOMOLOGATION = "homologation"
 	// PRODUCTION - Modo de produção - Usuário final
 	PRODUCTION = "production"
+)
+
+var (
+	// Secret - para fazer criptografia de chaves
+	Secret string
 )
 
 // Estrutura para armazenar as configurações da aplicação - Config
 type Config struct {
 	// Porta do servidor - Ex: 8080
-	USER_PORT int `json:"user_port"`
+	SRV_PORT string `json:"srv_port"`
+	// Web UI (Interface de Usuário Web) - Atividada/Desativada
+	WEB_UI bool `json:"web_ui"`
 	// Modo de uso da API - DEVELOPER, HOMOLOGATION ou PRODUCTION
 	Mode string `json:"mode"`
+	// Abrir o navegador - Atividada/Desativada
+	OpenBrowser bool `json:"open_browser"`
 	// Configurações do DataBase
 	DBConfig `json:"dbconfig"`
+	// Secret de criptografia de Token
+	Secret string `json:"secret"`
 }
 
 // Estrutura para armazenar as configurações do banco de dados - DBConfig
@@ -48,22 +56,23 @@ type DBConfig struct {
 }
 
 // NewConfig - Cria uma nova configuração - passada por parâmetro
-func NewConfig() *Config {
+func NewConfig(config *Config) *Config {
+
 	// Variável que armazenará as novas configurações
 	var conf *Config
 
-	var err error
-
-	if err = godotenv.Load(); err != nil {
+	// Verifica se a config e a porta do servidor está vazia (caso estejá pega a config padrão)
+	if config == nil || config.SRV_PORT == "" {
 		conf = DefaultConfig()
+	} else {
+		conf = config
 	}
-	fmt.Print(err, " ||||||||||||")
 
 	// Atribui uma variável de ambiente para porta do servidor
-	USER_PORT, _ := strconv.Atoi(os.Getenv("USER_PORT"))
+	SRV_PORT := os.Getenv("SRV_PORT")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
-	if USER_PORT != 0 {
-		conf.USER_PORT = USER_PORT
+	if SRV_PORT != "" {
+		conf.SRV_PORT = SRV_PORT
 	}
 
 	// Atribui uma variável de ambiente para modo de uso da API
@@ -73,50 +82,73 @@ func NewConfig() *Config {
 		conf.Mode = SRV_MODE
 	}
 
-	// Atribui uma variável de ambiente para drive do DataBase
-	DB_DRIVE := os.Getenv("DB_DRIVE")
+	// Atribui uma variável de ambiente para interface de Usuário Web
+	SRV_WEB_UI := os.Getenv("SRV_WEB_UI")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
-	if DB_DRIVE != "" {
-		conf.DBConfig.DB_DRIVE = DB_DRIVE
+	if SRV_WEB_UI != "" {
+		conf.WEB_UI, _ = strconv.ParseBool(SRV_WEB_UI)
+	}
+
+	// Atribui uma variável de ambiente para drive do DataBase
+	SRV_DB_DRIVE := os.Getenv("SRV_DB_DRIVE")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_DB_DRIVE != "" {
+		conf.DBConfig.DB_DRIVE = SRV_DB_DRIVE
 	}
 
 	// Atribui uma variável de ambiente para host do Database
-	DB_HOST := os.Getenv("DB_HOST")
+	SRV_DB_HOST := os.Getenv("SRV_DB_HOST")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
-	if DB_HOST != "" {
-		conf.DBConfig.DB_HOST = DB_HOST
+	if SRV_DB_HOST != "" {
+		conf.DBConfig.DB_HOST = SRV_DB_HOST
 	}
 
 	// Atribui uma variável de ambiente para porta do Database
-	DB_PORT := os.Getenv("DB_PORT")
+	SRV_DB_PORT := os.Getenv("SRV_DB_PORT")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
-	if DB_PORT != "" {
-		conf.DBConfig.DB_PORT = DB_PORT
+	if SRV_DB_PORT != "" {
+		conf.DBConfig.DB_PORT = SRV_DB_PORT
 	}
 
 	// Atribui uma variável de ambiente para usuário do Database
-	DB_USER := os.Getenv("DB_USER")
+	SRV_DB_USER := os.Getenv("SRV_DB_USER")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
-	if DB_USER != "" {
-		conf.DBConfig.DB_USER = DB_USER
+	if SRV_DB_USER != "" {
+		conf.DBConfig.DB_USER = SRV_DB_USER
 	}
 
 	// Atribui uma variável de ambiente para senha do Database
-	DB_PASS := os.Getenv("DB_PASS")
+	SRV_DB_PASS := os.Getenv("SRV_DB_PASS")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
-	if DB_PASS != "" {
-		conf.DBConfig.DB_PASS = DB_PASS
+	if SRV_DB_PASS != "" {
+		conf.DBConfig.DB_PASS = SRV_DB_PASS
 	}
 
 	// Atribui uma variável de ambiente para nome do Database
-	DB_NAME := os.Getenv("DB_NAME")
+	SRV_DB_NAME := os.Getenv("SRV_DB_NAME")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
-	if DB_NAME != "" {
-		conf.DBConfig.DB_NAME = DB_NAME
+	if SRV_DB_NAME != "" {
+		conf.DBConfig.DB_NAME = SRV_DB_NAME
+	}
+
+	// Atribui uma variável de ambiente para nome do Database
+	SRV_SECRET := os.Getenv("SECRET")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_SECRET != "" {
+		conf.Secret = SRV_SECRET
+		Secret = SRV_SECRET
+	}
+
+	// Atribui uma variável de ambiente para nome do Database
+	SRV_SECRET := os.Getenv("SECRET")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_SECRET != "" {
+		conf.Secret = SRV_SECRET
+		Secret = SRV_SECRET
 	}
 
 	// Retorna a nova configuração
-	return conf
+	return config
 }
 
 // Configurações padrão da aplicação - defaultConf
@@ -126,7 +158,6 @@ func DefaultConfig() *Config {
 		SRV_PORT:    "8081",
 		WEB_UI:      true,
 		OpenBrowser: true,
->>>>>>> c159f9d2de112426f41a26075473b24bb06e931f
 		DBConfig: DBConfig{
 			DB_DRIVE: "mysql",
 			DB_HOST:  "localhost",
@@ -136,6 +167,7 @@ func DefaultConfig() *Config {
 			DB_NAME:  "",
 		},
 		Mode: PRODUCTION,
+		Secret: "",
 	}
 
 	// retorna o endereço de memória da configuração padrão (aumentar eficiência evitando copias)

@@ -14,9 +14,11 @@ type User struct {
 	ID         uint64 `json:"id,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Email      string `json:"email,omitempty"`
-	Level      int    `json:"level,omitempty"`
+	Level      uint   `json:"level,omitempty"`
 	Created_At string `json:"created_at,omitempty"`
 	Status     string `json:"status,omitempty"`
+	Password   string `json:"password,omitempty"`
+	Hash       string `json:"-"`
 }
 
 // Método de user - retorna string com json do user ou erro
@@ -51,7 +53,7 @@ func (pl *UserList) String() string {
 }
 
 // Construtor de User - recebe dados no parâmetro e transforma em um user
-func NewUser(name, email, created_at, status string, level int, id uint64) *User {
+func NewUser(name, email, created_at, status string, level uint, id uint64) *User {
 	return &User{
 		ID:         id,
 		Name:       name,
@@ -60,4 +62,14 @@ func NewUser(name, email, created_at, status string, level int, id uint64) *User
 		Created_At: created_at,
 		Status:     status,
 	}
+}
+
+// Estrutura de dados de groupID
+type GroupID struct {
+	ID uint64
+}
+
+// Estrutura de dados para lista de groupID
+type GroupIDList struct {
+	List []*GroupID
 }

@@ -30,7 +30,7 @@ var dbpool = &dabase_pool{}
 // Cria nova conexão com Database, de acordo com as config passadas por parâmetro
 func NewDB(conf *config.Config) *dabase_pool {
 	// Atribui endereço DNS do Database passando URL do Database
-	conf.DBConfig.DB_DSN = fmt.Sprintf("%v:%v@tcp(%v:%v)/%v", conf.DBConfig.DB_USER, conf.DBConfig.DB_PASS, conf.DBConfig.DB_HOST, conf.DBConfig.DB_PORT, conf.DBConfig.DB_NAME)
+	conf.DBConfig.DB_DSN = fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true", conf.DBConfig.DB_USER, conf.DBConfig.DB_PASS, conf.DBConfig.DB_HOST, conf.DBConfig.DB_PORT, conf.DBConfig.DB_NAME)
 	// Cria pool de conexão com Database, através das config
 	dbpool = Mysql(conf)
 
