@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"microservice_user/config"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -85,4 +86,25 @@ func GetPermissions(c *gin.Context) (jwt.MapClaims, error) {
 	}
 
 	return permissions, nil
+}
+
+// Função que verifica se o user é um Adm, se for retorna nil, senão retorna erro
+func IsAdm(c *gin.Context) error {
+	// pega permissões do token
+	permissions, err := GetPermissions(c)
+	if err != nil {
+		return errors.New("error getting permissions")
+	}
+	// Pega level nas permissões do token
+	level, err := strconv.Atoi(fmt.Sprint(permissions["level"]))
+	if err != nil {
+		return errors.New("conversation error")
+	}
+
+	// Verifica se o user é um admin (level acima de 1)
+	if level > 1 {
+		return nil
+	} else {
+		return errors.New("admin exclusive route")
+	}
 }
