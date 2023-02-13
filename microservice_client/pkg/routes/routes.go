@@ -16,6 +16,9 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 			clients.GET("/clients/mygroups/:user_id", func(c *gin.Context) {
 				controller.GetClientsMyGroups(c, service)
 			})
+			clients.GET("/clients/id/:client_id", func(c *gin.Context) {
+				controller.GetClientByID(c, service)
+			})
 			clients.PUT("/clients/update/status/:client_id", func(c *gin.Context) {
 				controller.UpdateStatusClient(c, service)
 			})

@@ -15,6 +15,14 @@ import (
 
 // Função que chama método GetUsers do service e retorna json com lista de users
 func GetUsers(c *gin.Context, service service.UserServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Chama método GetUsers e retorna list de users
 	list, err := service.GetUsers()
 	// Verifica se teve ao buscar user no banco
@@ -169,7 +177,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		})
 		return
 	}
-	
+  
 	user.Password = security.RandStringRunes(12)
 
 	// Faz hash com a senha
@@ -194,7 +202,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// Retorno json com o user
 	c.JSON(http.StatusCreated, gin.H{
-		"email": user.Email,
+		"email":    user.Email,
 		"password": user.Password,
 	})
 }
