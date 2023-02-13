@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"microservice_release/pkg/entity"
 	"microservice_release/pkg/service"
 	"strconv"
 
@@ -35,8 +36,8 @@ func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface
 	}
 
 	// Chama método GetUsers e retorna release
-	release := service.GetReleaseTrainByID(&newId)
-	// Verifica se a release está vazia 
+	release := service.GetReleaseTrainByID(newId)
+	// Verifica se a release está vazia
 	if release == nil {
 		c.JSON(404, gin.H{
 			"error": "release not found, 404",
@@ -47,5 +48,35 @@ func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface
 	c.JSON(200, release)
 }
 
+func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
+	ID := c.Param("releasetrain_id")
 
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400" + err.Error(),
+		})
+		return
+	}
 
+	var release *entity.Release_Update
+
+	err = c.ShouldBind(&release)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "cannot bind JSON produto, 400" + err.Error(),
+		})
+		return
+	}
+
+	idResult := service.UpdateReleaseTrain(newID, release)
+	if idResult == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update JSON, 400" + err.Error(),
+		})
+		return
+	}
+
+	releaseUpdated := service.GetReleaseTrainByID(idResult)
+	c.JSON(200, releaseUpdated)
+}
