@@ -39,6 +39,7 @@ type Status struct {
 type CreateGroup struct {
 	Group_name  string `json:"group_name,omitempty"`
 	Customer_id int64  `json:"customer_id,omitempty"`
+	GroupIDList `json:"users,omitempty"`
 }
 
 func (p *Group) String() string {

@@ -260,6 +260,18 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup) int64 {
 	rowsaff, err := result.RowsAffected()
 	if err != nil {
 		fmt.Println(err.Error())
+
+	}
+
+	newid, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	if group.GroupIDList.List != nil {
+
+		ps.AttachUserGroup(&group.GroupIDList, uint64(newid))
+
 	}
 
 	return rowsaff
