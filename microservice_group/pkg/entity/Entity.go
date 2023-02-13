@@ -11,7 +11,13 @@ type Group struct {
 	Created_at string   `json:"created_at,omitempty"`
 	Status     Status   `json:"-,omitempty"`
 	Customer   Customer `json:"customers,omitempty"`
-	User       User     `json:"users,omitempty"`
+}
+
+type GroupID struct {
+	Group_id   uint64   `json:"group_id,omitempty"`
+	Group_name string   `json:"group_name,omitempty"`
+	Customer   Customer `json:"customers,omitempty"`
+	User       []User   `json:"users,omitempty"`
 }
 
 // tabela customer
@@ -30,6 +36,11 @@ type Status struct {
 	Status_description string `json:"status_name,omitempty"`
 }
 
+type CreateGroup struct {
+	Group_name  string `json:"group_name,omitempty"`
+	Customer_id int64  `json:"customer_id,omitempty"`
+}
+
 func (p *Group) String() string {
 	data, err := json.Marshal(p)
 
@@ -42,6 +53,12 @@ func (p *Group) String() string {
 	return string(data)
 }
 
+type ID struct {
+	ID int `json:"id"`
+}
+type GroupIDList struct {
+	List []*ID `json:"users_id"`
+}
 type GroupList struct {
 	List []*Group `json:"group_list"`
 }

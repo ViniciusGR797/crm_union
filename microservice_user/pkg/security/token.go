@@ -14,9 +14,9 @@ import (
 func NewToken(userID uint64, level uint) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
+	permissions["level"] = level
 	permissions["exp"] = time.Now().Add(time.Hour * 6).Unix()
 	permissions["userID"] = userID
-	permissions["level"] = level
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissions)
 	return token.SignedString([]byte(config.Secret))

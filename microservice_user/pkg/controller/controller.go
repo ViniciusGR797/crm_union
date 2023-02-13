@@ -210,6 +210,8 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	user.Password = security.RandStringRunes(12)
+
 	// Faz hash com a senha
 	user.Hash, err = security.HashPassword(user.Password)
 	// Verifica se teve erro ao fazer hash
