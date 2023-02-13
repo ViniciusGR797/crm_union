@@ -19,6 +19,14 @@ type Release struct {
 	Tags               []Tag  `json:"tags,omitempty"`
 }
 
+type Release_Update struct {
+	ID          uint64 `json:"release_id,omitempty"`
+	Code        string `json:"release_code,omitempty"`
+	Name        string `json:"release_name,omitempty"`
+	Business_ID uint64 `json:"business_id,omitempty"`
+	Status_ID   uint64 `json:"status_id,omitempty"`
+}
+
 type Tag struct {
 	Tag_Name string `json:"tag_name,omitempty"`
 }

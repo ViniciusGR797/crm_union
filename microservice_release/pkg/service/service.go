@@ -12,7 +12,8 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Release (tudo que tiver os métodos abaixo do CRUD são serviços de release)
 type ReleaseServiceInterface interface {
 	GetReleasesTrain() *entity.ReleaseList
-	GetReleaseTrainByID(ID *uint64) *entity.Release
+	GetReleaseTrainByID(ID uint64) *entity.Release
+	UpdateReleaseTrain(ID uint64, release *entity.Release_Update) uint64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -72,7 +73,7 @@ func (ps *Release_service) GetReleasesTrain() *entity.ReleaseList {
 	return list_release
 }
 
-func (ps *Release_service) GetReleaseTrainByID(ID *uint64) *entity.Release {
+func (ps *Release_service) GetReleaseTrainByID(ID uint64) *entity.Release {
 
 	database := ps.dbp.GetDB()
 
@@ -110,4 +111,27 @@ func (ps *Release_service) GetReleaseTrainByID(ID *uint64) *entity.Release {
 
 	return release
 
+}
+func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release_Update) uint64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblReleaseTrain SET release_code = ?, release_name = ?, business_id = ? WHERE release_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	defer stmt.Close()
+
+	var releaseID int64
+
+	result, err := stmt.Exec(release.Code, release.Name, release.Business_ID, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	releaseID, err = result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return uint64(releaseID)
 }
