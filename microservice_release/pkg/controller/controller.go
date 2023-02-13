@@ -3,6 +3,7 @@ package controller
 import (
 	"microservice_release/pkg/entity"
 	"microservice_release/pkg/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -110,4 +111,41 @@ func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface
 	}
 
 	c.JSON(200, tags)
+}
+
+// Função que chama método UpdateStatusReleaseTrain do service e retorna json com mensagem de sucesso
+func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
+	// Pega id passada como parâmetro na URL da rota
+	id := c.Param("releasetrain_id")
+
+	// Converter ":id" string para int id (newid)
+	newID, err := strconv.ParseUint(id, 10, 64)
+	// Verifica se teve erro na conversão
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID has to be interger, 400" + err.Error(),
+		})
+		return
+	}
+
+	// Chama método UpdateStatusUser passando id como parâmetro
+	result, err := service.UpdateStatusReleaseTrain(&newID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "cannot update JSON",
+		})
+		return
+	}
+	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
+	if result == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "user not found",
+		})
+		return
+	}
+
+	// Retorno json com mensagem de sucesso
+	c.JSON(http.StatusOK, gin.H{
+		"response": "Release Train Status Updated",
+	})
 }

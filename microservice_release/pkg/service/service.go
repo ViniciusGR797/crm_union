@@ -3,6 +3,7 @@ package service
 import (
 
 	// Import interno de packages do próprio sistema
+	"errors"
 	"fmt"
 	"log"
 	"microservice_release/pkg/database"
@@ -16,6 +17,7 @@ type ReleaseServiceInterface interface {
 	UpdateReleaseTrain(ID uint64, release *entity.Release_Update) uint64
 	GetTagsReleaseTrain(ID *uint64) []*entity.Tag
 	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) (uint64, error)
+	UpdateStatusReleaseTrain(ID *uint64) (int64, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -134,7 +136,6 @@ func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release
 	if err != nil {
 		log.Println(err.Error())
 	}
-	
 
 	return uint64(releaseID)
 }
@@ -180,12 +181,12 @@ func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) 
 	}
 
 	defer stmt.Close()
-	
+
 	_, err = stmt.Exec(ID)
 	if err != nil {
 		log.Println(err.Error())
 		return 0, err
-	} 
+	}
 
 	stmt, err = database.Prepare("INSERT IGNORE tblReleaseTrainTag SET tag_id = ?, release_id = ?")
 	if err != nil {
@@ -205,3 +206,48 @@ func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) 
 	return ID, nil
 }
 
+func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64) (int64, error) {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("SELECT status_id FROM tblReleaseTrain WHERE release_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+		return 0, errors.New("error preparing statement")
+	}
+
+	var statusID uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+		return 0, nil
+	}
+
+	if statusID == 7 {
+		statusID = 8
+	} else {
+		statusID = 7
+	}
+
+	updt, err := database.Prepare("UPDATE tblReleaseTrain SET status_id = ? WHERE release_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+		return 0, errors.New("error preparing statement")
+	}
+
+	defer stmt.Close()
+
+	result, err := updt.Exec(statusID, ID)
+	if err != nil {
+		log.Println(err.Error())
+		return 0, nil
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+		return 0, errors.New("error fetching rows affected")
+	}
+
+	return rowsaff, nil
+}
