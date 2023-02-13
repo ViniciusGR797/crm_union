@@ -16,12 +16,19 @@ func ConfigRoutes(router *gin.Engine, service service.ReleaseServiceInterface) *
 			release.GET("/releasetrains", func(c *gin.Context) {
 				controller.GetReleasesTrain(c, service)
 			})
-			release.GET("/releasetrains/id/:releasetrain_id", func(c *gin.Context){
+			release.GET("/releasetrains/id/:releasetrain_id", func(c *gin.Context) {
 				controller.GetReleaseTrainByID(c, service)
 			})
-			release.PUT("/releasetrains/update/:releasetrain_id", func(c *gin.Context){
+			release.PUT("/releasetrains/update/:releasetrain_id", func(c *gin.Context) {
 				controller.UpdateReleaseTrain(c, service)
 			})
+			release.GET("/releasetrains/tag/:releasetrain_id", func(c *gin.Context) {
+				controller.GetTagsReleaseTrain(c, service)
+			})
+			// release.PUT("/releasetrains/update/tag/:releasetrain_id", func(c *gin.Context) {
+			// 	controller.InsertTagsReleaseTrain(c, service)
+			// })
+			
 
 		}
 	}
