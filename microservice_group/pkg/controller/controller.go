@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"microservice_group/pkg/entity"
 	"microservice_group/pkg/service"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
+// rota 100% funcional
 func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 
 	id := c.Param("id")
@@ -14,7 +16,9 @@ func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 	newid, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error": err.Error(),
+			"message": "Invalid user id",
+			"code":    "400",
+			"path":    "/groups/user/:id",
 		})
 		return
 	}
@@ -29,7 +33,9 @@ func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 
 	if len(list.List) == 0 {
 		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
+			"message": "group not found",
+			"code":    "404",
+			"path":    "/groups/user/:id",
 		})
 		return
 	}
@@ -43,7 +49,9 @@ func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
 	newid, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error": err.Error(),
+			"message": "Invalid group id",
+			"code":    "400",
+			"path":    "/groups/:id",
 		})
 		return
 	}
@@ -52,7 +60,9 @@ func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
 
 	if group == nil {
 		c.JSON(404, gin.H{
-			"error": "group not found, 404",
+			"message": "group not found",
+			"code":    "404",
+			"path":    "/groups/:id",
 		})
 		return
 	}
@@ -67,19 +77,72 @@ func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
 	c.JSON(200, group)
 }
 
-func SoftDelete(c *gin.Context, service service.GroupServiceInterface) {
+// rota 100%
+func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error": err.Error(),
+			"message": "Invalid group id",
+			"code":    "400",
+			"path":    "/groups/update/status/:id",
 		})
 		return
 	}
 
-	err = service.SoftDelete(newid)
+	result := service.UpdateStatusGroup(newid)
+
+	if result == 0 {
+		c.JSON(404, gin.H{
+			"message": "group not found",
+			"code":    "404",
+			"path":    "/groups/update/status/:id",
+		})
+		return
+	}
+
+	if result == 1 {
+		c.JSON(200, gin.H{
+			"message": "group Active",
+		})
+		return
+	}
+
+	if result == 2 {
+		c.JSON(200, gin.H{
+			"message": "group Inactive",
+		})
+		return
+	}
+
+}
+
+func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
+	id := c.Param("id")
+
+	newid, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid group id",
+			"code":    "400",
+			"path":    "groups/usersGroup/:id",
+		})
+		return
+	}
+
+	UserGroup, err := service.GetUsersGroup(newid)
+
+	if UserGroup == nil {
+
+		c.JSON(404, gin.H{
+			"message": "group not found",
+			"code":    "404",
+			"path":    "groups/usersGroup/:id",
+		})
+		return
+	}
 
 	if err != nil {
 		c.JSON(500, gin.H{
@@ -88,7 +151,109 @@ func SoftDelete(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
+	if len(UserGroup.List) == 0 {
+		c.JSON(200, gin.H{
+			"message": "group without users",
+		})
+		return
+	}
+
+	c.JSON(200, UserGroup)
+}
+
+func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
+
+	var group entity.CreateGroup
+
+	if err := c.ShouldBindJSON(&group); err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid group data",
+			"code":    "400",
+			"path":    "/groups",
+		})
+		return
+	}
+
+	service.CreateGroup(&group)
+
 	c.JSON(200, gin.H{
-		"message": "group deleted",
+		"message": "group created",
 	})
+
+}
+
+// insert user_list in group
+func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
+
+	id := c.Param("id")
+
+	group_id, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid group id",
+			"code":    "400",
+			"path":    "/groups/attach/:id",
+		})
+		return
+	}
+
+	var users entity.GroupIDList
+
+	if err := c.ShouldBindJSON(&users); err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid user list",
+			"code":    "400",
+			"path":    "/groups/attach/:id",
+		})
+
+		return
+	}
+
+	idReturn := service.AttachUserGroup(&users, group_id)
+
+	group, err := service.GetGroupByID(uint64(idReturn))
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(200, group)
+}
+
+func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
+	id := c.Param("id")
+
+	group_id, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid group id",
+			"code":    "400",
+			"path":    "/groups/detach/:id",
+		})
+		return
+	}
+
+	var users entity.GroupIDList
+
+	if err := c.ShouldBindJSON(&users); err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid user list",
+			"code":    "400",
+			"path":    "/groups/detach/:id",
+		})
+
+		return
+	}
+
+	idReturn := service.DetachUserGroup(&users, group_id)
+
+	group, err := service.GetGroupByID(uint64(idReturn))
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(200, group)
 }

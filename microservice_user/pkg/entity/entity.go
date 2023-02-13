@@ -2,7 +2,11 @@ package entity
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
+	"strings"
+
+	"github.com/badoux/checkmail"
 )
 
 type UserInterface interface {
@@ -14,9 +18,11 @@ type User struct {
 	ID         uint64 `json:"id,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Email      string `json:"email,omitempty"`
-	Level      int    `json:"level,omitempty"`
+	Level      uint   `json:"level,omitempty"`
 	Created_At string `json:"created_at,omitempty"`
 	Status     string `json:"status,omitempty"`
+	Password   string `json:"password,omitempty"`
+	Hash       string `json:"-"`
 }
 
 // Método de user - retorna string com json do user ou erro
@@ -51,7 +57,7 @@ func (pl *UserList) String() string {
 }
 
 // Construtor de User - recebe dados no parâmetro e transforma em um user
-func NewUser(name, email, created_at, status string, level int, id uint64) *User {
+func NewUser(name, email, created_at, status string, level uint, id uint64) *User {
 	return &User{
 		ID:         id,
 		Name:       name,
@@ -60,4 +66,62 @@ func NewUser(name, email, created_at, status string, level int, id uint64) *User
 		Created_At: created_at,
 		Status:     status,
 	}
+}
+
+// Estrutura de dados de groupID
+type GroupID struct {
+	ID uint64
+}
+
+// Estrutura de dados para lista de groupID
+type GroupIDList struct {
+	List []*GroupID
+}
+
+func (user *User) Prepare() error {
+	if erro := user.validate(); erro != nil {
+		return erro
+	}
+
+	if erro := user.format(); erro != nil {
+		return erro
+	}
+
+	return nil
+}
+
+func (user *User) format() error {
+	user.Name = strings.TrimSpace(user.Name)
+
+	return nil
+}
+
+func (user *User) validate() error {
+	// Verifica se nome está vazio
+	if user.Name == "" {
+		return errors.New("the name is mandatory and cannot be blank")
+
+	}
+
+	// Verifica se level é válido
+	if user.Level < 1 || user.Level > 5 {
+		return errors.New("invalid level")
+	}
+
+	// Verifica se o status é válido
+	if user.Status != "ATIVO" && user.Status != "INATIVO" && user.Status != "" {
+		return errors.New("invalid status")
+	}
+
+	// Verifica se email formato válido
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		return errors.New("invalid email")
+	}
+
+	// Verifica se senha tem o tamanho mínimo de caracteres
+	if len(user.Password) < 8 {
+		return errors.New("password too short")
+	}
+
+	return nil
 }

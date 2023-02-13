@@ -21,8 +21,26 @@ func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gi
 			})
 
 			Group.PUT("/groups/update/status/:id", func(c *gin.Context) {
-				controller.SoftDelete(c, service)
+				controller.UpdateStatusGroup(c, service)
 			})
+
+			Group.GET("groups/usersGroup/:id", func(c *gin.Context) {
+				controller.GetUsersGroup(c, service)
+			})
+
+			Group.POST("/groups/create", func(c *gin.Context) {
+				controller.CreateGroup(c, service)
+			})
+
+			Group.PUT("/groups/update/attach/:id", func(c *gin.Context) {
+				controller.AttachUserGroup(c, service)
+			})
+
+			Group.PUT("/groups/update/detach/:id", func(c *gin.Context) {
+				controller.DetachUserGroup(c, service)
+
+			})
+
 		}
 	}
 
