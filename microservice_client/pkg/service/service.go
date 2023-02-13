@@ -12,6 +12,8 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Client (tudo que tiver os métodos abaixo do CRUD são serviços de client)
 type ClientServiceInterface interface {
 	GetClientsMyGroups(ID *uint64) *entity.ClientList
+	GetClientByID(ID *uint64) *entity.Client
+	GetTagsClient(ID *uint64) []*entity.Tag
 	UpdateStatusClient(ID *uint64) int64
 	GetClientByID(ID *uint64) *entity.Client
 }
@@ -47,7 +49,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description); err != nil {
 			fmt.Println(err.Error())
 		} else {
-			rowsTags, err := database.Query("select tag_name from tblTags inner join tblClientTag tCT on tblTags.tag_id = tCT.tag_id WHERE tCT.client_id = ?", client.ID)
+			rowsTags, err := database.Query("SELECT tag_name FROM tblTags INNER JOIN tblClientTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.client_id = ?", client.ID)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -71,6 +73,76 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 	}
 
 	return list_client
+
+}
+
+
+func (ps *Client_service) GetClientByID(ID *uint64) *entity.Client {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("call pcGetClientByID(?)")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var client entity.Client
+
+	err = stmt.QueryRow(ID).Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	rowsTags, err := database.Query("SELECT tag_name FROM tblTags INNER JOIN tblClientTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.client_id = ?", ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer rowsTags.Close()
+
+	var tags []entity.Tag
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			tags = append(tags, tag)
+		}
+	}
+
+	client.Tags = tags
+
+	return &client
+}
+
+func (ps *Client_service) GetTagsClient(ID *uint64) []*entity.Tag {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("select T.tag_id, T.tag_name from tblTags T inner join tblClientTag TCT on T.tag_id = TCT.tag_id WHERE client_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var tags []*entity.Tag
+
+	rowsTags, err := stmt.Query(ID)
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		}
+
+		tags = append(tags, &tag)
+	}
+
+	return tags
 
 }
 
