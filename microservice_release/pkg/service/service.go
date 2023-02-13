@@ -14,6 +14,8 @@ type ReleaseServiceInterface interface {
 	GetReleasesTrain() *entity.ReleaseList
 	GetReleaseTrainByID(ID uint64) *entity.Release
 	UpdateReleaseTrain(ID uint64, release *entity.Release_Update) uint64
+	GetTagsReleaseTrain(ID *uint64) []*entity.Tag
+	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) (uint64, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -132,6 +134,74 @@ func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release
 	if err != nil {
 		log.Println(err.Error())
 	}
+	
 
 	return uint64(releaseID)
 }
+
+func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) []*entity.Tag {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("SELECT T.tag_id, T.tag_name from tblTags T INNER JOIN tblReleaseTrainTag tRTT on T.tag_id = tRTT.tag_id WHERE release_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var tags []*entity.Tag
+
+	rowsTags, err := stmt.Query(ID)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		}
+
+		tags = append(tags, &tag)
+	}
+
+	return tags
+
+}
+
+func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) (uint64, error) {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("DELETE FROM tblReleaseTrainTag WHERE release_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+		return 0, err
+	}
+
+	defer stmt.Close()
+	
+	_, err = stmt.Exec(ID)
+	if err != nil {
+		log.Println(err.Error())
+		return 0, err
+	} 
+
+	stmt, err = database.Prepare("INSERT IGNORE tblReleaseTrainTag SET tag_id = ?, release_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+		return 0, err
+	}
+	defer stmt.Close()
+
+	for _, tag := range tags {
+		_, err := stmt.Exec(tag.Tag_ID, ID)
+		if err != nil {
+			log.Println(err.Error())
+			return 0, err
+		}
+	}
+
+	return ID, nil
+}
+

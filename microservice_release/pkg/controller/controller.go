@@ -72,11 +72,42 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 	idResult := service.UpdateReleaseTrain(newID, release)
 	if idResult == 0 {
 		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
+			"error": "cannot update JSON" + err.Error(),
+		})
+		return
+	}
+
+	_, err = service.InsertTagsReleaseTrain(newID, release.Tags)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "cannot update tags" + err.Error(),
 		})
 		return
 	}
 
 	releaseUpdated := service.GetReleaseTrainByID(idResult)
 	c.JSON(200, releaseUpdated)
+}
+
+// Função que chama método GetTagsReleaseTrain do service e retorna json com uma lista de tags do client
+func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
+	ID := c.Param("releasetrain_id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400",
+		})
+		return
+	}
+
+	tags := service.GetTagsReleaseTrain(&newID)
+	if len(tags) == 0 {
+		c.JSON(404, gin.H{
+			"error": "lista not found, 404",
+		})
+		return
+	}
+
+	c.JSON(200, tags)
 }
