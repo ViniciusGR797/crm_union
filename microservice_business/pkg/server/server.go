@@ -5,7 +5,6 @@ import (
 
 	// Import interno de packages do próprio sistema
 	"microservice_business/config"
-
 	"microservice_business/pkg/service"
 
 	// Import externo do github

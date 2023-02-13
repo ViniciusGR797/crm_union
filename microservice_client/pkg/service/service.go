@@ -13,6 +13,7 @@ import (
 type ClientServiceInterface interface {
 	GetClientsMyGroups(ID *uint64) *entity.ClientList
 	UpdateStatusClient(ID *uint64) int64
+	GetClientByID(ID *uint64) *entity.Client
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -27,7 +28,7 @@ func NewClientService(dabase_pool database.DatabaseInterface) *Client_service {
 	}
 }
 
-// Função que retorna lista de client
+// Função que retorna lista de client pelo group
 func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 	database := ps.dbp.GetDB()
 
@@ -43,17 +44,37 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 	for rows.Next() {
 		client := entity.Client{}
 
-		if err := rows.Scan(&client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.Status_Description); err != nil {
+		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description); err != nil {
 			fmt.Println(err.Error())
 		} else {
+			rowsTags, err := database.Query("select tag_name from tblTags inner join tblClientTag tCT on tblTags.tag_id = tCT.tag_id WHERE tCT.client_id = ?", client.ID)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+
+			var tags []entity.Tag
+
+			for rowsTags.Next() {
+				tag := entity.Tag{}
+
+				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+					fmt.Println(err.Error())
+				} else {
+					tags = append(tags, tag)
+				}
+			}
+
+			client.Tags = tags
+
 			list_client.List = append(list_client.List, &client)
 		}
-
 	}
 
 	return list_client
+
 }
 
+// Função que atualizar o status do client
 func (ps *Client_service) UpdateStatusClient(ID *uint64) int64 {
 	database := ps.dbp.GetDB()
 
@@ -62,17 +83,31 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64) int64 {
 		fmt.Println(err.Error())
 	}
 
-	var statusID uint64
+	defer stmt.Close()
 
-	err = stmt.QueryRow(ID).Scan(&statusID)
+	var statusClient uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusClient)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	if statusID == 11 {
-		statusID = 12
+	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = status.QueryRow("CLIENT", "ATIVO").Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	if statusID == statusClient {
+		statusClient++
 	} else {
-		statusID = 11
+		statusClient--
 	}
 
 	updt, err := database.Prepare("UPDATE tblClient SET status_id = ? WHERE client_id = ?")
@@ -80,9 +115,7 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64) int64 {
 		log.Println(err.Error())
 	}
 
-	defer stmt.Close()
-
-	result, err := updt.Exec(statusID, ID)
+	result, err := updt.Exec(statusClient, ID)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -93,4 +126,45 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64) int64 {
 	}
 
 	return rowsaff
+}
+
+func (ps *Client_service) GetClientByID(ID *uint64) *entity.Client {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("call pcGetClientByID(?)")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var client entity.Client
+
+	err = stmt.QueryRow(ID).Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	rowsTags, err := database.Query("select tag_name from tblTags inner join tblClientTag tCT on tblTags.tag_id = tCT.tag_id WHERE tCT.client_id = ?", ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer rowsTags.Close()
+
+	var tags []entity.Tag
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			tags = append(tags, tag)
+		}
+	}
+
+	client.Tags = tags
+
+	return &client
 }
