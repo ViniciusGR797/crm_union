@@ -10,6 +10,7 @@ type BusinessServiceInterface interface {
 	// Pega todos os Businesss, logo lista todos os Businesss
 	GetBusiness() *entity.BusinessList
 	GetBusinessByID(id uint64) (*entity.Business, error)
+	CreateBusiness(business *entity.CreateBusiness) int64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -92,5 +93,30 @@ func (ps *Business_service) GetBusinessByID(id uint64) (*entity.Business, error)
 	}
 
 	return Business, nil
+
+}
+
+func (ps *Business_service) CreateBusiness(business *entity.CreateBusiness) int64 {
+
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("insert into tblBusiness (business_code, business_name, segment_id, status_id) values (?, ?, ?, ?)")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(business.Busines_code, business.Business_name, business.Business_Segment_id, business.Business_Status_id)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	return rowsaff
 
 }
