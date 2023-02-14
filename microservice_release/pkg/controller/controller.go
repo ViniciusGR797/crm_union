@@ -149,3 +149,28 @@ func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInte
 		"response": "Release Train Status Updated",
 	})
 }
+
+// Função que chama método GetReleaseTrainByBusiness do service e retorna json com release
+func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInterface) {
+	ID := c.Param("business_id")
+
+	newId, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400",
+		})
+		return
+	}
+
+	// Chama método GetReleaseTrainByBusiness e retorna release
+	list, err := service.GetReleaseTrainByBusiness(&newId)
+	if err != nil {
+		c.JSON(404, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	//retorna sucesso 200 e retorna json da lista de users
+	c.JSON(200, list)
+}

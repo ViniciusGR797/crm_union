@@ -25,7 +25,7 @@ type Release_Update struct {
 	Name        string `json:"release_name,omitempty"`
 	Business_ID uint64 `json:"business_id,omitempty"`
 	Status_ID   uint64 `json:"status_id,omitempty"`
-	Tags []Tag  `json:"tags,omitempty"`
+	Tags        []Tag  `json:"tags,omitempty"`
 }
 
 type Tag struct {
