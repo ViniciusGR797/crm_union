@@ -128,6 +128,39 @@ func InsertTagClient(c *gin.Context, service service.ClientServiceInterface) {
 
 }
 
+func UpdateClient(c *gin.Context, service service.ClientServiceInterface) {
+	ID := c.Param("client_id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400" + err.Error(),
+		})
+		return
+	}
+
+	var client entity.ClientUpdate
+
+	if err := c.ShouldBindJSON(&client); err != nil {
+		c.JSON(400, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	result := service.UpdateClient(&newID, &client)
+	if *result == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update JSON, 400" + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"result": "Client updated successfully",
+	})
+}
+
 // Função que chama método UpdateStatusClient do service e realiza o softdelete
 func UpdateStatusClient(c *gin.Context, service service.ClientServiceInterface) {
 	ID := c.Param("client_id")

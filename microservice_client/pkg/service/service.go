@@ -15,8 +15,9 @@ type ClientServiceInterface interface {
 	GetClientByID(ID *uint64) *entity.Client
 	GetTagsClient(ID *uint64) []*entity.Tag
 	CreateClient(client *entity.ClientUpdate) int64
-	UpdateStatusClient(ID *uint64) int64
 	InsertTagClient(ID *uint64, client *entity.ClientUpdate) *uint64
+	UpdateClient(ID *uint64, client *entity.ClientUpdate) *uint64
+	UpdateStatusClient(ID *uint64) int64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -211,6 +212,31 @@ func (ps *Client_service) InsertTagClient(ID *uint64, client *entity.ClientUpdat
 	}
 
 	return ID
+}
+
+func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate) *uint64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblClient SET client_name = ?, client_email = ?, client_role = ?, customer_id = ?, business_id = ?, user_id = ?, status_id = ? WHERE client_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(client.Name, client.Email, client.Role, client.Customer_ID, client.Business_ID, client.User_ID, client.Status_ID, ID)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	rowAff, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	row := uint64(rowAff)
+
+	return &row
 }
 
 // Função que atualizar o status do client
