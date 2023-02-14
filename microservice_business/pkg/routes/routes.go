@@ -21,6 +21,9 @@ func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) 
 			Business.POST("/business", func(c *gin.Context) {
 				controller.CreateBusiness(c, service)
 			})
+			Business.PUT("/business/update/:id", func(c *gin.Context) {
+				controller.UpdateBusiness(c, service)
+			})
 
 		}
 	}
