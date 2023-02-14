@@ -12,15 +12,17 @@ import (
 // Função que chama método GetReleases do service e retorna json com lista de release
 func GetReleasesTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 
-	list := service.GetReleasesTrain()
-	if len(list.List) == 0 {
-		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
+	list, err := service.GetReleasesTrain()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains",
 		})
 		return
 	}
 
-	c.JSON(200, list)
+	c.JSON(http.StatusOK, list)
 }
 
 // Função que chama método GetReleseTrainByID do service e retorna json com lista de users
@@ -30,23 +32,27 @@ func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface
 
 	newId, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/releasetrains/id/:releasetrain_id",
 		})
 		return
 	}
 
 	// Chama método GetUsers e retorna release
-	release := service.GetReleaseTrainByID(newId)
+	release, err := service.GetReleaseTrainByID(newId)
 	// Verifica se a release está vazia
-	if release == nil {
-		c.JSON(404, gin.H{
-			"error": "release not found, 404",
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/id/:releasetrain_id",
 		})
 		return
 	}
 	//retorna sucesso 200 e retorna json da lista de users
-	c.JSON(200, release)
+	c.JSON(http.StatusOK, release)
 }
 
 func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
@@ -54,8 +60,10 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/releasetrains/update/:releasetrain_id",
 		})
 		return
 	}
@@ -64,30 +72,44 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 
 	err = c.ShouldBind(&release)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bind JSON produto, 400" + err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/releasetrains/update/:releasetrain_id",
 		})
 		return
 	}
 
-	idResult := service.UpdateReleaseTrain(newID, release)
-	if idResult == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot update JSON" + err.Error(),
+	idResult, err := service.UpdateReleaseTrain(newID, release)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/update/:releasetrain_id",
 		})
 		return
 	}
 
 	_, err = service.InsertTagsReleaseTrain(newID, release.Tags)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "cannot update tags" + err.Error(),
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/update/:releasetrain_id",
 		})
 		return
 	}
 
-	releaseUpdated := service.GetReleaseTrainByID(idResult)
-	c.JSON(200, releaseUpdated)
+	releaseUpdated, err := service.GetReleaseTrainByID(idResult)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/id/:releasetrain_id",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, releaseUpdated)
 }
 
 // Função que chama método GetTagsReleaseTrain do service e retorna json com uma lista de tags do client
@@ -96,21 +118,25 @@ func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/releasetrains/tag/:releasetrain_id",
 		})
 		return
 	}
 
-	tags := service.GetTagsReleaseTrain(&newID)
-	if len(tags) == 0 {
-		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
+	tags, err := service.GetTagsReleaseTrain(&newID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/tag/:releasetrain_id",
 		})
 		return
 	}
 
-	c.JSON(200, tags)
+	c.JSON(http.StatusOK, tags)
 }
 
 // Função que chama método UpdateStatusReleaseTrain do service e retorna json com mensagem de sucesso
@@ -123,23 +149,20 @@ func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInte
 	// Verifica se teve erro na conversão
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/releasetrains/update/status/:releasetrain_id",
 		})
 		return
 	}
 
 	// Chama método UpdateStatusUser passando id como parâmetro
-	result, err := service.UpdateStatusReleaseTrain(&newID)
+	_, err = service.UpdateStatusReleaseTrain(&newID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "cannot update JSON",
-		})
-		return
-	}
-	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
-	if result == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "user not found",
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/update/status/:releasetrain_id",
 		})
 		return
 	}
@@ -156,8 +179,10 @@ func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInt
 
 	newId, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/releasetrains/business/:business_id",
 		})
 		return
 	}
@@ -165,14 +190,16 @@ func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInt
 	// Chama método GetReleaseTrainByBusiness e retorna release
 	list, err := service.GetReleaseTrainByBusiness(&newId)
 	if err != nil {
-		c.JSON(404, gin.H{
-			"error": err,
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/business/:business_id",
 		})
 		return
 	}
 
 	//retorna sucesso 200 e retorna json da lista de users
-	c.JSON(200, list)
+	c.JSON(http.StatusOK, list)
 }
 
 // Função que chama método CreateReleaseTrain do service e retorna json com mensagem de sucesso
@@ -185,7 +212,9 @@ func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 	// Verifica se tem erro
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "cannot bind JSON user" + err.Error(),
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/releasetrains",
 		})
 		return
 	}
@@ -193,21 +222,12 @@ func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 	err = service.CreateReleaseTrain(release)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains",
 		})
 		return
 	}
-
-	/*_, err = service.InsertTagsReleaseTrain(newID, release.Tags)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "cannot update tags" + err.Error(),
-		})
-		return
-	}
-
-	releaseUpdated := service.GetReleaseTrainByID(idResult)*/
-
 	// Retorno json com o user
 	c.Status(http.StatusNoContent)
 }
