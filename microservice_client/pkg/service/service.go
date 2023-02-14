@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -12,8 +13,12 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Client (tudo que tiver os métodos abaixo do CRUD são serviços de client)
 type ClientServiceInterface interface {
 	GetClientsMyGroups(ID *uint64) *entity.ClientList
-	UpdateStatusClient(ID *uint64) int64
 	GetClientByID(ID *uint64) *entity.Client
+	GetTagsClient(ID *uint64) []*entity.Tag
+	CreateClient(client *entity.ClientUpdate) int64
+	UpdateClient(ID *uint64, client *entity.ClientUpdate) *uint64
+	UpdateStatusClient(ID *uint64) int64
+	InsertTagClient(ID *uint64, tags *[]entity.Tag) error
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -47,7 +52,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description); err != nil {
 			fmt.Println(err.Error())
 		} else {
-			rowsTags, err := database.Query("select tag_name from tblTags inner join tblClientTag tCT on tblTags.tag_id = tCT.tag_id WHERE tCT.client_id = ?", client.ID)
+			rowsTags, err := database.Query("SELECT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ?", client.ID)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -57,7 +62,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 			for rowsTags.Next() {
 				tag := entity.Tag{}
 
-				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+				if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 					fmt.Println(err.Error())
 				} else {
 					tags = append(tags, tag)
@@ -72,6 +77,157 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) *entity.ClientList {
 
 	return list_client
 
+}
+
+// Função que retorna um client pelo ID
+func (ps *Client_service) GetClientByID(ID *uint64) *entity.Client {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("call pcGetClientByID(?)")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var client entity.Client
+
+	err = stmt.QueryRow(ID).Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	rowsTags, err := database.Query("SELECT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ?", ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer rowsTags.Close()
+
+	var tags []entity.Tag
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			tags = append(tags, tag)
+		}
+	}
+
+	client.Tags = tags
+
+	return &client
+}
+
+// Função que retorna uma lista de tag pelo ID do client
+func (ps *Client_service) GetTagsClient(ID *uint64) []*entity.Tag {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("select T.tag_id, T.tag_name from tblTags T inner join tblClientTag TCT on T.tag_id = TCT.tag_id WHERE client_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var tags []*entity.Tag
+
+	rowsTags, err := stmt.Query(ID)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		}
+
+		tags = append(tags, &tag)
+	}
+
+	return tags
+
+}
+
+// Função utilizada para criar um novo client
+func (ps *Client_service) CreateClient(client *entity.ClientUpdate) int64 {
+	database := ps.dbp.GetDB()
+
+	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = status.QueryRow("CLIENT", "ATIVO").Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	stmt, err := database.Prepare("INSERT INTO tblClient(client_name, client_email, client_role, customer_id, release_id, business_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(&client.Name, &client.Email, &client.Role, &client.Customer_ID, &client.Release_ID, &client.Business_ID, &client.User_ID, statusID)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	ID, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	newID := uint64(ID)
+
+	if client.Tags != nil {
+		err := ps.InsertTagClient(&newID, &client.Tags)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	return ID
+}
+
+func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate) *uint64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblClient SET client_name = ?, client_email = ?, client_role = ?, customer_id = ?, business_id = ?, user_id = ?, status_id = ? WHERE client_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(client.Name, client.Email, client.Role, client.Customer_ID, client.Business_ID, client.User_ID, client.Status_ID, ID)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	rowAff, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	row := uint64(rowAff)
+
+	if client.Tags != nil {
+		err := ps.InsertTagClient(ID, &client.Tags)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	return &row
 }
 
 // Função que atualizar o status do client
@@ -128,43 +284,34 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64) int64 {
 	return rowsaff
 }
 
-func (ps *Client_service) GetClientByID(ID *uint64) *entity.Client {
+func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag) error {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("call pcGetClientByID(?)")
+	stmt, err := database.Prepare("DELETE FROM tblClientTag WHERE client_id = ?")
 	if err != nil {
-		fmt.Println(err.Error())
+		return errors.New("error prepare delete tags on client train")
 	}
 
 	defer stmt.Close()
 
-	var client entity.Client
-
-	err = stmt.QueryRow(ID).Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description)
+	_, err = stmt.Exec(ID)
 	if err != nil {
-		fmt.Println(err.Error())
+		return errors.New("error exec statement exec on client train")
 	}
 
-	rowsTags, err := database.Query("select tag_name from tblTags inner join tblClientTag tCT on tblTags.tag_id = tCT.tag_id WHERE tCT.client_id = ?", ID)
+	stmt, err = database.Prepare("INSERT IGNORE tblClientTag SET tag_id = ?, client_id = ?")
 	if err != nil {
-		log.Println(err.Error())
+		return errors.New("error insert a new row on tag_id and client")
 	}
 
-	defer rowsTags.Close()
+	defer stmt.Close()
 
-	var tags []entity.Tag
-
-	for rowsTags.Next() {
-		tag := entity.Tag{}
-
-		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			tags = append(tags, tag)
+	for _, tag := range *tags {
+		_, err := stmt.Exec(tag.Tag_ID, ID)
+		if err != nil {
+			return errors.New("error insert data tag_ID and ID on database")
 		}
 	}
 
-	client.Tags = tags
-
-	return &client
+	return nil
 }

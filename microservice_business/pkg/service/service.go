@@ -16,6 +16,7 @@ type BusinessServiceInterface interface {
 	UpdateBusiness(ID *uint64, business *entity.Business) uint64
 	SoftDeleteBusiness(ID *uint64) int64
 	GetBusinessByName(name *string) (*entity.BusinessList, error)
+
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -237,3 +238,4 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	// retorna lista de Businesss
 	return lista_Businesss, nil
 }
+

@@ -1,10 +1,12 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
 	// Import interno de packages do próprio sistema
+
 	"microservice_remark/pkg/database"
 	"microservice_remark/pkg/entity"
 )
@@ -13,8 +15,12 @@ import (
 type RemarkServiceInterface interface {
 	// Pega todos os Remarks, logo lista todos os Remarks
 	GetSubmissiveRemarks(ID *uint64) *entity.RemarkList
-	GetRemarkByID(ID *int64) *entity.Remark
-	CreateRemark(remark *entity.Remark) int64
+	GetRemarkByID(ID *uint64) *entity.Remark
+	CreateRemark(remark *entity.RemarkUpdate) uint64
+	GetBarChartRemark(ID *uint64) *entity.Remark
+	GetPieChartRemark(ID *uint64) *entity.Remark
+	UpdateStatusRemark(ID *uint64, remark *entity.Remark) error
+	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) uint64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -50,14 +56,14 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *uint64) *entity.RemarkList {
 	// Pega todo resultado da query linha por linha
 	for rows.Next() {
 		// variável do tipo Remark (vazia)
-		Remark := entity.Remark{}
+		remark := entity.Remark{}
 
 		// pega dados da query e atribui a variável Remark, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&Remark.ID, &Remark.User_Name, &Remark.Subject, &Remark.Client_Name, &Remark.Business_Name, &Remark.Release_Name, &Remark.Text, &Remark.Date, &Remark.Date_Return, &Remark.Status_Description); err != nil {
+		if err := rows.Scan(&remark.ID, &remark.User_Name, &remark.Remark_Name, &remark.Client_Name, &remark.Business_Name, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.Status_Description); err != nil {
 			fmt.Println(err.Error())
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs
-			lista_Remarks.List = append(lista_Remarks.List, &Remark)
+			lista_Remarks.List = append(lista_Remarks.List, &remark)
 		}
 
 	}
@@ -66,10 +72,11 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *uint64) *entity.RemarkList {
 	return lista_Remarks
 }
 
-func (ps *remark_service) GetRemarkByID(ID *int64) *entity.Remark {
+// Função que retorna um Remark pelo ID
+func (ps *remark_service) GetRemarkByID(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("select remark_id, remark_subject, remark_text from tblRemark WHERE remark_id = ?")
+	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
 
 	if err != nil {
 		log.Println(err.Error())
@@ -79,25 +86,26 @@ func (ps *remark_service) GetRemarkByID(ID *int64) *entity.Remark {
 
 	remark := entity.Remark{}
 
-	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Subject, &remark.Text)
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Business_Name, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
 	if err != nil {
-		log.Println("error: cannot find remarByName", err.Error())
+		log.Println("error: cannot find remarkByID", err.Error())
 	}
 
 	return &remark
 }
 
-func (ps *remark_service) CreateRemark(remark *entity.Remark) int64 {
+// Função que cria um Remark
+func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) uint64 {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("INSERT INTO remark (remark_text, remark_date, remark_date_return) VALUES (?, ?, ?)")
+	stmt, err := database.Prepare("INSERT INTO tblRemark (remark_subject, remark_text, remark_date, remark_return, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Println(err.Error())
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(remark.ID, remark.Text, remark.Date, remark.Date_Return)
+	result, err := stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, remark.Status_ID)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -106,5 +114,128 @@ func (ps *remark_service) CreateRemark(remark *entity.Remark) int64 {
 		log.Println(err.Error())
 	}
 
-	return lastId
+	return uint64(lastId)
+}
+
+// Função
+func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	remark := entity.Remark{}
+
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Business_Name, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	if err != nil {
+		log.Println("error: cannot find remarkByID", err.Error())
+	}
+
+	return &remark
+
+}
+
+// Função
+func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	remark := entity.Remark{}
+
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Business_Name, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	if err != nil {
+		log.Println("error: cannot find remarkPieID", err.Error())
+	}
+
+	return &remark
+
+}
+
+// Função que atualiza o Status do Remark
+func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark) error {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("SELECT status_id FROM tblRemark WHERE remark_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var statusRemark uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusRemark)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = status.QueryRow("REMARK", remark.Status_Description).Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	if statusRemark == statusID {
+		return errors.New("unable to update with the same id, 400")
+	}
+
+	updt, err := database.Prepare("UPDATE tblRemark SET status_id = ? WHERE remark_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	result, err := updt.Exec(statusID, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return nil
+}
+
+// Função que atualiza um Remark
+func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) uint64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?  WHERE remark_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	newID := uint64(rowsaff)
+
+	return newID
+
 }

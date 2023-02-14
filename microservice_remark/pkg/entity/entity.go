@@ -13,7 +13,7 @@ type RemarkInterface interface {
 // Estrutura de dados de Remark
 type Remark struct {
 	ID                 uint64     `json:"id,omitempty"`
-	Subject            string     `json:"subject_title,omitempty"`
+	Remark_Name        string     `json:"remark_name,omitempty"`
 	Text               string     `json:"text,omitempty"`
 	Date               *time.Time `json:"date,omitempty"`
 	Date_Return        *time.Time `json:"date_return,omitempty"`
@@ -27,6 +27,18 @@ type Remark struct {
 }
 
 // Estrutura de dados de Remark utilizada para criar, atualizar e efetuar softdelete
+
+type RemarkUpdate struct {
+	Remark_Name string     `json:"remark_name,omitempty"`
+	Text        string     `json:"text,omitempty"`
+	Date        *time.Time `json:"date,omitempty"`
+	Date_Return *time.Time `json:"date_return,omitempty"`
+	Subject_ID  uint64     `json:"subject_id,omitempty"`
+	Client_ID   uint64     `json:"client_id,omitempty"`
+	Release_ID  uint64     `json:"release_id,omitempty"`
+	User_ID     uint64     `json:"user_id,omitempty"`
+	Status_ID   uint64     `json:"status_id,omitempty"`
+}
 
 // Método de Remark - retorna string com json do Remark ou erro
 func (p *Remark) String() string {
