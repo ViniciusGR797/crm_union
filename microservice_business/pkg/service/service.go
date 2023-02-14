@@ -258,31 +258,38 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	defer rows.Close()
 
 	// variável do tipo BusinessList (vazia)
-	lista_Businesss := &entity.BusinessList{}
+	list_Business := &entity.BusinessList{}
 
-	// Pega todo resultado da query linha por linha
 	for rows.Next() {
-		// variável do tipo Business (vazia)
-		Business := entity.Business{}
+		business := entity.Business{}
 
-		// pega dados da query e atribui a variável Business, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&Business.Business_id,
-			&Business.Business_code,
-			&Business.Business_name,
-			&Business.BusinessSegment.BusinessSegment_id,
-			&Business.BusinessSegment.BusinessSegment_description,
-			&Business.Status.Status_id,
-			&Business.Status.Status_description); err != nil {
-			log.Println(err.Error())
+		if err := rows.Scan(&business.Business_id, &business.Business_code, &business.Business_name, &business.BusinessSegment.BusinessSegment_id, &business.BusinessSegment.BusinessSegment_description, &business.Status.Status_id, &business.Status.Status_description); err != nil {
+			return &entity.BusinessList{}, nil
 		} else {
-			// caso não tenha erro, adiciona a lista de Businesss
-			lista_Businesss.List = append(lista_Businesss.List, &Business)
-		}
+			rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", business.Business_id)
+			if err != nil {
+				return &entity.BusinessList{}, nil
+			}
 
+			var tags []entity.Tag
+
+			for rowsTags.Next() {
+				tag := entity.Tag{}
+
+				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+					return &entity.BusinessList{}, nil
+				} else {
+					tags = append(tags, tag)
+				}
+			}
+
+			business.Tags = tags
+
+			list_Business.List = append(list_Business.List, &business)
+		}
 	}
 
-	// retorna lista de Businesss
-	return lista_Businesss, nil
+	return list_Business, nil
 }
 
 func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) (uint64, error) {
