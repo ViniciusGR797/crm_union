@@ -28,8 +28,10 @@ func GetBusinessByID(c *gin.Context, service service.BusinessServiceInterface) {
 
 	newID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/business/id/:id",
 		})
 		return
 	}
@@ -42,7 +44,7 @@ func GetBusinessByID(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	c.JSON(200, business)
+	c.JSON(http.StatusOK, business)
 }
 
 func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
