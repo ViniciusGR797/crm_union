@@ -97,5 +97,28 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
 	business = service.GetBusinessByID(&newID)
 	c.JSON(200, business)
+}
 
+func SoftDeleteBusiness(c *gin.Context, service service.BusinessServiceInterface) {
+	ID := c.Param("id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400" + err.Error(),
+		})
+		return
+	}
+
+	result := service.SoftDeleteBusiness(&newID)
+	if result == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update JSON, 400" + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"response": "Business Status Updated",
+	})
 }

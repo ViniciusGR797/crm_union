@@ -24,7 +24,9 @@ func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) 
 			Business.PUT("/business/update/:id", func(c *gin.Context) {
 				controller.UpdateBusiness(c, service)
 			})
-
+			Business.PUT("/business/update/status/:id", func(c *gin.Context) {
+				controller.SoftDeleteBusiness(c, service)
+			})
 		}
 	}
 
