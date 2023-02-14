@@ -23,6 +23,9 @@ func ConfigRoutes(router *gin.Engine, service service.CustomerServiceInterface) 
 			customer.POST("/CreateCustomer/", func(c *gin.Context) {
 				controller.CreateCustomer(c, service)
 			})
+			customer.PUT("/customer/:id", func(c *gin.Context) {
+				controller.UpdateCustomer(c, service)
+			})
 		}
 	}
 

@@ -26,6 +26,7 @@ func ConfigRoutes(router *gin.Engine, service service.ReleaseServiceInterface) *
 			release.GET("/releasetrains/tag/:releasetrain_id", func(c *gin.Context) {
 				controller.GetTagsReleaseTrain(c, service)
 			})
+
 			// Rota que altera status ativo/inativo (PUT que dispara método UpdateStatusReleaseTrain controller)
 			release.PUT("/releasetrains/update/status/:releasetrain_id", func(c *gin.Context) {
 				controller.UpdateStatusReleaseTrain(c, service)
@@ -38,7 +39,6 @@ func ConfigRoutes(router *gin.Engine, service service.ReleaseServiceInterface) *
 			release.POST("/releasetrains", func(c *gin.Context) {
 				controller.CreateReleaseTrain(c, service)
 			})
-
 		}
 	}
 

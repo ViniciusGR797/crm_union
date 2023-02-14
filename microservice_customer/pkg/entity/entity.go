@@ -17,6 +17,11 @@ type Customer struct {
 	Status     string `json:"status,omitempty"`
 }
 
+type CustomerTag struct {
+	customer_ID uint64 `json:"customer_id,omitempty"`
+	tag_ID      uint64 `json:"tag_id,omitempty"`
+}
+
 // Método de customer - retorna string com json do customer ou erro
 func (p *Customer) String() string {
 	data, err := json.Marshal(p)
@@ -48,14 +53,9 @@ func (pl *CustomerList) String() string {
 	return string(data)
 }
 
-// Construtor de Customer - recebe dados no parâmetro e transforma em um user
-func NewCostumer(name, created_at, status string, id uint64) *Customer {
+// Construtor de Customer - recebe dados no parâmetro
+func NewCustomer(name string) *Customer {
 	return &Customer{
-		ID:         id,
-		Name:       name,
-		Created_At: created_at,
-		Status:     status,
+		Name: name,
 	}
 }
-
-// testetetetete

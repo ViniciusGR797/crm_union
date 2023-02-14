@@ -15,22 +15,23 @@ type CustomerServiceInterface interface {
 	GetAllCustomer() *entity.CustomerList
 	GetCustomerByID(ID *uint64) *entity.Customer
 	CreateCustomer(customer *entity.Customer) uint64
+	UpdateCustomer(ID *uint64, customer *entity.Customer) uint64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
-type Customer_service struct {
+type customer_service struct {
 	dbp database.DatabaseInterface
 }
 
 // Cria novo serviço de CRUD para pool de conexão
-func NewCostumerService(dabase_pool database.DatabaseInterface) *Customer_service {
-	return &Customer_service{
+func NewCostumerService(dabase_pool database.DatabaseInterface) *customer_service {
+	return &customer_service{
 		dabase_pool,
 	}
 }
 
 // Função que retorna lista de users
-func (ps *Customer_service) GetAllCustomer() *entity.CustomerList {
+func (ps *customer_service) GetAllCustomer() *entity.CustomerList {
 	// pega database
 	database := ps.dbp.GetDB()
 
@@ -65,7 +66,7 @@ func (ps *Customer_service) GetAllCustomer() *entity.CustomerList {
 	return lista_customer
 }
 
-func (ps *Customer_service) GetCustomerByID(ID *uint64) *entity.Customer {
+func (ps *customer_service) GetCustomerByID(ID *uint64) *entity.Customer {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id WHERE C.customer_id = ?")
@@ -85,17 +86,17 @@ func (ps *Customer_service) GetCustomerByID(ID *uint64) *entity.Customer {
 	return &customer
 }
 
-func (ps *Customer_service) CreateCustomer(customer *entity.Customer) uint64 {
+func (ps *customer_service) CreateCustomer(customer *entity.Customer) uint64 {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("INSERT INTO customer(customer_name) VALUES (?)")
+	stmt, err := database.Prepare("INSERT INTO tblCustomer(customer_name,  status_id) VALUES (?, 3)")
 	if err != nil {
 		log.Println(err.Error())
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(customer.ID, customer.Name)
+	result, err := stmt.Exec(customer.Name)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -106,5 +107,42 @@ func (ps *Customer_service) CreateCustomer(customer *entity.Customer) uint64 {
 	}
 
 	return uint64(lastId)
-
 }
+
+func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer) uint64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblCustomer SET customer_name = ?, status_id = ? WHERE customer_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(customer.Name, customer.Status, customer.ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return uint64(rowsaff)
+}
+
+// CRIAR INSERT DE CUSTOMERTAGS ASSOCIATIVA
+//UPDATE CUSTOMERTAG?
+
+// stmt, err := database.Prepare("INSERT INTO tblCustomerTag (customer_id, customerTag_id) VALUES (?, ?)")
+//     if err != nil {
+//         fmt.Println(err.Error())
+//     }
+// for , user := range users.List {
+// 	, err := stmt.Exec(id, user.ID)
+// 	if err != nil {
+// 		fmt.Println(err.Error())
+// 	}
+
+// }

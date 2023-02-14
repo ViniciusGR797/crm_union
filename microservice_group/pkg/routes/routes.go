@@ -33,7 +33,12 @@ func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gi
 			})
 
 			Group.PUT("/groups/update/attach/:id", func(c *gin.Context) {
-				controller.InsertUserGroup(c, service)
+				controller.AttachUserGroup(c, service)
+			})
+
+			Group.PUT("/groups/update/detach/:id", func(c *gin.Context) {
+				controller.DetachUserGroup(c, service)
+
 			})
 
 		}

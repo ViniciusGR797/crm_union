@@ -138,6 +138,7 @@ func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release
 	if err != nil {
 		log.Println(err.Error())
 	}
+	
 
 	return uint64(releaseID)
 }
