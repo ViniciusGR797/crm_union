@@ -19,6 +19,18 @@ func ConfigRoutes(router *gin.Engine, service service.SubjectServiceInterface) *
 			subject.GET("/subjects/:id", func(c *gin.Context) {
 				controller.GetSubject(c, service)
 			})
+
+			subject.PUT("/subjects/update/finished/:id", func(c *gin.Context) {
+				controller.UpdateStatusSubjectFinished(c, service)
+			})
+
+			subject.PUT("/subjects/update/canceled/:id", func(c *gin.Context) {
+				controller.UpdateStatusSubjectCanceled(c, service)
+			})
+
+			subject.POST("/subjects/create/user/:id", func(c *gin.Context) {
+				controller.CreateSubject(c, service)
+			})
 		}
 	}
 

@@ -40,6 +40,9 @@ func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gi
 				controller.DetachUserGroup(c, service)
 
 			})
+			Group.GET("/groups/count/user/:id", func(c *gin.Context) {
+				controller.CountUsersGroup(c, service)
+			})
 
 		}
 	}

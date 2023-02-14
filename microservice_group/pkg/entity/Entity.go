@@ -42,6 +42,15 @@ type CreateGroup struct {
 	GroupIDList `json:"users,omitempty"`
 }
 
+type CountUser struct {
+	Grup_id uint64 `json:"group_id,omitempty"`
+	Qnt     int    `json:"qnt,omitempty"`
+}
+
+type CountUsersList struct {
+	List []*CountUser `json:"count_users_list,omitempty"`
+}
+
 func (p *Group) String() string {
 	data, err := json.Marshal(p)
 

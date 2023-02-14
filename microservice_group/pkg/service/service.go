@@ -15,6 +15,7 @@ type GroupServiceInterface interface {
 	CreateGroup(group *entity.CreateGroup) int64
 	AttachUserGroup(user *entity.GroupIDList, id uint64) int64
 	DetachUserGroup(user *entity.GroupIDList, id uint64) int64
+	CountUsersGroup(id uint64) (*entity.CountUsersList, error)
 }
 
 type Group_service struct {
@@ -321,5 +322,38 @@ func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64) i
 	}
 
 	return int64(id)
+
+}
+
+// count users in group
+func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, error) {
+
+	database := ps.dbp.GetDB()
+
+	rows, err := database.Query("call pcCountUserGroup (?)", id)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer rows.Close()
+
+	CountUserList := &entity.CountUsersList{}
+
+	for rows.Next() {
+		CountUser := entity.CountUser{}
+
+		if err := rows.Scan(
+			&CountUser.Grup_id,
+			&CountUser.Qnt,
+		); err != nil {
+			fmt.Println(err.Error())
+		} else {
+
+			CountUserList.List = append(CountUserList.List, &CountUser)
+
+		}
+	}
+
+	return CountUserList, nil
 
 }
