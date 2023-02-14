@@ -30,6 +30,10 @@ type Tag struct {
 	Tag_Name string `json:"tag_name,omitempty"`
 }
 
+type TagList struct {
+	Tags *[]Tag `json:"tags,omitempty"`
+}
+
 // Estrutura de dados de Client para softdelete, create e update
 type ClientUpdate struct {
 	ID          uint64 `json:"client_id,omitempty"`
