@@ -98,6 +98,7 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
 	business = service.GetBusinessByID(&newID)
 	c.JSON(200, business)
+
 }
 
 func SoftDeleteBusiness(c *gin.Context, service service.BusinessServiceInterface) {

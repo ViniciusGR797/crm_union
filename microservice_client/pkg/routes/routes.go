@@ -19,6 +19,15 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 			clients.GET("/clients/id/:client_id", func(c *gin.Context) {
 				controller.GetClientByID(c, service)
 			})
+			clients.GET("/clients/tag/:client_id", func(c *gin.Context) {
+				controller.GetTagsClient(c, service)
+			})
+			clients.POST("/clients/", func(c *gin.Context) {
+				controller.CreateClient(c, service)
+			})
+			clients.PUT("/clients/update/:client_id", func(c *gin.Context) {
+				controller.UpdateClient(c, service)
+			})
 			clients.PUT("/clients/update/status/:client_id", func(c *gin.Context) {
 				controller.UpdateStatusClient(c, service)
 			})

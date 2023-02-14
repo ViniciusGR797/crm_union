@@ -45,6 +45,14 @@ func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método GetUserByID do service e retorna json com user
 func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
 
@@ -80,6 +88,14 @@ func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método GetUserByName do service e retorna json com user
 func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("user_name")
 	// Chama método GetUserByName passando name como parâmetro
@@ -129,6 +145,12 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	// Verifica se o user é level 1, logo não tem user submissive
+	if level <= 1 {
+		c.Status(http.StatusNoContent)
+		return
+	}
+
 	// Verifica se teve erro na conversão
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -157,6 +179,14 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método CreateUser do service e retorna json com mensagem de sucesso
 func CreateUser(c *gin.Context, service service.UserServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Cria variável do tipo user (inicialmente vazia)
 	var user *entity.User
 
@@ -170,14 +200,16 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
-	// Verifica se email formato válido
-	if err := checkmail.ValidateFormat(user.Email); err != nil {
+	user.Password = security.RandStringRunes(12)
+
+	// Prepara e valida dados
+	if err = user.Prepare(); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid email",
+			"error": err.Error(),
 		})
 		return
 	}
-  
+
 	user.Password = security.RandStringRunes(12)
 
 	// Faz hash com a senha
@@ -209,6 +241,14 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método UpdateStatusUser do service e retorna json com mensagem de sucesso
 func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
 
@@ -246,6 +286,14 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método UpdateUser do service e retorna json com mensagem de sucesso
 func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
 	// Cria variável do tipo user (inicialmente vazia)
@@ -271,18 +319,9 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
-	// Verifica se email formato válido
-	if err := checkmail.ValidateFormat(user.Email); err != nil {
+	if err = user.Prepare(); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid email",
-		})
-		return
-	}
-
-	// Verifica se senha tem o tamanho mínimo de caracteres
-	if len(user.Password) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "password too short",
+			"error": err.Error(),
 		})
 		return
 	}
@@ -290,7 +329,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	// Verifica se senha tem o tamanho mínimo de caracteres
 	user.Hash, err = security.HashPassword(user.Password)
 	if err != nil {
-		c.JSON(500, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "could not hash password: " + err.Error(),
 		})
 		return
