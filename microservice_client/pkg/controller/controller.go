@@ -99,35 +99,6 @@ func CreateClient(c *gin.Context, service service.ClientServiceInterface) {
 	c.JSON(200, id)
 }
 
-func InsertTagClient(c *gin.Context, service service.ClientServiceInterface) {
-
-	ID := c.Param("client_id")
-
-	newID, err := strconv.ParseUint(ID, 10, 64)
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
-		})
-		return
-	}
-
-	var client entity.ClientUpdate
-
-	if err := c.ShouldBindJSON(&client); err != nil {
-		c.JSON(400, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	_ = service.InsertTagClient(&newID, &client)
-
-	c.JSON(200, gin.H{
-		"result": "Tag inserted successfully",
-	})
-
-}
-
 func UpdateClient(c *gin.Context, service service.ClientServiceInterface) {
 	ID := c.Param("client_id")
 

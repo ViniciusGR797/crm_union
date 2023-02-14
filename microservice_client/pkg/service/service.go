@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -15,9 +16,9 @@ type ClientServiceInterface interface {
 	GetClientByID(ID *uint64) *entity.Client
 	GetTagsClient(ID *uint64) []*entity.Tag
 	CreateClient(client *entity.ClientUpdate) int64
-	InsertTagClient(ID *uint64, client *entity.ClientUpdate) *uint64
 	UpdateClient(ID *uint64, client *entity.ClientUpdate) *uint64
 	UpdateStatusClient(ID *uint64) int64
+	InsertTagClient(ID *uint64, tags *[]entity.Tag) error
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -188,24 +189,7 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate) int64 {
 	newID := uint64(ID)
 
 	if client.Tags != nil {
-		ps.InsertTagClient(&newID, client)
-	}
-
-	return ID
-}
-
-func (ps *Client_service) InsertTagClient(ID *uint64, client *entity.ClientUpdate) *uint64 {
-	database := ps.dbp.GetDB()
-
-	stmt, err := database.Prepare("INSERT INTO tblClientTag(client_id, tag_id) VALUES (?, ?)")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	defer stmt.Close()
-
-	for _, tag := range client.Tags {
-		_, err := stmt.Exec(ID, tag.Tag_ID)
+		err := ps.InsertTagClient(&newID, &client.Tags)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
@@ -235,6 +219,13 @@ func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate) 
 	}
 
 	row := uint64(rowAff)
+
+	if client.Tags != nil {
+		err := ps.InsertTagClient(ID, &client.Tags)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
 
 	return &row
 }
@@ -291,4 +282,36 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64) int64 {
 	}
 
 	return rowsaff
+}
+
+func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag) error {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("DELETE FROM tblClientTag WHERE client_id = ?")
+	if err != nil {
+		return errors.New("error prepare delete tags on client train")
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(ID)
+	if err != nil {
+		return errors.New("error exec statement exec on client train")
+	}
+
+	stmt, err = database.Prepare("INSERT IGNORE tblClientTag SET tag_id = ?, client_id = ?")
+	if err != nil {
+		return errors.New("error insert a new row on tag_id and client")
+	}
+
+	defer stmt.Close()
+
+	for _, tag := range *tags {
+		_, err := stmt.Exec(tag.Tag_ID, ID)
+		if err != nil {
+			return errors.New("error insert data tag_ID and ID on database")
+		}
+	}
+
+	return nil
 }
