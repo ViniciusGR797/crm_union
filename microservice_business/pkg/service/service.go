@@ -16,7 +16,6 @@ type BusinessServiceInterface interface {
 	UpdateBusiness(ID *uint64, business *entity.Business) uint64
 	SoftDeleteBusiness(ID *uint64) int64
 	GetBusinessByName(name *string) (*entity.BusinessList, error)
-
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -94,8 +93,27 @@ func (ps *Business_service) GetBusinessByID(ID *uint64) *entity.Business {
 
 	err = stmt.QueryRow(ID).Scan(&Business.Business_id, &Business.Business_code, &Business.Business_name, &Business.BusinessSegment.BusinessSegment_id, &Business.BusinessSegment.BusinessSegment_description, &Business.Status.Status_id, &Business.Status.Status_description)
 	if err != nil {
-		log.Println("error: cannot find cusiness", err.Error())
+		log.Println("error: cannot find business", err.Error())
 	}
+
+	rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", Business.Business_id)
+	if err != nil {
+		return &entity.Business{}
+	}
+
+	var tags []entity.Tag
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+			return &entity.Business{}
+		} else {
+			tags = append(tags, tag)
+		}
+	}
+
+	Business.Tags = tags
 
 	return &Business
 
@@ -247,4 +265,3 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	// retorna lista de Businesss
 	return lista_Businesss, nil
 }
-
