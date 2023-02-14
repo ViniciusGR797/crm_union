@@ -16,6 +16,7 @@ type CustomerServiceInterface interface {
 	GetCustomerByID(ID *uint64) *entity.Customer
 	CreateCustomer(customer *entity.Customer) uint64
 	UpdateCustomer(ID *uint64, customer *entity.Customer) uint64
+	SoftDeleteCustomer(ID *uint64) int64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -57,7 +58,25 @@ func (ps *customer_service) GetAllCustomer() *entity.CustomerList {
 		if err := rows.Scan(&customer.ID, &customer.Name, &customer.Status); err != nil {
 			fmt.Println(err.Error())
 		} else {
-			// caso não tenha erro, adiciona a variável log na lista de logs
+			rowsTags, err := database.Query("SELECT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ?", customer.ID)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+
+			var tags []entity.Tag
+
+			for rowsTags.Next() {
+				tag := entity.Tag{}
+
+				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+					fmt.Println(err.Error())
+				} else {
+					tags = append(tags, tag)
+				}
+			}
+
+			customer.Tags = tags
+
 			lista_customer.List = append(lista_customer.List, &customer)
 		}
 	}
@@ -83,20 +102,53 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) *entity.Customer {
 		log.Println("error: cannot find customer", err.Error())
 	}
 
+	rowsTags, err := database.Query("SELECT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ?", ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer rowsTags.Close()
+
+	var tags []entity.Tag
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			tags = append(tags, tag)
+		}
+	}
+
+	customer.Tags = tags
+
 	return &customer
 }
 
 func (ps *customer_service) CreateCustomer(customer *entity.Customer) uint64 {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("INSERT INTO tblCustomer(customer_name,  status_id) VALUES (?, 3)")
+	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = status.QueryRow("CUSTOMER", "ATIVO").Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	stmt, err := database.Prepare("INSERT INTO tblCustomer(customer_name,  status_id) VALUES (?, ?)")
 	if err != nil {
 		log.Println(err.Error())
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(customer.Name)
+	result, err := stmt.Exec(customer.Name, statusID)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -106,6 +158,18 @@ func (ps *customer_service) CreateCustomer(customer *entity.Customer) uint64 {
 		log.Println(err.Error())
 	}
 
+	stmt, err = database.Prepare("INSERT INTO tblCustomerTag (customer_id, tag_id) VALUES (?, ?)")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	for _, tag := range customer.Tags {
+		_, err := stmt.Exec(lastId, tag.Tag_ID)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+	}
 	return uint64(lastId)
 }
 
@@ -132,17 +196,55 @@ func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer
 	return uint64(rowsaff)
 }
 
-// CRIAR INSERT DE CUSTOMERTAGS ASSOCIATIVA
-//UPDATE CUSTOMERTAG?
+func (ps *customer_service) SoftDeleteCustomer(ID *uint64) int64 {
+	database := ps.dbp.GetDB()
 
-// stmt, err := database.Prepare("INSERT INTO tblCustomerTag (customer_id, customerTag_id) VALUES (?, ?)")
-//     if err != nil {
-//         fmt.Println(err.Error())
-//     }
-// for , user := range users.List {
-// 	, err := stmt.Exec(id, user.ID)
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 	}
+	stmt, err := database.Prepare("SELECT status_id FROM tblCustomer WHERE customer_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
-// }
+	defer stmt.Close()
+
+	var statusCustomer uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusCustomer)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = status.QueryRow("CUSTOMER", "ATIVO").Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	if statusID == statusCustomer {
+		statusCustomer++
+	} else {
+		statusCustomer--
+	}
+
+	updt, err := database.Prepare("UPDATE tblCustomer SET status_id = ? WHERE customer_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	result, err := updt.Exec(statusCustomer, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return rowsaff
+}
