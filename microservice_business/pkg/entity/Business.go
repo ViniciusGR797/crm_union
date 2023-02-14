@@ -5,6 +5,10 @@ import (
 	"log"
 )
 
+type BusinessInterface interface {
+	String() string
+}
+
 type Business struct {
 	Business_id     uint64 `json:"business_id,omitempty"`
 	Business_name   string `json:"business_name,omitempty"`
@@ -56,4 +60,10 @@ type CreateBusiness struct {
 	Business_name       string `json:"business_name,omitempty"`
 	Business_Segment_id int64  `json:"business_Segment_id,omitempty"`
 	Business_Status_id  int64  `json:"status_id,omitempty"`
+}
+
+func NewBusiness(name string) *Business {
+	return &Business{
+		Business_name: name,
+	}
 }

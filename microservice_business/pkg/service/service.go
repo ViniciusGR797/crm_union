@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"microservice_business/pkg/database"
 	"microservice_business/pkg/entity"
 )
@@ -9,8 +10,9 @@ import (
 type BusinessServiceInterface interface {
 	// Pega todos os Businesss, logo lista todos os Businesss
 	GetBusiness() *entity.BusinessList
-	GetBusinessByID(id uint64) (*entity.Business, error)
+	GetBusinessByID(ID *uint64) *entity.Business
 	CreateBusiness(business *entity.CreateBusiness) int64
+	UpdateBusiness(ID *uint64, business *entity.Business) uint64
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -64,35 +66,25 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 
 }
 
-func (ps *Business_service) GetBusinessByID(id uint64) (*entity.Business, error) {
+func (ps *Business_service) GetBusinessByID(ID *uint64) *entity.Business {
 
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("select b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description from tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id where b.business_id = ?", id)
-
-	// verifica se teve erro
+	stmt, err := database.Prepare("select b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description from tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id where b.business_id = ?")
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 	}
 
-	defer rows.Close()
+	defer stmt.Close()
 
-	Business := &entity.Business{}
+	Business := entity.Business{}
 
-	if rows.Next() {
-		if err := rows.Scan(
-			&Business.Business_id,
-			&Business.Business_code,
-			&Business.Business_name,
-			&Business.BusinessSegment.BusinessSegment_id,
-			&Business.BusinessSegment.BusinessSegment_description,
-			&Business.Status.Status_id,
-			&Business.Status.Status_description); err != nil {
-			return &entity.Business{}, err
-		}
+	err = stmt.QueryRow(ID).Scan(&Business.Business_id, &Business.Business_code, &Business.Business_name, &Business.BusinessSegment.BusinessSegment_id, &Business.BusinessSegment.BusinessSegment_description, &Business.Status.Status_id, &Business.Status.Status_description)
+	if err != nil {
+		log.Println("error: cannot find customer", err.Error())
 	}
 
-	return Business, nil
+	return &Business
 
 }
 
@@ -119,4 +111,27 @@ func (ps *Business_service) CreateBusiness(business *entity.CreateBusiness) int6
 
 	return rowsaff
 
+}
+
+func (ps *Business_service) UpdateBusiness(ID *uint64, business *entity.Business) uint64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ?, status_id = ? WHERE business_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(business.Business_name, business.Business_code, business.BusinessSegment.BusinessSegment_id, business.Status.Status_id, business.Business_id)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return uint64(rowsaff)
 }

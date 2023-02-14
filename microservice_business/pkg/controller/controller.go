@@ -25,31 +25,23 @@ func GetBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 func GetBusinessByID(c *gin.Context, service service.BusinessServiceInterface) {
 	id := c.Param("id")
 
-	newid, err := strconv.ParseUint(id, 10, 64)
+	newID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"error": err.Error(),
+			"error": "ID has to be interger, 400",
 		})
 		return
 	}
 
-	Business, err := service.GetBusinessByID(newid)
-
-	if Business == nil {
+	business := service.GetBusinessByID(&newID)
+	if business.Business_id == 0 {
 		c.JSON(404, gin.H{
-			"error": "Business not found, 404",
+			"error": "produto not found, 404",
 		})
 		return
 	}
 
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(200, Business)
+	c.JSON(200, business)
 }
 
 func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
@@ -71,5 +63,39 @@ func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		"business_Segment_id": business.Business_Segment_id,
 		"status_id":           business.Business_Status_id,
 	})
+
+}
+
+func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
+	ID := c.Param("id")
+
+	var business *entity.Business
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Id has to be integer, 400" + err.Error(),
+		})
+		return
+	}
+
+	err = c.ShouldBind(&business)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "cannot bin JSON business, 400" + err.Error(),
+		})
+		return
+	}
+
+	idResult := service.UpdateBusiness(&newID, business)
+	if idResult == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update JSON, 400" + err.Error(),
+		})
+		return
+	}
+
+	business = service.GetBusinessByID(&newID)
+	c.JSON(200, business)
 
 }
