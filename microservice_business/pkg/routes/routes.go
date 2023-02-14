@@ -30,7 +30,6 @@ func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) 
 			Business.GET("/business/name/:Business_name", func(c *gin.Context) {
 				controller.GetBusinessByName(c, service)
 			})
-
 		}
 	}
 
