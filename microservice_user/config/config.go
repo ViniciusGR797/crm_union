@@ -158,7 +158,7 @@ func DefaultConfig() *Config {
 			DB_PASS:  "",
 			DB_NAME:  "",
 		},
-		Mode: PRODUCTION,
+		Mode:   PRODUCTION,
 		Secret: "",
 	}
 
