@@ -19,6 +19,7 @@ type ReleaseServiceInterface interface {
 	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) (uint64, error)
 	UpdateStatusReleaseTrain(ID *uint64) (int64, error)
 	GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error)
+	CreateReleaseTrain(release *entity.Release_Update) error
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -49,7 +50,7 @@ func (ps *Release_service) GetReleasesTrain() *entity.ReleaseList {
 	for rows.Next() {
 		release := entity.Release{}
 
-		if err := rows.Scan(&release.ID, &release.Code, &release.Name, &release.Business_Name, &release.Status_Description); err != nil {
+		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description); err != nil {
 			fmt.Println(err.Error())
 		} else {
 			rowsTags, err := database.Query("select tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ?", release.ID)
@@ -90,7 +91,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) *entity.Release {
 
 	release := &entity.Release{}
 
-	err = stmt.QueryRow(ID).Scan(&release.ID, &release.Code, &release.Name, &release.Business_Name, &release.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -169,7 +170,6 @@ func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) []*entity.Tag {
 	}
 
 	return tags
-
 }
 
 func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) (uint64, error) {
@@ -322,4 +322,41 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 
 	// Retornar lista de releases
 	return releaseList, nil
+}
+
+func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update) error {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("INSERT INTO tblReleaseTrain (release_code, release_name, business_id, status_id) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		return errors.New("error in release statement")
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(release.Code, release.Name, release.Business_ID, 7)
+	if err != nil {
+		return errors.New("release exec error")
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		return errors.New("error inserting into database")
+	}
+
+	ID, _ := result.LastInsertId()
+	release.ID = uint64(ID)
+
+	stmt, err = database.Prepare("INSERT tblReleaseTrainTag SET tag_id = ?, release_id = ?")
+	if err != nil {
+		return errors.New("error in release tags statement")
+	}
+
+	for _, tag := range release.Tags {
+		_, err := stmt.Exec(tag.Tag_ID, release.ID)
+		if err != nil {
+			return errors.New("release tags exec error")
+		}
+	}
+
+	return nil
 }

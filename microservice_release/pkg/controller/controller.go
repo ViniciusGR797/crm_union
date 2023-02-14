@@ -174,3 +174,40 @@ func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInt
 	//retorna sucesso 200 e retorna json da lista de users
 	c.JSON(200, list)
 }
+
+// Função que chama método CreateReleaseTrain do service e retorna json com mensagem de sucesso
+func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
+	// Cria variável do tipo release (inicialmente vazia)
+	var release *entity.Release_Update
+
+	// Converte json em release
+	err := c.ShouldBind(&release)
+	// Verifica se tem erro
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "cannot bind JSON user" + err.Error(),
+		})
+		return
+	}
+
+	err = service.CreateReleaseTrain(release)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	/*_, err = service.InsertTagsReleaseTrain(newID, release.Tags)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "cannot update tags" + err.Error(),
+		})
+		return
+	}
+
+	releaseUpdated := service.GetReleaseTrainByID(idResult)*/
+
+	// Retorno json com o user
+	c.Status(http.StatusNoContent)
+}

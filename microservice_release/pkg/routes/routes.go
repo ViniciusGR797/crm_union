@@ -34,6 +34,10 @@ func ConfigRoutes(router *gin.Engine, service service.ReleaseServiceInterface) *
 			release.GET("/releasetrains/business/:business_id", func(c *gin.Context) {
 				controller.GetReleaseTrainByBusiness(c, service)
 			})
+			// Rota que cadastra release (POST que dispara método CreateReleaseTrain controller)
+			release.POST("/releasetrains", func(c *gin.Context) {
+				controller.CreateReleaseTrain(c, service)
+			})
 
 		}
 	}
