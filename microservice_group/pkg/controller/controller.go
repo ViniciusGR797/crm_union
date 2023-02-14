@@ -149,6 +149,7 @@ func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 			"error": err.Error(),
 		})
 		return
+
 	}
 
 	if len(UserGroup.List) == 0 {
@@ -176,7 +177,7 @@ func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 	service.CreateGroup(&group)
 
-	c.JSON(200, gin.H{
+	c.JSON(201, gin.H{
 		"message": "group created",
 	})
 
@@ -256,4 +257,29 @@ func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 	}
 
 	c.JSON(200, group)
+}
+
+func CountUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
+
+	id := c.Param("id")
+
+	newid, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid group id",
+			"code":    "400",
+			"path":    "/groups/count/:id",
+		})
+		return
+	}
+
+	CountUser, err := service.CountUsersGroup(newid)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(200, CountUser)
+
 }

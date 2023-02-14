@@ -51,6 +51,13 @@ type Status struct {
 type Subject_list struct {
 	List []*Subject `jason:"list,omitempty"`
 }
+type CreateSubject struct {
+	Subject_title string `json:"subject_title,omitempty"`
+	Subject_text  string `json:"subject_text,omitempty"`
+	Subject_type  uint64 `json:"subject_type,omitempty"`
+	Client_id     uint64 `json:"client_id,omitempty"`
+	Release_id    uint64 `json:"release_id,omitempty"`
+}
 
 func NewSubjecet(subject_id uint64, subject_title string, business string, client string, release string, user string, status_id uint64, status_description string) *Subject {
 	return &Subject{
