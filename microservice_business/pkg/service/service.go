@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"microservice_business/pkg/database"
@@ -13,6 +14,9 @@ type BusinessServiceInterface interface {
 	GetBusinessByID(ID *uint64) *entity.Business
 	CreateBusiness(business *entity.CreateBusiness) int64
 	UpdateBusiness(ID *uint64, business *entity.Business) uint64
+	SoftDeleteBusiness(ID *uint64) int64
+	GetBusinessByName(name *string) (*entity.BusinessList, error)
+
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -81,7 +85,7 @@ func (ps *Business_service) GetBusinessByID(ID *uint64) *entity.Business {
 
 	err = stmt.QueryRow(ID).Scan(&Business.Business_id, &Business.Business_code, &Business.Business_name, &Business.BusinessSegment.BusinessSegment_id, &Business.BusinessSegment.BusinessSegment_description, &Business.Status.Status_id, &Business.Status.Status_description)
 	if err != nil {
-		log.Println("error: cannot find customer", err.Error())
+		log.Println("error: cannot find cusiness", err.Error())
 	}
 
 	return &Business
@@ -135,3 +139,103 @@ func (ps *Business_service) UpdateBusiness(ID *uint64, business *entity.Business
 
 	return uint64(rowsaff)
 }
+
+func (ps *Business_service) SoftDeleteBusiness(ID *uint64) int64 {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("SELECT status_id FROM tblBusiness WHERE business_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var statusBusiness uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusBusiness)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = status.QueryRow("Business", "ATIVO").Scan(&statusID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	if statusID == statusBusiness {
+		statusBusiness++
+	} else {
+		statusBusiness--
+	}
+
+	updt, err := database.Prepare("UPDATE tblBusiness SET status_id = ? WHERE business_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	result, err := updt.Exec(statusBusiness, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	rowsaff, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return rowsaff
+}
+
+func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessList, error) {
+	nameString := fmt.Sprint("%", *name, "%")
+	query := "SELECT DISTINCT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id WHERE b.business_name LIKE ? ORDER BY b.business_name"
+
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// manda uma query para ser executada no database
+	rows, err := database.Query(query, nameString)
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+		return &entity.BusinessList{}, errors.New("error fetching Businesss")
+	}
+
+	// fecha linha da query, quando sair da função
+	defer rows.Close()
+
+	// variável do tipo BusinessList (vazia)
+	lista_Businesss := &entity.BusinessList{}
+
+	// Pega todo resultado da query linha por linha
+	for rows.Next() {
+		// variável do tipo Business (vazia)
+		Business := entity.Business{}
+
+		// pega dados da query e atribui a variável Business, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&Business.Business_id,
+			&Business.Business_code,
+			&Business.Business_name,
+			&Business.BusinessSegment.BusinessSegment_id,
+			&Business.BusinessSegment.BusinessSegment_description,
+			&Business.Status.Status_id,
+			&Business.Status.Status_description); err != nil {
+			log.Println(err.Error())
+		} else {
+			// caso não tenha erro, adiciona a lista de Businesss
+			lista_Businesss.List = append(lista_Businesss.List, &Business)
+		}
+
+	}
+
+	// retorna lista de Businesss
+	return lista_Businesss, nil
+}
+

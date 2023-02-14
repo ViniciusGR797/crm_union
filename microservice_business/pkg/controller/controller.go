@@ -3,6 +3,7 @@ package controller
 import (
 	"microservice_business/pkg/entity"
 	"microservice_business/pkg/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -98,4 +99,52 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	business = service.GetBusinessByID(&newID)
 	c.JSON(200, business)
 
+}
+
+func SoftDeleteBusiness(c *gin.Context, service service.BusinessServiceInterface) {
+	ID := c.Param("id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "ID has to be interger, 400" + err.Error(),
+		})
+		return
+	}
+
+	result := service.SoftDeleteBusiness(&newID)
+	if result == 0 {
+		c.JSON(400, gin.H{
+			"error": "cannot update JSON, 400" + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"response": "Business Status Updated",
+	})
+}
+
+func GetBusinessByName(c *gin.Context, service service.BusinessServiceInterface) {
+	// Pega name passada como parâmetro na URL da rota
+	name := c.Param("Business_name")
+	// Chama método GetBusinessByName passando name como parâmetro
+	list, err := service.GetBusinessByName(&name)
+	// Verifica se teve ao buscar Businesss no banco
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not fetch Businesss",
+		})
+		return
+	}
+	// Verifica se a lista de Businesss tem tamanho zero (caso for não tem Business com esse name)
+	if len(list.List) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "no Businesss found",
+		})
+		return
+	}
+
+	// Retorno json com Business
+	c.JSON(http.StatusOK, list)
 }

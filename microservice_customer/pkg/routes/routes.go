@@ -29,6 +29,7 @@ func ConfigRoutes(router *gin.Engine, service service.CustomerServiceInterface) 
 			customer.PUT("/customer/SoftDelete/:id", func(c *gin.Context) {
 				controller.SoftDeleteCustomer(c, service)
 			})
+
 		}
 	}
 
