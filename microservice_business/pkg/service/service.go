@@ -35,7 +35,7 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("select b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description from tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id;")
+	rows, err := database.Query("select b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description from tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id")
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
@@ -43,29 +43,38 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 
 	defer rows.Close()
 
-	lista_Business := &entity.BusinessList{}
+	list_Business := &entity.BusinessList{}
 
 	for rows.Next() {
-
 		business := entity.Business{}
 
-		if err := rows.Scan(
-			&business.Business_id,
-			&business.Business_code,
-			&business.Business_name,
-			&business.BusinessSegment.BusinessSegment_id,
-			&business.BusinessSegment.BusinessSegment_description,
-			&business.Status.Status_id,
-			&business.Status.Status_description); err != nil {
-			fmt.Println(err.Error())
+		if err := rows.Scan(&business.Business_id, &business.Business_code, &business.Business_name, &business.BusinessSegment.BusinessSegment_id, &business.BusinessSegment.BusinessSegment_description, &business.Status.Status_id, &business.Status.Status_description); err != nil {
+			return &entity.BusinessList{}
 		} else {
+			rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", business.Business_id)
+			if err != nil {
+				return &entity.BusinessList{}
+			}
 
-			lista_Business.List = append(lista_Business.List, &business)
+			var tags []entity.Tag
+
+			for rowsTags.Next() {
+				tag := entity.Tag{}
+
+				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+					return &entity.BusinessList{}
+				} else {
+					tags = append(tags, tag)
+				}
+			}
+
+			business.Tags = tags
+
+			list_Business.List = append(list_Business.List, &business)
 		}
-
 	}
 
-	return lista_Business
+	return list_Business
 
 }
 

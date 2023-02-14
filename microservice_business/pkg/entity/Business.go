@@ -15,6 +15,12 @@ type Business struct {
 	Business_code   string `json:"business_code,omitempty"`
 	BusinessSegment BusinessSegment
 	Status          Status
+	Tags            []Tag `json:"tags,omitempty"`
+}
+
+type Tag struct {
+	Tag_ID   uint64 `json:"tag_id,omitempty"`
+	Tag_Name string `json:"tag_name,omitempty"`
 }
 
 type BusinessSegment struct {
