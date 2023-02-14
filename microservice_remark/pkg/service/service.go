@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -18,7 +19,7 @@ type RemarkServiceInterface interface {
 	CreateRemark(remark *entity.RemarkUpdate) uint64
 	GetBarChartRemark(ID *uint64) *entity.Remark
 	GetPieChartRemark(ID *uint64) *entity.Remark
-	UpdateStatusRemark(ID *uint64, remark *entity.RemarkUpdate) uint64
+	UpdateStatusRemark(ID *uint64, remark *entity.Remark) error
 	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) uint64
 }
 
@@ -71,6 +72,7 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *uint64) *entity.RemarkList {
 	return lista_Remarks
 }
 
+// Função que retorna um Remark pelo ID
 func (ps *remark_service) GetRemarkByID(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
@@ -92,6 +94,7 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) *entity.Remark {
 	return &remark
 }
 
+// Função que cria um Remark
 func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) uint64 {
 	database := ps.dbp.GetDB()
 
@@ -113,6 +116,8 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) uint64 {
 
 	return uint64(lastId)
 }
+
+// Função
 func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
@@ -134,6 +139,7 @@ func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 
 }
 
+// Função
 func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
@@ -155,30 +161,59 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 
 }
 
-func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.RemarkUpdate) uint64 {
+// Função que atualiza o Status do Remark
+func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark) error {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("UPDATE tblRemark SET status_id = ? WHERE remark_id = ?")
+	stmt, err := database.Prepare("SELECT status_id FROM tblRemark WHERE remark_id = ?")
 	if err != nil {
-		log.Println(err.Error())
+		fmt.Println(err.Error())
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(remark.Status_ID, ID)
+	var statusRemark uint64
+
+	err = stmt.QueryRow(ID).Scan(&statusRemark)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	rowsaff, err := result.RowsAffected()
+	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var statusID uint64
+
+	err = status.QueryRow("REMARK", remark.Status_Description).Scan(&statusID)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	return uint64(rowsaff)
+	if statusRemark == statusID {
+		return errors.New("unable to update with the same id, 400")
+	}
 
+	updt, err := database.Prepare("UPDATE tblRemark SET status_id = ? WHERE remark_id = ?")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	result, err := updt.Exec(statusID, ID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return nil
 }
 
+// Função que atualiza um Remark
 func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) uint64 {
 	database := ps.dbp.GetDB()
 

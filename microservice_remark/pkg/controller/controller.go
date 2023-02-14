@@ -44,6 +44,7 @@ func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface
 	c.JSON(200, remarks)
 
 }
+
 func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("remark_id")
 
@@ -134,12 +135,11 @@ func GetPieChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 }
 
 func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) {
+	ID := c.Param("remark_id")
 
-	id := c.Param("id")
+	var remark *entity.Remark
 
-	var remark *entity.RemarkUpdate
-
-	newid, err := strconv.ParseUint(id, 10, 64)
+	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "ID has to be interger, 400" + err.Error(),
@@ -155,15 +155,15 @@ func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) 
 		return
 	}
 
-	idResult := service.UpdateStatusRemark(&newid, remark)
-	if idResult == 0 {
+	err = service.UpdateStatusRemark(&newID, remark)
+	if err != nil {
 		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
 
-	remarkResult := service.GetRemarkByID(&newid)
+	remarkResult := service.GetRemarkByID(&newID)
 	c.JSON(200, remarkResult)
 
 }
