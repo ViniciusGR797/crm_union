@@ -38,7 +38,7 @@ func NewReleaseService(dabase_pool database.DatabaseInterface) *Release_service 
 func (ps *Release_service) GetReleasesTrain() *entity.ReleaseList {
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("select * from vwGetAllReleaseTrains")
+	rows, err := database.Query("select DISTINCT * from vwGetAllReleaseTrains ORDER BY release_name")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -53,7 +53,7 @@ func (ps *Release_service) GetReleasesTrain() *entity.ReleaseList {
 		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description); err != nil {
 			fmt.Println(err.Error())
 		} else {
-			rowsTags, err := database.Query("select tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ?", release.ID)
+			rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -138,7 +138,6 @@ func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release
 	if err != nil {
 		log.Println(err.Error())
 	}
-	
 
 	return uint64(releaseID)
 }
@@ -146,7 +145,7 @@ func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release
 func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) []*entity.Tag {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT T.tag_id, T.tag_name from tblTags T INNER JOIN tblReleaseTrainTag tRTT on T.tag_id = tRTT.tag_id WHERE release_id = ?")
+	stmt, err := database.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblReleaseTrainTag tRTT on T.tag_id = tRTT.tag_id WHERE release_id = ? ORDER BY T.tag_name")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -256,7 +255,7 @@ func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64) (int64, error) {
 
 // Função que retorna lista de releases, filtrando pelo ID business
 func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error) {
-	query := "SELECT DISTINCT V.release_id, V.release_code, V.release_name, V.business_name, V.status_description FROM vwGetAllReleaseTrains V INNER JOIN tblReleaseTrain R ON V.release_id = R.release_id WHERE R.business_id = ?"
+	query := "SELECT DISTINCT V.release_id, V.release_code, V.release_name, V.business_name, V.status_description FROM vwGetAllReleaseTrains V INNER JOIN tblReleaseTrain R ON V.release_id = R.release_id WHERE R.business_id = ? ORDER BY V.release_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -291,7 +290,7 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 
 	// For para pegar tags da lista de releases
 	for _, release := range releaseList.List {
-		query := "SELECT tag_name FROM tblTags INNER JOIN tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ?"
+		query := "SELECT DISTINCT tag_name FROM tblTags INNER JOIN tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name"
 
 		// manda uma query para ser executada no database
 		rows, err := database.Query(query, release.ID)
