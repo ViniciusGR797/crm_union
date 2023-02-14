@@ -15,11 +15,12 @@ type Customer struct {
 	Name       string `json:"name,omitempty"`
 	Created_At string `json:"created_at,omitempty"`
 	Status     string `json:"status,omitempty"`
+	Tags       []Tag  `json:"tags,omitempty"`
 }
 
-type CustomerTag struct {
-	customer_ID uint64 `json:"customer_id,omitempty"`
-	tag_ID      uint64 `json:"tag_id,omitempty"`
+type Tag struct {
+	Tag_ID   uint64 `json:"tag_id,omitempty"`
+	Tag_Name string `json:"tag_name,omitempty"`
 }
 
 // Método de customer - retorna string com json do customer ou erro
