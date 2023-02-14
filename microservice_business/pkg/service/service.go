@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"microservice_business/pkg/database"
@@ -14,6 +15,7 @@ type BusinessServiceInterface interface {
 	CreateBusiness(business *entity.CreateBusiness) int64
 	UpdateBusiness(ID *uint64, business *entity.Business) uint64
 	SoftDeleteBusiness(ID *uint64) int64
+	GetBusinessByName(name *string) (*entity.BusinessList, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -188,4 +190,50 @@ func (ps *Business_service) SoftDeleteBusiness(ID *uint64) int64 {
 	}
 
 	return rowsaff
+}
+
+func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessList, error) {
+	nameString := fmt.Sprint("%", *name, "%")
+	query := "SELECT DISTINCT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id WHERE b.business_name LIKE ? ORDER BY b.business_name"
+
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// manda uma query para ser executada no database
+	rows, err := database.Query(query, nameString)
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+		return &entity.BusinessList{}, errors.New("error fetching Businesss")
+	}
+
+	// fecha linha da query, quando sair da função
+	defer rows.Close()
+
+	// variável do tipo BusinessList (vazia)
+	lista_Businesss := &entity.BusinessList{}
+
+	// Pega todo resultado da query linha por linha
+	for rows.Next() {
+		// variável do tipo Business (vazia)
+		Business := entity.Business{}
+
+		// pega dados da query e atribui a variável Business, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&Business.Business_id,
+			&Business.Business_code,
+			&Business.Business_name,
+			&Business.BusinessSegment.BusinessSegment_id,
+			&Business.BusinessSegment.BusinessSegment_description,
+			&Business.Status.Status_id,
+			&Business.Status.Status_description); err != nil {
+			log.Println(err.Error())
+		} else {
+			// caso não tenha erro, adiciona a lista de Businesss
+			lista_Businesss.List = append(lista_Businesss.List, &Business)
+		}
+
+	}
+
+	// retorna lista de Businesss
+	return lista_Businesss, nil
 }
