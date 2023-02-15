@@ -17,6 +17,9 @@ func ConfigRoutes(router *gin.Engine, service service.PlannerServiceInterface) *
 			planners.GET("/planners/id/:id", func(c *gin.Context) {
 				controller.GetPlannerByID(c, service)
 			})
+			planners.POST("/planners", func(c *gin.Context) {
+				controller.CreatePlanner(c, service)
+			})
 
 		}
 	}

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"microservice_planner/pkg/entity"
 	"microservice_planner/pkg/service"
 	"net/http"
 	"strconv"
@@ -36,4 +37,34 @@ func GetPlannerByID(c *gin.Context, service service.PlannerServiceInterface) {
 
 	//retorna sucesso 200 e retorna json da lista de users
 	c.JSON(http.StatusOK, planner)
+}
+
+func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
+	// Cria variável do tipo Planner (inicialmente vazia)
+	var planner *entity.PlannerUpdate
+
+	// Converte json em Planner
+	err := c.ShouldBind(&planner)
+	// Verifica se tem erro
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/planner",
+		})
+		return
+	}
+
+	err = service.CreatePlanner(planner)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/planner",
+		})
+		return
+	}
+
+	// Retorno json com o Planner
+	c.Status(http.StatusNoContent)
 }
