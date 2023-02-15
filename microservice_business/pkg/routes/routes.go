@@ -15,7 +15,7 @@ func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) 
 			Business.GET("/business", func(c *gin.Context) {
 				controller.GetBusiness(c, service)
 			})
-			Business.GET("/business/:id", func(c *gin.Context) {
+			Business.GET("/business/id/:id", func(c *gin.Context) {
 				controller.GetBusinessById(c, service)
 			})
 			Business.POST("/business", func(c *gin.Context) {
@@ -24,8 +24,8 @@ func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) 
 			Business.PUT("/business/update/:id", func(c *gin.Context) {
 				controller.UpdateBusiness(c, service)
 			})
-			Business.PUT("/business/delete/:id", func(c *gin.Context) {
-				controller.SoftDeleteBusiness(c, service)
+			Business.PUT("/business/update/status/:id", func(c *gin.Context) {
+				controller.UpdateStatusBusiness(c, service)
 			})
 			Business.GET("/business/name/:Business_name", func(c *gin.Context) {
 				controller.GetBusinessByName(c, service)
