@@ -18,6 +18,7 @@ type BusinessServiceInterface interface {
 	SoftDeleteBusiness(ID *uint64) int64
 	GetBusinessByName(name *string) (*entity.BusinessList, error)
 	InsertTagsBusiness(ID uint64, tags []entity.Tag) (uint64, error)
+
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -118,7 +119,6 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 	Business.Tags = tags
 
 	return Business, nil
-
 }
 
 func (ps *Business_service) CreateBusiness(business *entity.Business_Update) error {
