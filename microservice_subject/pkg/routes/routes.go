@@ -28,6 +28,10 @@ func ConfigRoutes(router *gin.Engine, service service.SubjectServiceInterface) *
 				controller.UpdateStatusSubjectCanceled(c, service)
 			})
 
+			subject.PUT("/subjects/update/:id", func(c *gin.Context) {
+				controller.UpdateSubject(c, service)
+			})
+
 			subject.POST("/subjects/create/user/:id", func(c *gin.Context) {
 				controller.CreateSubject(c, service)
 			})

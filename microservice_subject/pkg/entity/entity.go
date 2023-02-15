@@ -14,6 +14,19 @@ type Subject struct {
 	Client        string `json:"client_name,omitempty"`
 	Status        Status `json:"status,omitempty"`
 	Created_at    string `json:"created_at,omitempty"`
+	Domain        Domain `json:"domain,omitempty"`
+}
+
+func (p *Subject) String() string {
+	data, err := json.Marshal(p)
+
+	if err != nil {
+		log.Println("error to convert User to JSON")
+		log.Println(err.Error())
+		return ""
+	}
+
+	return string(data)
 }
 
 type SubjectID struct {
@@ -24,6 +37,20 @@ type SubjectID struct {
 	Release_name  string `json:"release_name,omitempty"`
 	Subject_text  string `json:"subject_text,omitempty"`
 	Created_at    string `json:"created_at,omitempty"`
+	Domain        Domain `json:"domain,omitempty"`
+	Status        Status `json:"status,omitempty"`
+}
+
+func (p *SubjectID) String() string {
+	data, err := json.Marshal(p)
+
+	if err != nil {
+		log.Println("error to convert User to JSON")
+		log.Println(err.Error())
+		return ""
+	}
+
+	return string(data)
 }
 
 type Client struct {
@@ -32,7 +59,7 @@ type Client struct {
 	Client_name  string `json:"client_name,omitempty"`
 }
 
-func (p *Subject) String() string {
+func (p *Client) String() string {
 	data, err := json.Marshal(p)
 
 	if err != nil {
@@ -48,9 +75,35 @@ type Status struct {
 	Status_id          uint64 `json:"status_id,omitempty"`
 	Status_description string `json:"status_description,omitempty"`
 }
+
+func (p *Status) String() string {
+	data, err := json.Marshal(p)
+
+	if err != nil {
+		log.Println("error to convert User to JSON")
+		log.Println(err.Error())
+		return ""
+	}
+
+	return string(data)
+}
+
 type Subject_list struct {
 	List []*Subject `jason:"list,omitempty"`
 }
+
+func (p *Subject_list) String() string {
+	data, err := json.Marshal(p)
+
+	if err != nil {
+		log.Println("error to convert User to JSON")
+		log.Println(err.Error())
+		return ""
+	}
+
+	return string(data)
+}
+
 type CreateSubject struct {
 	Subject_title string `json:"subject_title,omitempty"`
 	Subject_text  string `json:"subject_text,omitempty"`
@@ -59,14 +112,36 @@ type CreateSubject struct {
 	Release_id    uint64 `json:"release_id,omitempty"`
 }
 
-func NewSubjecet(subject_id uint64, subject_title string, business string, client string, release string, user string, status_id uint64, status_description string) *Subject {
-	return &Subject{
-		Subject_id:    subject_id,
-		Subject_title: subject_title,
-		Business:      business,
-		Client:        client,
-		Release:       release,
-		User:          user,
-		Status:        Status{Status_id: status_id, Status_description: status_description},
+func (p *CreateSubject) String() string {
+	data, err := json.Marshal(p)
+
+	if err != nil {
+		log.Println("error to convert User to JSON")
+		log.Println(err.Error())
+		return ""
 	}
+
+	return string(data)
+}
+
+type Domain struct {
+	Domain_id    uint64 `json:"domain_id,omitempty"`
+	Domain_value string `json:"domain_value,omitempty"`
+}
+
+func (p *Domain) String() string {
+	data, err := json.Marshal(p)
+
+	if err != nil {
+		log.Println("error to convert User to JSON")
+		log.Println(err.Error())
+		return ""
+	}
+
+	return string(data)
+}
+
+type UpdateSubject struct {
+	Subject_title string `json:"subject_title,omitempty"`
+	Subject_text  string `json:"subject_text,omitempty"`
 }

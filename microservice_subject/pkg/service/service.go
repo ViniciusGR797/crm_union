@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"microservice_subject/pkg/entity"
 	"microservice_user/pkg/database"
 )
@@ -13,6 +12,7 @@ type SubjectServiceInterface interface {
 	UpdateStatusSubjectFinished(id uint64) (int64, error)
 	UpdateStatusSubjectCanceled(id uint64) (int64, error)
 	CreateSubject(subject *entity.CreateSubject, id uint64) (*entity.SubjectID, error)
+	UpdateSubject(id uint64, subject *entity.UpdateSubject) (int64, error)
 }
 
 type Subject_service struct {
@@ -31,14 +31,18 @@ func (s *Subject_service) GetSubjectList(id uint64) (*entity.Subject_list, error
 
 	rows, err := database.Query("call pcGetAllUserSubjects (?)", id)
 	if err != nil {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	defer rows.Close()
 
+	hasResult := false
+
 	list_subjects := &entity.Subject_list{}
 
 	for rows.Next() {
+
+		hasResult = true
 
 		subject := entity.Subject{}
 
@@ -52,11 +56,17 @@ func (s *Subject_service) GetSubjectList(id uint64) (*entity.Subject_list, error
 			&subject.Status.Status_id,
 			&subject.Status.Status_description,
 			&subject.Created_at,
+			&subject.Domain.Domain_id,
+			&subject.Domain.Domain_value,
 		); err != nil {
-			log.Println(err.Error())
+			return nil, err
 		}
 
 		list_subjects.List = append(list_subjects.List, &subject)
+	}
+
+	if !hasResult {
+		return nil, fmt.Errorf("no subjects found")
 	}
 
 	return list_subjects, nil
@@ -69,14 +79,18 @@ func (s *Subject_service) GetSubject(id uint64) (*entity.SubjectID, error) {
 
 	rows, err := database.Query("call pcGetSubjectByID (?)", id)
 	if err != nil {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	defer rows.Close()
 
+	hasResult := false
+
 	subject := &entity.SubjectID{}
 
 	for rows.Next() {
+
+		hasResult = true
 
 		if err := rows.Scan(
 			&subject.Subject_id,
@@ -88,10 +102,18 @@ func (s *Subject_service) GetSubject(id uint64) (*entity.SubjectID, error) {
 			&subject.Release_name,
 			&subject.Subject_text,
 			&subject.Created_at,
+			&subject.Domain.Domain_id,
+			&subject.Domain.Domain_value,
+			&subject.Status.Status_id,
+			&subject.Status.Status_description,
 		); err != nil {
-			log.Println(err.Error())
+			return nil, err
 		}
 
+	}
+
+	if !hasResult {
+		return nil, fmt.Errorf("no subjects found")
 	}
 
 	return subject, nil
@@ -104,41 +126,41 @@ func (s *Subject_service) UpdateStatusSubjectFinished(id uint64) (int64, error) 
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblSubject WHERE subject_id = ?")
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	var statusSubject uint64
 
 	err = stmt.QueryRow(id).Scan(&statusSubject)
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
-		fmt.Println(err.Error())
+		return 0, err
 	}
 
 	var statusID uint64
 
 	err = status.QueryRow("SUBJECT", "FINISHED").Scan(&statusID)
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	updt, err := database.Prepare("UPDATE tblSubject SET status_id = ? WHERE subject_id = ?")
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	result, err := updt.Exec(statusID, id)
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	roww, err := result.RowsAffected()
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	return roww, nil
@@ -151,41 +173,41 @@ func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64) (int64, error) 
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblSubject WHERE subject_id = ?")
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	var statusSubject uint64
 
 	err = stmt.QueryRow(id).Scan(&statusSubject)
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
-		fmt.Println(err.Error())
+		return 0, err
 	}
 
 	var statusID uint64
 
 	err = status.QueryRow("SUBJECT", "CANCELED").Scan(&statusID)
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	updt, err := database.Prepare("UPDATE tblSubject SET status_id = ? WHERE subject_id = ?")
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	result, err := updt.Exec(statusID, id)
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	roww, err := result.RowsAffected()
 	if err != nil {
-		log.Println(err.Error())
+		return 0, err
 	}
 
 	return roww, nil
@@ -198,34 +220,34 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
-		fmt.Println(err.Error())
+		return nil, err
 	}
 
 	var statusID uint64
 
 	err = status.QueryRow("SUBJECT", "IN PROGRESS").Scan(&statusID)
 	if err != nil {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	stmt, err := database.Prepare("INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?,?)")
 	if err != nil {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	result, err := stmt.Exec(subject.Subject_title, subject.Subject_text, subject.Subject_type, subject.Client_id, subject.Release_id, id, statusID)
 	if err != nil {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	idresult, err := result.LastInsertId()
 	if err != nil {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	rows, err := database.Query("call pcGetSubjectByID (?)", idresult)
 	if err != nil {
-		log.Println(err.Error())
+		return nil, err
 	}
 
 	defer rows.Close()
@@ -244,12 +266,43 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 			&subjectID.Release_name,
 			&subjectID.Subject_text,
 			&subjectID.Created_at,
+			&subjectID.Domain.Domain_id,
+			&subjectID.Domain.Domain_value,
+			&subjectID.Status.Status_id,
+			&subjectID.Status.Status_description,
 		); err != nil {
-			log.Println(err.Error())
+			return nil, err
 		}
 
 	}
 
 	return subjectID, nil
+
+}
+
+func (s *Subject_service) UpdateSubject(id uint64, subject *entity.UpdateSubject) (int64, error) {
+
+	database := s.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblSubject SET subject_title = ?, subject_text = ? WHERE subject_id = ?")
+
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := stmt.Exec(subject.Subject_title, subject.Subject_text, id)
+	if err != nil {
+		return 0, err
+	}
+
+	roww, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	if roww == 0 {
+		return 0, fmt.Errorf("no subject found")
+	}
+
+	return roww, nil
 
 }
