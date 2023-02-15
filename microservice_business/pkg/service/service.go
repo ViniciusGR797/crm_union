@@ -17,7 +17,7 @@ type BusinessServiceInterface interface {
 	UpdateBusiness(ID uint64, business *entity.Business_Update) (uint64, error)
 	SoftDeleteBusiness(ID *uint64) int64
 	GetBusinessByName(name *string) (*entity.BusinessList, error)
-	InsertTagsBusiness(ID uint64, tags []entity.Tag) (uint64, error)
+	InsertTagsBusiness(ID uint64, tags []entity.Tag) error
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -183,6 +183,13 @@ func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_
 		return 0, errors.New("error RowsAffected update business")
 	}
 
+	if business.Tags != nil {
+		err = ps.InsertTagsBusiness(ID, business.Tags)
+		if err != nil {
+			return 0, errors.New("error in update business tags statement")
+		}
+	}
+
 	return uint64(businessID), nil
 }
 
@@ -292,24 +299,24 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	return list_Business, nil
 }
 
-func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) (uint64, error) {
+func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) error {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("DELETE FROM tblBusiness WHERE business_id = ?")
+	stmt, err := database.Prepare("DELETE FROM tblBusinessTag WHERE business_id = ?")
 	if err != nil {
-		return 0, errors.New("error prepare delete tags on business")
+		return errors.New("error prepare delete tags on business")
 	}
 
 	defer stmt.Close()
 
 	_, err = stmt.Exec(ID)
 	if err != nil {
-		return 0, errors.New("error exec statement exec on business")
+		return errors.New("error exec statement exec on business")
 	}
 
 	stmt, err = database.Prepare("INSERT IGNORE tblBusinessTag SET tag_id = ?, business_id = ?")
 	if err != nil {
-		return 0, errors.New("error insert a new row on tag_id and business_id")
+		return errors.New("error insert a new row on tag_id and business_id")
 	}
 
 	defer stmt.Close()
@@ -317,11 +324,11 @@ func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) (ui
 	for _, tag := range tags {
 		_, err := stmt.Exec(tag.Tag_ID, ID)
 		if err != nil {
-			return 0, errors.New("error insert data tag_ID and ID on database")
+			return errors.New("error insert data tag_ID and ID on database")
 		}
 	}
 
-	return ID, nil
+	return nil
 }
 
 func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {

@@ -76,6 +76,7 @@ func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		})
 		return
 	}
+
 	// Retorno json com o business
 	c.Status(http.StatusNoContent)
 }
@@ -105,7 +106,7 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	idResult, err := service.UpdateBusiness(newID, business)
+	_, err = service.UpdateBusiness(newID, business)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -115,17 +116,7 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	_, err = service.InsertTagsBusiness(newID, business.Tags)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-			"code":    http.StatusInternalServerError,
-			"path":    "/business/update/:id",
-		})
-		return
-	}
-
-	businessUpdated, err := service.GetBusinessById(idResult)
+	businessUpdated, err := service.GetBusinessById(newID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
