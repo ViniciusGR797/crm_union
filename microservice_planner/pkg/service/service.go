@@ -1,16 +1,14 @@
 package service
 
 import (
-
 	// Import interno de packages do próprio sistema
 	"microservice_planner/pkg/database"
-	"microservice_planner/pkg/entity"
 )
 
 // Estrutura interface para padronizar comportamento de CRUD User (tudo que tiver os métodos abaixo do CRUD são serviços de user)
 type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
-	GetPlannerByID() (*entity.PlannerList, error)
+	GetPlannerByID()
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
