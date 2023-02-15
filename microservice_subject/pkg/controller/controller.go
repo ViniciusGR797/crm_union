@@ -15,19 +15,15 @@ func GetSubjectList(c *gin.Context, service service.SubjectServiceInterface) {
 	newid, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		c.JSON(400, gin.H{
-			"message": "Invalid user id",
-			"code":    "400",
-			"path":    "/subjects/user/:id",
-		})
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
 	}
 
 	list, err := service.GetSubjectList(newid)
 
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
 	}
 
 	c.JSON(200, list)
@@ -41,19 +37,15 @@ func GetSubject(c *gin.Context, service service.SubjectServiceInterface) {
 	newid, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		c.JSON(400, gin.H{
-			"message": "Invalid subject id",
-			"code":    "400",
-			"path":    "/subjects/:id",
-		})
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
 	}
 
 	subject, err := service.GetSubject(newid)
 
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		JSONMessenger(c, 404, c.Request.URL.Path, err)
+		return
 	}
 
 	c.JSON(200, subject)
@@ -67,19 +59,15 @@ func UpdateStatusSubjectFinished(c *gin.Context, service service.SubjectServiceI
 	newid, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		c.JSON(400, gin.H{
-			"message": "Invalid subject id",
-			"code":    "400",
-			"path":    "/subjects/update/finished/:id",
-		})
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
 	}
 
 	_, err = service.UpdateStatusSubjectFinished(newid)
 
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
 	}
 
 	c.JSON(200, gin.H{
@@ -97,19 +85,15 @@ func UpdateStatusSubjectCanceled(c *gin.Context, service service.SubjectServiceI
 	newid, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		c.JSON(400, gin.H{
-			"message": "Invalid subject id",
-			"code":    "400",
-			"path":    "/subjects/update/canceled/:id",
-		})
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
 	}
 
 	_, err = service.UpdateStatusSubjectCanceled(newid)
 
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
 	}
 
 	c.JSON(200, gin.H{
@@ -126,32 +110,69 @@ func CreateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
-
 	if err != nil {
-		c.JSON(400, gin.H{
-			"message": "Invalid subject id",
-			"code":    "400",
-			"path":    "/subjects/update/canceled/:id",
-		})
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
 	}
 
 	var subject entity.CreateSubject
 
 	if err := c.ShouldBindJSON(&subject); err != nil {
-		c.JSON(400, gin.H{
-			"message": "Invalid request body",
-			"code":    "400",
-			"path":    "/subjects/create/user/:id",
-		})
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
 	}
 
 	subjectCreated, err := service.CreateSubject(&subject, newid)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
 	}
 
 	c.JSON(201, subjectCreated)
 
+}
+
+func UpdateSubject(c *gin.Context, service service.SubjectServiceInterface) {
+
+	id := c.Param("id")
+
+	newid, err := strconv.ParseUint(id, 10, 64)
+
+	if err != nil {
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
+	}
+
+	var subject entity.UpdateSubject
+
+	if err := c.ShouldBindJSON(&subject); err != nil {
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
+	}
+
+	_, err = service.UpdateSubject(newid, &subject)
+	if err != nil {
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Subject updated successfully",
+		"code":    "200",
+		"path":    "/subjects/update/:id",
+	})
+
+}
+
+func JSONMessenger(c *gin.Context, status int, path string, err error) {
+	errorMessage := ""
+	if err != nil {
+		errorMessage = err.Error()
+	}
+	c.JSON(status, gin.H{
+		"status":  status,
+		"message": errorMessage,
+		"error":   err,
+		"path":    path,
+	})
 }

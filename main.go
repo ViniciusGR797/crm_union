@@ -12,6 +12,7 @@ func main() {
 		"microservice_release/cmd/main.go",
 		"microservice_remark/cmd/main.go",
 		"microservice_user/cmd/main.go",
+		"microservice_subject/cmd/main.go",
 	}
 
 	for _, cmd := range cmds {
