@@ -344,7 +344,7 @@ func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update) er
 	ID, _ := result.LastInsertId()
 	release.ID = uint64(ID)
 
-	stmt, err = database.Prepare("INSERT INTO tblReleaseTrainTag SET tag_id = ?, release_id = ?")
+	stmt, err = database.Prepare("INSERT INTO tblReleaseTrainTag (tag_id, release_id) VALUES (?, ?)")
 	if err != nil {
 		return errors.New("error in prepare release tags statement")
 	}
