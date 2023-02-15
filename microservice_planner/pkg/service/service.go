@@ -11,7 +11,7 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD User (tudo que tiver os métodos abaixo do CRUD são serviços de user)
 type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
-	GetPlannerByID(ID uint64) (*entity.Planner, error)
+	GetPlannerByID(ID *uint64) (*entity.Planner, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -27,7 +27,7 @@ func NewPlannerService(dabase_pool database.DatabaseInterface) *Planner_service 
 }
 
 // Função que retorna lista de planners
-func (ps *Planner_service) GetPlannerByID(ID uint64) (*entity.Planner, error) {
+func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT * FROM vwGetAllPlanners WHERE planner_id = ?")

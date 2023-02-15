@@ -23,7 +23,7 @@ func GetPlannerByID(c *gin.Context, service service.PlannerServiceInterface) {
 	}
 
 	// Chama método GetUsers e retorna release
-	business, err := service.GetPlannerByID(newId)
+	planner, err := service.GetPlannerByID(&newId)
 	// Verifica se a release está vazia
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -35,5 +35,5 @@ func GetPlannerByID(c *gin.Context, service service.PlannerServiceInterface) {
 	}
 
 	//retorna sucesso 200 e retorna json da lista de users
-	c.JSON(http.StatusOK, business)
+	c.JSON(http.StatusOK, planner)
 }
