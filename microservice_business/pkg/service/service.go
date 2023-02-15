@@ -11,11 +11,14 @@ import (
 type BusinessServiceInterface interface {
 	// Pega todos os Businesss, logo lista todos os Businesss
 	GetBusiness() *entity.BusinessList
-	GetBusinessByID(ID *uint64) *entity.Business
-	CreateBusiness(business *entity.CreateBusiness) int64
-	UpdateBusiness(ID *uint64, business *entity.Business) uint64
+	GetBusinessById(ID uint64) (*entity.Business, error)
+	GetTagsBusiness(ID *uint64) ([]*entity.Tag, error)
+	CreateBusiness(business *entity.Business_Update) error
+	UpdateBusiness(ID uint64, business *entity.Business_Update) (uint64, error)
 	SoftDeleteBusiness(ID *uint64) int64
 	GetBusinessByName(name *string) (*entity.BusinessList, error)
+	InsertTagsBusiness(ID uint64, tags []entity.Tag) (uint64, error)
+
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -78,7 +81,7 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 
 }
 
-func (ps *Business_service) GetBusinessByID(ID *uint64) *entity.Business {
+func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error) {
 
 	database := ps.dbp.GetDB()
 
@@ -89,16 +92,16 @@ func (ps *Business_service) GetBusinessByID(ID *uint64) *entity.Business {
 
 	defer stmt.Close()
 
-	Business := entity.Business{}
+	Business := &entity.Business{}
 
 	err = stmt.QueryRow(ID).Scan(&Business.Business_id, &Business.Business_code, &Business.Business_name, &Business.BusinessSegment.BusinessSegment_id, &Business.BusinessSegment.BusinessSegment_description, &Business.Status.Status_id, &Business.Status.Status_description)
 	if err != nil {
-		log.Println("error: cannot find business", err.Error())
+		return &entity.Business{}, errors.New("error scanning rows")
 	}
 
 	rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", Business.Business_id)
 	if err != nil {
-		return &entity.Business{}
+		return &entity.Business{}, errors.New("error fetching tags from business by id")
 	}
 
 	var tags []entity.Tag
@@ -107,7 +110,7 @@ func (ps *Business_service) GetBusinessByID(ID *uint64) *entity.Business {
 		tag := entity.Tag{}
 
 		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
-			return &entity.Business{}
+			return &entity.Business{}, errors.New("error scanning tags from business by id")
 		} else {
 			tags = append(tags, tag)
 		}
@@ -115,11 +118,10 @@ func (ps *Business_service) GetBusinessByID(ID *uint64) *entity.Business {
 
 	Business.Tags = tags
 
-	return &Business
-
+	return Business, nil
 }
 
-func (ps *Business_service) CreateBusiness(business *entity.CreateBusiness) int64 {
+func (ps *Business_service) CreateBusiness(business *entity.Business_Update) error {
 
 	database := ps.dbp.GetDB()
 
@@ -130,41 +132,58 @@ func (ps *Business_service) CreateBusiness(business *entity.CreateBusiness) int6
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(business.Busines_code, business.Business_name, business.Business_Segment_id, business.Business_Status_id)
+	result, err := stmt.Exec(business.Code, business.Name, business.Segment_Id, business.Status_id)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	rowsaff, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
-		fmt.Println(err.Error())
+		return errors.New("error rowAffected insert into database")
 	}
 
-	return rowsaff
+	ID, _ := result.LastInsertId()
+	business.ID = uint64(ID)
+
+	stmt, err = database.Prepare("INSERT tblBusinessTag SET tag_id = ?, business_id = ?")
+	if err != nil {
+		return errors.New("error in prepare rusiness tags statement")
+	}
+
+	for _, tag := range business.Tags {
+		_, err := stmt.Exec(tag.Tag_ID, business.ID)
+		if err != nil {
+			return errors.New("business tags exec error")
+		}
+	}
+
+	return nil
 
 }
 
-func (ps *Business_service) UpdateBusiness(ID *uint64, business *entity.Business) uint64 {
+func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update) (uint64, error) {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ?, status_id = ? WHERE business_id = ?")
 	if err != nil {
-		log.Println(err.Error())
+		return 0, errors.New("error prepare update business")
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(business.Business_name, business.Business_code, business.BusinessSegment.BusinessSegment_id, business.Status.Status_id, business.Business_id)
+	var businessID int64
+
+	result, err := stmt.Exec(business.Name, business.Code, business.Segment_Id, business.Status_id, ID)
 	if err != nil {
-		log.Println(err.Error())
+		return 0, errors.New("error exec update business")
 	}
 
-	rowsaff, err := result.RowsAffected()
+	businessID, err = result.RowsAffected()
 	if err != nil {
-		log.Println(err.Error())
+		return 0, errors.New("error RowsAffected update business")
 	}
 
-	return uint64(rowsaff)
+	return uint64(businessID), nil
 }
 
 func (ps *Business_service) SoftDeleteBusiness(ID *uint64) int64 {
@@ -239,29 +258,98 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	defer rows.Close()
 
 	// variável do tipo BusinessList (vazia)
-	lista_Businesss := &entity.BusinessList{}
+	list_Business := &entity.BusinessList{}
 
-	// Pega todo resultado da query linha por linha
 	for rows.Next() {
-		// variável do tipo Business (vazia)
-		Business := entity.Business{}
+		business := entity.Business{}
 
-		// pega dados da query e atribui a variável Business, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&Business.Business_id,
-			&Business.Business_code,
-			&Business.Business_name,
-			&Business.BusinessSegment.BusinessSegment_id,
-			&Business.BusinessSegment.BusinessSegment_description,
-			&Business.Status.Status_id,
-			&Business.Status.Status_description); err != nil {
-			log.Println(err.Error())
+		if err := rows.Scan(&business.Business_id, &business.Business_code, &business.Business_name, &business.BusinessSegment.BusinessSegment_id, &business.BusinessSegment.BusinessSegment_description, &business.Status.Status_id, &business.Status.Status_description); err != nil {
+			return &entity.BusinessList{}, nil
 		} else {
-			// caso não tenha erro, adiciona a lista de Businesss
-			lista_Businesss.List = append(lista_Businesss.List, &Business)
-		}
+			rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", business.Business_id)
+			if err != nil {
+				return &entity.BusinessList{}, nil
+			}
 
+			var tags []entity.Tag
+
+			for rowsTags.Next() {
+				tag := entity.Tag{}
+
+				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+					return &entity.BusinessList{}, nil
+				} else {
+					tags = append(tags, tag)
+				}
+			}
+
+			business.Tags = tags
+
+			list_Business.List = append(list_Business.List, &business)
+		}
 	}
 
-	// retorna lista de Businesss
-	return lista_Businesss, nil
+	return list_Business, nil
+}
+
+func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) (uint64, error) {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("DELETE FROM tblBusiness WHERE business_id = ?")
+	if err != nil {
+		return 0, errors.New("error prepare delete tags on business")
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(ID)
+	if err != nil {
+		return 0, errors.New("error exec statement exec on business")
+	}
+
+	stmt, err = database.Prepare("INSERT IGNORE tblBusinessTag SET tag_id = ?, business_id = ?")
+	if err != nil {
+		return 0, errors.New("error insert a new row on tag_id and business_id")
+	}
+
+	defer stmt.Close()
+
+	for _, tag := range tags {
+		_, err := stmt.Exec(tag.Tag_ID, ID)
+		if err != nil {
+			return 0, errors.New("error insert data tag_ID and ID on database")
+		}
+	}
+
+	return ID, nil
+}
+
+func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblBusinessTag B on T.tag_id = B.tag_id WHERE business_id = ? ORDER BY T.tag_name")
+	if err != nil {
+		return []*entity.Tag{}, errors.New("error fetching on tag business")
+	}
+
+	defer stmt.Close()
+
+	var tags []*entity.Tag
+
+	rowsTags, err := stmt.Query(ID)
+	if err != nil {
+		return []*entity.Tag{}, errors.New("error fetching on row tags query release train")
+	}
+
+	for rowsTags.Next() {
+		tag := entity.Tag{}
+
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
+			return []*entity.Tag{}, errors.New("error fetching on row tags next release train")
+		}
+
+		tags = append(tags, &tag)
+	}
+
+	return tags, nil
 }

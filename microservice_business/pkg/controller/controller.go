@@ -23,83 +23,119 @@ func GetBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	c.JSON(200, list)
 }
 
-func GetBusinessByID(c *gin.Context, service service.BusinessServiceInterface) {
-	id := c.Param("id")
+func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
+	ID := c.Param("id")
 
-	newID, err := strconv.ParseUint(id, 10, 64)
+	newId, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 			"code":    http.StatusBadRequest,
-			"path":    "/business/id/:id",
+			"path":    "/business/:id",
 		})
 		return
 	}
 
-	business := service.GetBusinessByID(&newID)
-	if business.Business_id == 0 {
-		c.JSON(404, gin.H{
-			"error": "produto not found, 404",
+	// Chama método GetUsers e retorna release
+	business, err := service.GetBusinessById(newId)
+	// Verifica se a release está vazia
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/releasetrains/id/:releasetrain_id",
 		})
 		return
 	}
-
+  
+	//retorna sucesso 200 e retorna json da lista de users
 	c.JSON(http.StatusOK, business)
 }
 
 func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
+	// Cria variável do tipo business (inicialmente vazia)
+	var business *entity.Business_Update
 
-	var business entity.CreateBusiness
-
-	if err := c.ShouldBindJSON(&business); err != nil {
-		c.JSON(400, gin.H{
-			"error": err.Error(),
+	// Converte json em business
+	err := c.ShouldBind(&business)
+	// Verifica se tem erro
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/business",
 		})
 		return
 	}
 
-	service.CreateBusiness(&business)
-
-	c.JSON(200, gin.H{
-		"business_code":       business.Busines_code,
-		"business_name":       business.Business_name,
-		"business_Segment_id": business.Business_Segment_id,
-		"status_id":           business.Business_Status_id,
-	})
-
+	err = service.CreateBusiness(business)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/business",
+		})
+		return
+	}
+	// Retorno json com o business
+	c.Status(http.StatusNoContent)
 }
 
 func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	ID := c.Param("id")
 
-	var business *entity.Business
-
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "Id has to be integer, 400" + err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/business/update/:id",
 		})
 		return
 	}
+
+	var business *entity.Business_Update
 
 	err = c.ShouldBind(&business)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bin JSON business, 400" + err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/business/update/:id",
 		})
 		return
 	}
 
-	idResult := service.UpdateBusiness(&newID, business)
-	if idResult == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
+	idResult, err := service.UpdateBusiness(newID, business)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/business/update/:id",
 		})
 		return
 	}
 
-	business = service.GetBusinessByID(&newID)
-	c.JSON(200, business)
+	_, err = service.InsertTagsBusiness(newID, business.Tags)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/business/update/:id",
+		})
+		return
+	}
+
+	businessUpdated, err := service.GetBusinessById(idResult)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/business/:id",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, businessUpdated)
 
 }
 
@@ -149,4 +185,30 @@ func GetBusinessByName(c *gin.Context, service service.BusinessServiceInterface)
 
 	// Retorno json com Business
 	c.JSON(http.StatusOK, list)
+}
+
+func GetTagsBusiness(c *gin.Context, service service.BusinessServiceInterface) {
+	ID := c.Param("id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/business/tag/:id",
+		})
+		return
+	}
+
+	tags, err := service.GetTagsBusiness(&newID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/business/tag/:id",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, tags)
 }

@@ -61,11 +61,13 @@ func (pl *BusinessList) String() string {
 	return string(data)
 }
 
-type CreateBusiness struct {
-	Busines_code        string `json:"business_code,omitempty"`
-	Business_name       string `json:"business_name,omitempty"`
-	Business_Segment_id int64  `json:"business_Segment_id,omitempty"`
-	Business_Status_id  int64  `json:"status_id,omitempty"`
+type Business_Update struct {
+	ID         uint64 `json:"business_id,omitempty"`
+	Code       string `json:"business_code,omitempty"`
+	Name       string `json:"business_name,omitempty"`
+	Segment_Id int64  `json:"segment_id,omitempty"`
+	Status_id  int64  `json:"status_id,omitempty"`
+	Tags       []Tag  `json:"tags,omitempty"`
 }
 
 func NewBusiness(name string) *Business {
