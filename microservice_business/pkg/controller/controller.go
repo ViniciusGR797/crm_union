@@ -49,6 +49,7 @@ func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 		})
 		return
 	}
+  
 	//retorna sucesso 200 e retorna json da lista de users
 	c.JSON(http.StatusOK, business)
 }

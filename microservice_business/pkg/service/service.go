@@ -120,7 +120,6 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 	Business.Tags = tags
 
 	return Business, nil
-
 }
 
 // CreateBusiness cria um business no banco
