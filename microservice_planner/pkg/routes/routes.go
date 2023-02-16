@@ -2,6 +2,7 @@ package routes
 
 import (
 	"microservice_planner/pkg/controller"
+	"microservice_planner/pkg/middlewares"
 	"microservice_planner/pkg/service"
 
 	"github.com/gin-gonic/gin"
@@ -11,11 +12,15 @@ import (
 func ConfigRoutes(router *gin.Engine, service service.PlannerServiceInterface) *gin.Engine {
 	main := router.Group("union")
 	{
-		planners := main.Group("/v1")
+		planner := main.Group("/v1")
 		{
 			// Rota que retorna lista de planners (GET que dispara método GetPlannerByID controller)
-			planners.GET("/planners/id/:id", func(c *gin.Context) {
+			planner.GET("/planners/id/:id", func(c *gin.Context) {
 				controller.GetPlannerByID(c, service)
+			})
+			// Rota que retorna lista de planners (GET que dispara método GetSubmissivePlanners controller)
+			planner.GET("planners/submissives", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetSubmissivePlanners(c, service)
 			})
 
 		}
