@@ -17,6 +17,7 @@ type PlannerServiceInterface interface {
 	GetPlannerByName(ID *int, level int, name *string) (*entity.PlannerList, error)
 	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
 	GetPlannerByBusiness(name *string) (*entity.PlannerList, error)
+	GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -35,7 +36,7 @@ func NewPlannerService(dabase_pool database.DatabaseInterface) *Planner_service 
 func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT * FROM vwGetAllPlanners WHERE planner_id = ?")
+	stmt, err := database.Prepare("git pu")
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -425,4 +426,35 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 		}
 	}
 	return planner_list, nil
+}
+
+// GetTagsBusiness busca as tags de business
+func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error) {
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("call pcGetClientGuest(?)")
+	if err != nil {
+		return []*entity.Client{}, errors.New("error fetching on tag business")
+	}
+
+	defer stmt.Close()
+
+	var guests []*entity.Client
+
+	rowsGuests, err := stmt.Query(ID)
+	if err != nil {
+		return []*entity.Client{}, errors.New("error fetching on Guests clients")
+	}
+
+	for rowsGuests.Next() {
+		client := entity.Client{}
+
+		if err := rowsGuests.Scan(&client.ID, &client.Name, &client.Email); err != nil {
+			return []*entity.Client{}, errors.New("error fetching on row tags next release train")
+		}
+
+		guests = append(guests, &client)
+	}
+
+	return guests, nil
 }

@@ -43,8 +43,9 @@ type PlannerUpdate struct {
 
 // Estrutura de dados de Client
 type Client struct {
-	ID   uint64 `json:"client_id,omitempty"`
-	Name string `json:"client_name,omitempty"`
+	ID    uint64 `json:"client_id,omitempty"`
+	Name  string `json:"client_name,omitempty"`
+	Email string `json:"client_email,omitempty"`
 }
 
 // Método de planner - retorna string com json do planner ou erro

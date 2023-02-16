@@ -32,6 +32,9 @@ func ConfigRoutes(router *gin.Engine, service service.PlannerServiceInterface) *
 			planner.GET("/planners/business/:business_name", func(c *gin.Context) {
 				controller.GetPlannerByBusiness(c, service)
 			})
+			planner.GET("/planners/guest/client/:id", func(c *gin.Context) {
+				controller.GetGuestClientPlanners(c, service)
+			})
 		}
 	}
 	// retorna rota

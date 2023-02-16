@@ -211,3 +211,29 @@ func GetPlannerByBusiness(c *gin.Context, service service.PlannerServiceInterfac
 	c.JSON(http.StatusOK, planner)
 
 }
+
+func GetGuestClientPlanners(c *gin.Context, service service.PlannerServiceInterface) {
+	ID := c.Param("id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/business/guest/client/:id",
+		})
+		return
+	}
+
+	tags, err := service.GetGuestClientPlanners(&newID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/business/guest/client/:id",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, tags)
+}
