@@ -117,7 +117,6 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) uint64 {
 	return uint64(lastId)
 }
 
-// Função
 func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
@@ -139,7 +138,6 @@ func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 
 }
 
-// Função
 func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
