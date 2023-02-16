@@ -477,7 +477,6 @@ func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdat
 		fmt.Println(err.Error())
 	}
 
-	// stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
 	stmt, err := database.Prepare("UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -505,13 +504,26 @@ func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdat
 		return 0, errors.New("error rowAffected update into database")
 	}
 
-	//ID, _ := result.LastInsertId()
 	planner.ID = uint64(ID)
 
-	stmt, err = database.Prepare("INSERT INTO tblEngagementPlannerGuestInvite (client_id, planner_id)  VALUES (?, ?)")
+	stmt, err = database.Prepare("DELETE FROM tblEngagementPlannerGuestInvite WHERE planner_id = ?")
 	if err != nil {
-		return 0, errors.New("error in prepare planner statement")
+		return 0, errors.New("error prepare delete guest on planner")
 	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(ID)
+	if err != nil {
+		return 0, errors.New("error exec statement exec on client train")
+	}
+
+	stmt, err = database.Prepare("INSERT IGNORE tblEngagementPlannerGuestInvite SET client_id = ?, planner_id = ?")
+	if err != nil {
+		return 0, errors.New("error insert a new row on guest and planner")
+	}
+
+	defer stmt.Close()
 
 	for _, guest := range planner.Guest {
 		_, err := stmt.Exec(guest.ID, planner.ID)
@@ -521,5 +533,4 @@ func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdat
 	}
 
 	return uint64(plannerID), nil
-
 }
