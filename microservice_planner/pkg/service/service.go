@@ -320,6 +320,10 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 				lista_users.List = append(lista_users.List, &user)
 			}
 		}
+
+		user := entity.User{}
+		user.ID = uint64(*ID)
+		lista_users.List = append(lista_users.List, &user)
 	}
 
 	// fecha linha da query, quando sair da função
