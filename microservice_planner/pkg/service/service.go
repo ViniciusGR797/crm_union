@@ -498,7 +498,8 @@ func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdat
 		planner.Client,
 		planner.Release,
 		planner.User,
-		statusID, ID)
+		planner.Status,
+		ID)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
