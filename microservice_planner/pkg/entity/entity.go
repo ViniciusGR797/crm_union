@@ -18,6 +18,7 @@ type Planner struct {
 	Duration   uint64   `json:"duration,omitempty"`
 	Subject    string   `json:"subject,omitempty"`
 	Client     string   `json:"client,omitempty"`
+	Business   string   `json:"business,omitempty"`
 	Release    string   `json:"release,omitempty"`
 	User       string   `json:"user,omitempty"`
 	Status     string   `json:"status"`

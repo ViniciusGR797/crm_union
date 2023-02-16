@@ -193,3 +193,21 @@ func GetSubmissivePlanners(c *gin.Context, service service.PlannerServiceInterfa
 	// Retorno json com planner
 	c.JSON(http.StatusOK, list)
 }
+
+func GetPlannerByBusiness(c *gin.Context, service service.PlannerServiceInterface) {
+
+	name := c.Param("name")
+
+	planner, err := service.GetPlannerByBusiness(&name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/planners/business/:business_name",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, planner)
+
+}

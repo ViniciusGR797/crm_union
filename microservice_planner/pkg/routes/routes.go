@@ -28,6 +28,10 @@ func ConfigRoutes(router *gin.Engine, service service.PlannerServiceInterface) *
 			planner.GET("planners/submissives", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetSubmissivePlanners(c, service)
 			})
+
+			planner.GET("/planners/business/:business_name", func(c *gin.Context) {
+				controller.GetPlannerByBusiness(c, service)
+			})
 		}
 	}
 	// retorna rota
