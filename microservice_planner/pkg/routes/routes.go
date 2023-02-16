@@ -21,7 +21,7 @@ func ConfigRoutes(router *gin.Engine, service service.PlannerServiceInterface) *
 			planner.POST("/planners", func(c *gin.Context) {
 				controller.CreatePlanner(c, service)
 			})
-			planner.GET("/planners/name/:name", func(c *gin.Context) {
+			planner.GET("/planners/name/:name", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetPlannerByName(c, service)
 			})
 			// Rota que retorna lista de planners (GET que dispara método GetSubmissivePlanners controller)

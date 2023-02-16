@@ -74,7 +74,7 @@ func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 func GetPlannerByName(c *gin.Context, service service.PlannerServiceInterface) {
 
 	// Pega name passada como parâmetro na URL da rota
-	name := c.Param("name")
+	/*name := c.Param("name")
 
 	// Chama método GetPlannerByName passando name como parâmetro
 	list, err := service.GetPlannerByName(&name)
@@ -96,6 +96,55 @@ func GetPlannerByName(c *gin.Context, service service.PlannerServiceInterface) {
 
 	// Retorno json com Planner
 	c.JSON(http.StatusOK, list)
+	*/
+
+	// Pega name passada como parâmetro na URL da rota
+	name := c.Param("name")
+
+	// Pega permissões do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id passada como token na rota
+	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Pega level passada como token na rota
+	level, err := strconv.Atoi(fmt.Sprint(permissions["level"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Chama método GetSubmissivePlanners passando id e level como parâmetro
+	list, err := service.GetPlannerByName(&id, level, &name)
+	// Verifica se teve erro ao buscar planners no banco
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not fetch planners",
+		})
+		return
+	}
+	// Verifica se a lista de planners tem tamanho zero (caso for user não tem planners submissive)
+	if len(list.List) == 0 {
+		c.Status(http.StatusNoContent)
+		return
+	}
+
+	// Retorno json com planner
+	c.JSON(http.StatusOK, list)
+
 }
 
 // Função que chama método GetSubmissivePlanners do service e retorna json com planners
