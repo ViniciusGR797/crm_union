@@ -64,6 +64,26 @@ type PlannerList struct {
 	List []*Planner `json:"list"`
 }
 
+// Estrutura de dados de groupID
+type GroupID struct {
+	ID uint64
+}
+
+// Estrutura de dados para lista de groupID
+type GroupIDList struct {
+	List []*GroupID
+}
+
+// Estrutura de dados de User
+type User struct {
+	ID uint64
+}
+
+// Estrutura de dados para lista de Users
+type UserList struct {
+	List []*User
+}
+
 // Método de PlannerList - retorna string com json da lista de planners ou erro
 func (pl *PlannerList) String() string {
 	data, err := json.Marshal(pl)

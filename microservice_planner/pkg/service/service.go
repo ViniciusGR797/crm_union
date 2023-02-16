@@ -14,6 +14,8 @@ type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
 	GetPlannerByID(ID *uint64) (*entity.Planner, error)
 	CreatePlanner(planner *entity.PlannerUpdate) error
+	GetPlannerByName(name *string) (*entity.PlannerList, error)
+	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -120,4 +122,180 @@ func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate) error {
 
 	return nil
 
+}
+
+func (ps *Planner_service) GetPlannerByName(name *string) (*entity.PlannerList, error) {
+	//nameString := fmt.Sprint("%", *name, "%")
+	nameString := fmt.Sprint(*name)
+	query := "SELECT * FROM vwGetAllPlanners WHERE planner_subject = ?"
+
+	// pega database
+	database := ps.dbp.GetDB()
+
+	rows, err := database.Query(query, nameString)
+	if err != nil {
+		log.Println(err.Error())
+		return &entity.PlannerList{}, errors.New("error fetching Planners")
+	}
+
+	defer rows.Close()
+
+	list_Planners := &entity.PlannerList{}
+
+	for rows.Next() {
+		planner := entity.Planner{}
+
+		if err := rows.Scan(
+			&planner.ID,
+			&planner.Name,
+			&planner.Date,
+			&planner.Duration,
+			&planner.Subject,
+			&planner.Client,
+			&planner.Release,
+			&planner.User,
+			&planner.Created_At,
+			&planner.Status); err != nil {
+			return &entity.PlannerList{}, errors.New("error scanning rows")
+		}
+
+		rowsGuest, err := database.Query("SELECT C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.Name)
+		if err != nil {
+			return &entity.PlannerList{}, errors.New("error fetching clients from planner by name")
+		}
+
+		var guest []entity.Client
+
+		for rowsGuest.Next() {
+			client := entity.Client{}
+
+			if err := rowsGuest.Scan(&client.Name); err != nil {
+				return &entity.PlannerList{}, errors.New("error scanning guest from planners by name")
+			} else {
+				guest = append(guest, client)
+			}
+
+		}
+		planner.Guest = guest
+
+		list_Planners.List = append(list_Planners.List, &planner)
+
+	}
+
+	return list_Planners, nil
+}
+
+// Função que retorna lista de users
+func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error) {
+	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
+
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// manda uma query para ser executada no database
+	rows, err := database.Query(query, ID)
+	// verifica se teve erro
+	if err != nil {
+		return &entity.PlannerList{}, errors.New("error fetching user's groups")
+	}
+
+	// variável do tipo UserList (vazia)
+	groupIDList := &entity.GroupIDList{}
+
+	// Pega todo resultado da query linha por linha
+	for rows.Next() {
+		// variável do tipo User (vazia)
+		groupID := entity.GroupID{}
+
+		// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&groupID.ID); err != nil {
+			return &entity.PlannerList{}, errors.New("error scan user's groups")
+		} else {
+			// caso não tenha erro, adiciona a lista de users
+			groupIDList.List = append(groupIDList.List, &groupID)
+		}
+	}
+
+	// variável do tipo UserList (vazia)
+	lista_users := &entity.UserList{}
+
+	for _, groupID := range groupIDList.List {
+		query := "SELECT DISTINCT U.user_id FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id WHERE UG.group_id = ? AND U.user_level < ?"
+
+		// manda uma query para ser executada no database
+		rows, err := database.Query(query, groupID.ID, level)
+		// verifica se teve erro
+		if err != nil {
+			return &entity.PlannerList{}, errors.New("error fetching users")
+		}
+
+		// Pega todo resultado da query linha por linha
+		for rows.Next() {
+			// variável do tipo User (vazia)
+			user := entity.User{}
+
+			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
+			if err := rows.Scan(&user.ID); err != nil {
+				return &entity.PlannerList{}, errors.New("error scan users")
+			} else {
+				// caso não tenha erro, adiciona a lista de users
+				lista_users.List = append(lista_users.List, &user)
+			}
+		}
+	}
+
+	// fecha linha da query, quando sair da função
+	defer rows.Close()
+
+	// variável do tipo PlannerList (vazia)
+	lista_planners := &entity.PlannerList{}
+
+	for _, userID := range lista_users.List {
+		query := "SELECT P.planner_id, P.planner_subject, P.planner_date, P.planner_duration, SU.subject_title, C.client_name, R.release_name, U.user_name, P.created_at, S.status_description FROM tblPlanner P INNER JOIN tblSubject SU ON P.subject_id = SU.subject_id INNER JOIN tblClient C ON P.client_id = C.client_id INNER JOIN tblReleaseTrain R ON P.release_id = R.release_id INNER JOIN tblUser U ON P.user_id = U.user_id INNER JOIN tblStatus S ON P.status_id = S.status_id WHERE P.user_id = ?"
+
+		// manda uma query para ser executada no database
+		rows, err := database.Query(query, userID.ID)
+		// verifica se teve erro
+		if err != nil {
+			return &entity.PlannerList{}, errors.New("error fetching planners")
+		}
+
+		// Pega todo resultado da query linha por linha
+		for rows.Next() {
+			// variável do tipo User (vazia)
+			planner := entity.Planner{}
+
+			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
+			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject, &planner.Client, &planner.Release, &planner.User, &planner.Created_At, &planner.Status); err != nil {
+				return &entity.PlannerList{}, errors.New("error scan planners")
+			} else {
+				// caso não tenha erro, adiciona a lista de users
+				lista_planners.List = append(lista_planners.List, &planner)
+			}
+		}
+	}
+
+	for _, planner := range lista_planners.List {
+		rowsGuest, err := database.Query("SELECT C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+		if err != nil {
+			return &entity.PlannerList{}, errors.New("error fetching guests")
+		}
+
+		var guest []entity.Client
+
+		for rowsGuest.Next() {
+			client := entity.Client{}
+
+			if err := rowsGuest.Scan(&client.Name); err != nil {
+				return &entity.PlannerList{}, errors.New("error scan guests")
+			} else {
+				guest = append(guest, client)
+			}
+
+		}
+		planner.Guest = guest
+	}
+
+	// retorna lista de users
+	return lista_planners, nil
 }
