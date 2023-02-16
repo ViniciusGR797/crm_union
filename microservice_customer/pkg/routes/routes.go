@@ -20,13 +20,13 @@ func ConfigRoutes(router *gin.Engine, service service.CustomerServiceInterface) 
 			customer.GET("/customer/:id", func(c *gin.Context) {
 				controller.GetCustomerByID(c, service)
 			})
-			customer.POST("/Customer/create", func(c *gin.Context) {
+			customer.POST("/customer/create", func(c *gin.Context) {
 				controller.CreateCustomer(c, service)
 			})
 			customer.PUT("/customer/update/:id", func(c *gin.Context) {
 				controller.UpdateCustomer(c, service)
 			})
-			customer.PUT("/customer/SoftDelete/:id", func(c *gin.Context) {
+			customer.PUT("/customer/softDelete/:id", func(c *gin.Context) {
 				controller.SoftDeleteCustomer(c, service)
 			})
 
