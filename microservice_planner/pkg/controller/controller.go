@@ -237,3 +237,56 @@ func GetGuestClientPlanners(c *gin.Context, service service.PlannerServiceInterf
 
 	c.JSON(http.StatusOK, tags)
 }
+
+func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
+	ID := c.Param("id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/planners/update/:id",
+		})
+		return
+	}
+
+	// Cria variável do tipo Planner (inicialmente vazia)
+	var planner *entity.PlannerUpdate
+
+	// Converte json em Planner
+	err = c.ShouldBind(&planner)
+	// Verifica se tem erro
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusBadRequest,
+			"path":    "/planner",
+		})
+		return
+	}
+
+	_, err = service.UpdatePlanner(newID, planner)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/planner",
+		})
+		return
+	}
+
+	plannerUpdated, err := service.GetPlannerByID(&newID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/planners/:id",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, plannerUpdated)
+
+	//// Retorno json com o Planner
+	//c.Status(http.StatusNoContent)
+}

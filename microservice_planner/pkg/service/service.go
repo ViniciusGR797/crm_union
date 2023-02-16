@@ -18,6 +18,7 @@ type PlannerServiceInterface interface {
 	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
 	GetPlannerByBusiness(name *string) (*entity.PlannerList, error)
 	GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error)
+	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate) (uint64, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -36,7 +37,7 @@ func NewPlannerService(dabase_pool database.DatabaseInterface) *Planner_service 
 func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("git pu")
+	stmt, err := database.Prepare("SELECT DISTINCT * FROM vwGetAllPlanners WHERE planner_id = ?")
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -387,7 +388,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 	nameString := fmt.Sprint("%", *name, "%")
 
 	// Consulta SQL
-	query := "SELECT DISTINCT p.*, b.business_name FROM vwGetAllPlanners p INNER JOIN tblReleaseTrain r ON p.release_name = r.release_name INNER JOIN tblBusiness b ON r.business_id = b.business_id WHERE b.business_name LIKE ? ORDER BY b.business_name"
+	query := "SELECT DISTINCT * FROM vwGetAllPlanners WHERE business_name LIKE ? ORDER BY business_name"
 
 	// Atribui o banco de dados
 	database := ps.dbp.GetDB()
@@ -461,4 +462,68 @@ func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client,
 	}
 
 	return guests, nil
+}
+
+func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate) (uint64, error) {
+
+	database := ps.dbp.GetDB()
+
+	var statusID uint64
+
+	rowStatus, err := database.Query("SELECT status_id FROM tblStatus WHERE status_dominio = 'PLANNER' AND status_description = 'SCHEDULED'")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	rowStatus.Next()
+
+	if err := rowStatus.Scan(&statusID); err != nil {
+		fmt.Println(err.Error())
+	}
+
+	// stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := database.Prepare("UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer stmt.Close()
+
+	var plannerID int64
+
+	result, err := stmt.Exec(
+		planner.Name,
+		planner.Date,
+		planner.Duration,
+		planner.Subject,
+		planner.Client,
+		planner.Release,
+		planner.User,
+		statusID, ID)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	plannerID, err = result.RowsAffected()
+	if err != nil {
+		return 0, errors.New("error rowAffected update into database")
+	}
+
+	//ID, _ := result.LastInsertId()
+	planner.ID = uint64(ID)
+
+	stmt, err = database.Prepare("INSERT INTO tblEngagementPlannerGuestInvite (client_id, planner_id)  VALUES (?, ?)")
+	if err != nil {
+		return 0, errors.New("error in prepare planner statement")
+	}
+
+	for _, guest := range planner.Guest {
+		_, err := stmt.Exec(guest.ID, planner.ID)
+		if err != nil {
+			return 0, errors.New("planner guest error")
+		}
+	}
+
+	return uint64(plannerID), nil
+
 }
