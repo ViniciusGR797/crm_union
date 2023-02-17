@@ -25,6 +25,7 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Subject_service {
 	}
 }
 
+// GetSubjectList retorna uma lista de Subjects de um determinado usuario
 func (s *Subject_service) GetSubjectList(id uint64) (*entity.Subject_list, error) {
 
 	database := s.dbp.GetDB()
@@ -73,6 +74,7 @@ func (s *Subject_service) GetSubjectList(id uint64) (*entity.Subject_list, error
 
 }
 
+// GetSubject retorna um Subject pelo id
 func (s *Subject_service) GetSubject(id uint64) (*entity.SubjectID, error) {
 
 	database := s.dbp.GetDB()
@@ -120,6 +122,7 @@ func (s *Subject_service) GetSubject(id uint64) (*entity.SubjectID, error) {
 
 }
 
+// pdateStatusSubjectFinished atualiza o status de um Subject para FINISHED
 func (s *Subject_service) UpdateStatusSubjectFinished(id uint64) (int64, error) {
 
 	database := s.dbp.GetDB()
@@ -167,6 +170,7 @@ func (s *Subject_service) UpdateStatusSubjectFinished(id uint64) (int64, error) 
 
 }
 
+// UpdateStatusSubjectCanceled atualiza o status de um Subject para CANCELED
 func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64) (int64, error) {
 
 	database := s.dbp.GetDB()
@@ -214,6 +218,7 @@ func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64) (int64, error) 
 
 }
 
+// CreateSubject cria um novo Subject
 func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64) (*entity.SubjectID, error) {
 
 	database := s.dbp.GetDB()
@@ -280,6 +285,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 
 }
 
+// UpdateSubject atualiza um Subject
 func (s *Subject_service) UpdateSubject(id uint64, subject *entity.UpdateSubject) (int64, error) {
 
 	database := s.dbp.GetDB()

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// rota 100% funcional
+// GetGroups lista todos os grupos do usuario
 func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 
 	id := c.Param("id")
@@ -33,6 +33,7 @@ func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 	c.JSON(200, list)
 }
 
+// GetGroupByID lista um grupo pelo id
 func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
 	id := c.Param("id")
 
@@ -57,7 +58,7 @@ func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
 	c.JSON(200, group)
 }
 
-// rota 100%
+// UpdateStatusGroup altera o status do grupo para ativo ou inativo
 func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 	id := c.Param("id")
@@ -95,6 +96,7 @@ func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 }
 
+// GetUsersGroup lista todos os usuarios do grupo
 func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 	id := c.Param("id")
 
@@ -121,6 +123,7 @@ func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 	c.JSON(200, UserGroup)
 }
 
+// CreateGroup cria um novo grupo
 func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 	var group entity.CreateGroup
@@ -138,7 +141,7 @@ func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 }
 
-// insert user_list in group
+// AttachUserGroup adiciona um ou varios  usuario ao grupo
 func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 	id := c.Param("id")
@@ -171,6 +174,7 @@ func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 	c.JSON(200, group)
 }
 
+// DetachUserGroup remove um ou varios  usuario do grupo
 func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 	id := c.Param("id")
 
@@ -204,6 +208,7 @@ func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 	c.JSON(200, group)
 }
 
+// CountUsersGroup conta a quantidade de usuarios do grupo
 func CountUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 	id := c.Param("id")
