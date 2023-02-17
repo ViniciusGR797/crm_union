@@ -11,12 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewToken(userID uint64, level uint) (string, error) {
+func NewToken(userID uint64, level uint, status string) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
-	permissions["level"] = level
 	permissions["exp"] = time.Now().Add(time.Hour * 6).Unix()
 	permissions["userID"] = userID
+	permissions["level"] = level
+	permissions["status"] = status
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissions)
 	return token.SignedString([]byte(config.Secret))
@@ -26,11 +27,18 @@ func ValidateToken(token string) error {
 	_, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		_, isValid := t.Method.(*jwt.SigningMethodHMAC)
 		if !isValid {
+
 			return nil, errors.New("invalid token: " + token)
 		}
 
 		return []byte(config.Secret), nil
 	})
+	if err != nil {
+		return err
+	}
+
+	err = IsActive(token)
+
 	return err
 }
 
@@ -86,6 +94,24 @@ func GetPermissions(c *gin.Context) (jwt.MapClaims, error) {
 	}
 
 	return permissions, nil
+}
+
+// Função que verifica se o user é ATIVO, se for retorna nil, senão retorna erro
+func IsActive(token string) error {
+	// pega permissões do token
+	permissions, err := ExtractToken(token)
+	if err != nil {
+		return errors.New("error getting permissions")
+	}
+	// Pega status nas permissões do token
+	status := fmt.Sprint(permissions["status"])
+
+	// Verifica se o user é está ativo
+	if status == "ATIVO" {
+		return nil
+	} else {
+		return errors.New("inactive user")
+	}
 }
 
 // Função que verifica se o user é um Adm, se for retorna nil, senão retorna erro

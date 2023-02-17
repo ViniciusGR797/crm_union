@@ -414,7 +414,7 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	// Gera token com base no ID do user logado com sucesso
-	token, err := security.NewToken(user.ID, user.Level)
+	token, err := security.NewToken(user.ID, user.Level, user.Status)
 	// Verifica se teve erro ao gerar o token
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
