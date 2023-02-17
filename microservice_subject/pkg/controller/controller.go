@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetSubjectList retorna uma lista de Subjects de um determinado usuario
 func GetSubjectList(c *gin.Context, service service.SubjectServiceInterface) {
 
 	id := c.Param("id")
@@ -30,6 +31,7 @@ func GetSubjectList(c *gin.Context, service service.SubjectServiceInterface) {
 
 }
 
+// GetSubject retorna um Subject pelo id
 func GetSubject(c *gin.Context, service service.SubjectServiceInterface) {
 
 	id := c.Param("id")
@@ -52,6 +54,7 @@ func GetSubject(c *gin.Context, service service.SubjectServiceInterface) {
 
 }
 
+// UpdateStatusSubjectFinished atualiza o status de um Subject para "finished" pelo id
 func UpdateStatusSubjectFinished(c *gin.Context, service service.SubjectServiceInterface) {
 
 	id := c.Param("id")
@@ -78,6 +81,7 @@ func UpdateStatusSubjectFinished(c *gin.Context, service service.SubjectServiceI
 
 }
 
+// UpdateStatusSubjectCanceled atualiza o status de um Subject para "canceled" pelo id
 func UpdateStatusSubjectCanceled(c *gin.Context, service service.SubjectServiceInterface) {
 
 	id := c.Param("id")
@@ -104,7 +108,7 @@ func UpdateStatusSubjectCanceled(c *gin.Context, service service.SubjectServiceI
 
 }
 
-// create a new subject
+// CreateSubject cria um novo Subject
 func CreateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 
 	id := c.Param("id")
@@ -132,6 +136,7 @@ func CreateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 
 }
 
+// UpdateSubject atualiza um Subject
 func UpdateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 
 	id := c.Param("id")

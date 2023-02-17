@@ -31,6 +31,7 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Group_service {
 	}
 }
 
+// GetGroups retorna todos os grupos do usuario
 func (ps *Group_service) GetGroups(id uint64) (*entity.GroupList, error) {
 
 	database := ps.dbp.GetDB()
@@ -79,6 +80,7 @@ func (ps *Group_service) GetGroups(id uint64) (*entity.GroupList, error) {
 
 }
 
+// GetGroupByID retorna um grupo pelo id
 func (ps *Group_service) GetGroupByID(id uint64) (*entity.GroupID, error) {
 
 	database := ps.dbp.GetDB()
@@ -131,6 +133,7 @@ func (ps *Group_service) GetGroupByID(id uint64) (*entity.GroupID, error) {
 
 }
 
+// UpdateStatusGroup atualiza o status do grupo  ATIVO/INATIVO
 func (ps *Group_service) UpdateStatusGroup(id uint64) (int64, error) {
 	database := ps.dbp.GetDB()
 
@@ -206,6 +209,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64) (int64, error) {
 	return 0, nil
 }
 
+// GetUsersGroup retorna todos os usuarios do grupo
 func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
 
 	database := ps.dbp.GetDB()
@@ -248,6 +252,7 @@ func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
 
 }
 
+// CreateGroup cria um novo grupo
 func (ps *Group_service) CreateGroup(group *entity.CreateGroup) (int64, error) {
 
 	database := ps.dbp.GetDB()
@@ -297,6 +302,7 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup) (int64, error) {
 
 }
 
+// AttachUserGroup adiciona usuarios ao grupo
 func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64) (int64, error) {
 
 	database := ps.dbp.GetDB()
@@ -320,6 +326,7 @@ func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64) (
 
 }
 
+// DetachUserGroup remove usuarios do grupo
 func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64) (int64, error) {
 
 	database := ps.dbp.GetDB()
@@ -343,7 +350,7 @@ func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64) (
 
 }
 
-// count users in group
+// CountUsersGroup retorna a quantidade de usuarios do grupo
 func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, error) {
 
 	database := ps.dbp.GetDB()
