@@ -38,9 +38,9 @@ func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	// Chama método GetUsers e retorna release
+	// Chama método GetUsers e retorna business
 	business, err := service.GetBusinessById(newId)
-	// Verifica se a release está vazia
+	// Verifica se a business está vazia
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -49,8 +49,8 @@ func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 		})
 		return
 	}
-  
-	//retorna sucesso 200 e retorna json da lista de users
+
+	//retorna sucesso 200 e retorna json da lista de business
 	c.JSON(http.StatusOK, business)
 }
 
@@ -184,6 +184,7 @@ func GetBusinessByName(c *gin.Context, service service.BusinessServiceInterface)
 	c.JSON(http.StatusOK, list)
 }
 
+// GetTagsBusiness interage com o service de Business e taz as tags de um business
 func GetTagsBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	ID := c.Param("id")
 

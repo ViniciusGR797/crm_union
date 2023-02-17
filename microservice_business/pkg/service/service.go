@@ -21,19 +21,19 @@ type BusinessServiceInterface interface {
 	InsertTagsBusiness(ID uint64, tags []entity.Tag) error
 }
 
-// Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
+// Business_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
 type Business_service struct {
 	dbp database.DatabaseInterface
 }
 
-// Cria novo serviço de CRUD para pool de conexão
+// NewBusinessService Cria um novo serviço de CRUD para pool de conexão
 func NewBusinessService(dabase_pool database.DatabaseInterface) *Business_service {
 	return &Business_service{
 		dabase_pool,
 	}
 }
 
-// GetBusiness implements BusinessServiceInterface
+// GetBusiness traz todos os Business do banco de dados
 func (ps *Business_service) GetBusiness() *entity.BusinessList {
 
 	database := ps.dbp.GetDB()
@@ -81,7 +81,7 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 
 }
 
-// GetBusinessById retorna um business do banco
+// GetBusinessById traz um usuario no banco de dados pelo ID do mesmo
 func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error) {
 
 	database := ps.dbp.GetDB()
@@ -122,7 +122,7 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 	return Business, nil
 }
 
-// CreateBusiness cria um business no banco
+// CreateBusiness cria um Business no banco de dados
 func (ps *Business_service) CreateBusiness(business *entity.Business_Update) error {
 
 	database := ps.dbp.GetDB()
@@ -163,7 +163,7 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update) err
 
 }
 
-// UpdateBusiness atualiza um business no banco
+// UpdateBusiness atualiza os dados de um Bussines no banco pelo ID do mesmo
 func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update) (uint64, error) {
 	database := ps.dbp.GetDB()
 
@@ -192,11 +192,11 @@ func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_
 			return 0, errors.New("error in update business tags statement")
 		}
 	}
-  
+
 	return uint64(businessID), nil
 }
 
-// UpdateStatusBusiness faz um soft delete de um business
+// UpdateStatusBusiness altera o status de um usuario no banco
 func (ps *Business_service) UpdateStatusBusiness(ID *uint64) int64 {
 	database := ps.dbp.GetDB()
 
@@ -250,7 +250,7 @@ func (ps *Business_service) UpdateStatusBusiness(ID *uint64) int64 {
 	return rowsaff
 }
 
-// GetBusinessByName busca um business pelo nome
+// GetBusinessByName busca Business no banco de dados pelo nome passado como parâmetro no query.
 func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessList, error) {
 	nameString := fmt.Sprint("%", *name, "%")
 	query := "SELECT DISTINCT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id WHERE b.business_name LIKE ? ORDER BY b.business_name"
@@ -305,8 +305,7 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	return list_Business, nil
 }
 
-
-// InsertTagsBusiness insere tags na business
+// InsertTagsBusiness insere tags na Business
 func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) error {
 	database := ps.dbp.GetDB()
 
@@ -340,7 +339,7 @@ func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) err
 	return nil
 }
 
-// GetTagsBusiness busca as tags de business
+// GetTagsBusiness busca as tags de Business
 func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
 
