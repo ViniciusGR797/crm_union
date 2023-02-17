@@ -12,12 +12,12 @@ type ClienteInteface interface {
 
 // Estrutura de dados de Client
 type Client struct {
-	ID                 uint64    `json:"client_id,omitempty"`
-	Name               string    `json:"client_name,omitempty"`
-	Email              string    `json:"client_email,omitempty"`
-	Role               string    `json:"client_role,omitempty"`
-	Customer_Name      string    `json:"customer_name,omitempty"`
-	Release_Name       string    `json:"release_name,omitempty"`
+	ID                 uint64 `json:"client_id,omitempty"`
+	Name               string `json:"client_name,omitempty"`
+	Email              string `json:"client_email,omitempty"`
+	Role               string `json:"client_role,omitempty"`
+	Customer_Name      string `json:"customer_name,omitempty"`
+	Release            `json:"release,omitempty"`
 	Business_Name      string    `json:"business_name,omitempty"`
 	User_Name          string    `json:"user_name,omitempty"`
 	Created_At         time.Time `json:"created_at,omitempty"`
@@ -25,13 +25,21 @@ type Client struct {
 	Tags               []Tag     `json:"tags,omitempty"`
 }
 
+// Estrutura de dados de uma tag
 type Tag struct {
 	Tag_ID   uint64 `json:"tag_id,omitempty"`
 	Tag_Name string `json:"tag_name,omitempty"`
 }
 
+// Estrutura de dados de uma lista de tags
 type TagList struct {
 	Tags *[]Tag `json:"tags,omitempty"`
+}
+
+// Estrutura de dados de Release
+type Release struct {
+	Release_ID   uint64 `json:"release_id,omitempty"`
+	Release_Name string `json:"release_name,omitempty"`
 }
 
 // Estrutura de dados de Client para softdelete, create e update
@@ -44,7 +52,6 @@ type ClientUpdate struct {
 	Release_ID  uint64 `json:"release_id,omitempty"`
 	Business_ID uint64 `json:"business_id,omitempty"`
 	User_ID     uint64 `json:"user_id,omitempty"`
-	Status_ID   uint64 `json:"status_id,omitempty"`
 	Tags        []Tag  `json:"tags,omitempty"`
 }
 

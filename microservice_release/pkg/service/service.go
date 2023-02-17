@@ -44,8 +44,9 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 	defer rows.Close()
 
 	list_release := &entity.ReleaseList{}
-
+	hasResult := false
 	for rows.Next() {
+		hasResult = true
 		release := entity.Release{}
 
 		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description); err != nil {
@@ -72,6 +73,9 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 
 			list_release.List = append(list_release.List, &release)
 		}
+	}
+	if !hasResult {
+		return nil, errors.New("release not found")
 	}
 
 	return list_release, nil

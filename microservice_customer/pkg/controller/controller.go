@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"fmt"
 	"microservice_customer/pkg/entity"
 	"microservice_customer/pkg/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -12,15 +12,12 @@ import (
 // Função que chama método GetCustomer do service e retorna json com lista
 func GetAllCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
-	lista := service.GetAllCustomer()
-	if len(lista.List) == 0 {
-		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
-		})
+	lista, err := service.GetAllCustomer()
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
 	}
-	fmt.Printf("tudo certo")
-	c.JSON(200, lista)
+	c.JSON(http.StatusOK, lista)
 }
 
 // buscar customer por ID
@@ -30,21 +27,17 @@ func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
 
 	newID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	produto := service.GetCustomerByID(&newID)
-	if produto.ID == 0 {
-		c.JSON(404, gin.H{
-			"error": "produto not found, 404",
-		})
+	customer, err := service.GetCustomerByID(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, err)
 		return
 	}
 
-	c.JSON(200, produto)
+	c.JSON(http.StatusOK, customer)
 
 }
 
@@ -53,21 +46,17 @@ func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 	var customer *entity.Customer
 	err := c.ShouldBindJSON(&customer)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bind JSON customer" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	id := service.CreateCustomer(customer)
-	if id == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot create JSON: " + err.Error(),
-		})
+	err = service.CreateCustomer(customer)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
 	}
 
-	customer = service.GetCustomerByID(&id)
-	c.JSON(200, customer)
+	c.JSON(http.StatusNoContent, nil)
 }
 
 func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
@@ -77,30 +66,22 @@ func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
 	newID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "Id has to be integer, 400" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	err = c.ShouldBind(&customer)
+	err = c.ShouldBindJSON(&customer)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bin JSON customer, 400" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusUnprocessableEntity, c.Request.URL.Path, err)
 		return
 	}
 
-	idResult := service.UpdateCustomer(&newID, customer)
-	if idResult == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
-		})
+	err = service.UpdateCustomer(&newID, customer)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
 	}
-
-	customer = service.GetCustomerByID(&newID)
-	c.JSON(200, customer)
+	c.JSON(http.StatusNoContent, nil)
 
 }
 
@@ -109,21 +90,30 @@ func SoftDeleteCustomer(c *gin.Context, service service.CustomerServiceInterface
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
+
+	}
+
+	err = service.SoftDeleteCustomer(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	result := service.SoftDeleteCustomer(&newID)
-	if result == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
-		})
-		return
-	}
-
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"response": "Customer Status Updated",
+	})
+}
+func JSONMessenger(c *gin.Context, status int, path string, err error) {
+	errorMessage := ""
+	if err != nil {
+		errorMessage = err.Error()
+	}
+	c.JSON(status, gin.H{
+		"status":  status,
+		"message": errorMessage,
+		"error":   err,
+		"path":    path,
 	})
 }

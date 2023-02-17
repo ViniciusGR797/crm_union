@@ -3,93 +3,71 @@ package controller
 import (
 	"microservice_remark/pkg/entity"
 	"microservice_remark/pkg/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-// Função que chama método GetRemark do service e retorna json com lista de users
-// func GetRemark(c *gin.Context, service service.RemarkServiceInterface) {
-// 	// Chama método GetRemark e retorna list de users
-// 	list := service.GetRemark()
-// 	// Verifica se a lista está vazia (tem tamanho zero)
-// 	if len(list.List) == 0 {
-// 		c.JSON(404, gin.H{
-// 			"error": "lista not found, 404",
-// 		})
-// 		return
-// 	}
-// 	//retorna sucesso 200 e retorna json da lista de users
-// 	c.JSON(200, list)
-
-// }
-
+// Função que chama método GetSubmissiveRemark do service e retorna json com lista
 func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("user_ID")
 	NewID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID Has to be interger, 400",
-		})
-	}
-
-	remarks := service.GetSubmissiveRemarks(&NewID)
-	if len(remarks.List) == 0 {
-		c.JSON(404, gin.H{
-			"error": "ID Remark not found, 404",
-		})
-
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
-	c.JSON(200, remarks)
+
+	remarks, err := service.GetSubmissiveRemarks(&NewID)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, remarks)
 
 }
 
+// Função que chama método GetRemarkByID do service e retorna json com um client
 func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("remark_id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID Has to be interger, 400",
-		})
-	}
-
-	remark := service.GetRemarkByID(&newID)
-	if remark == nil {
-		c.JSON(404, gin.H{
-			"error": "ID Remark not found, 404",
-		})
-
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
-	c.JSON(200, remark)
+
+	remark, err := service.GetRemarkByID(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, remark)
 
 }
 
+// Função que cria um Remark
 func CreateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
 	var remark *entity.RemarkUpdate
 
 	err := c.ShouldBindJSON(&remark)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bind JSON remark" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	id := service.CreateRemark(remark)
-	if id == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot create JSON: " + err.Error(),
-		})
-
+	err = service.CreateRemark(remark)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
+		return
 	}
 
-	var remarkCreated *entity.Remark
-	remarkCreated = service.GetRemarkByID(&id)
-	c.JSON(200, remarkCreated)
+	c.JSON(http.StatusNoContent, gin.H{
+		"result": "remark created successfully",
+	})
 }
 
 func GetBarChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
@@ -97,17 +75,12 @@ func GetBarChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID Has to be interger, 400",
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 	}
 
 	remark := service.GetBarChartRemark(&newID)
 	if remark == nil {
-		c.JSON(404, gin.H{
-			"error": "ID Remark not found, 404",
-		})
-
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 	c.JSON(200, remark)
@@ -118,22 +91,18 @@ func GetPieChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID Has to be interger, 400",
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 	}
 
 	remark := service.GetPieChartRemark(&newID)
 	if remark == nil {
-		c.JSON(404, gin.H{
-			"error": "ID Remark not found, 404",
-		})
-
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 	c.JSON(200, remark)
 }
 
+// Função que chama método UpdateStatusRemark do service e realiza o softdelete
 func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("remark_id")
 
@@ -141,30 +110,25 @@ func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) 
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
 	err = c.ShouldBind(&remark)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bin JSON remarkUpdate, 400" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
 	err = service.UpdateStatusRemark(&newID, remark)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": err.Error(),
-		})
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
 	}
 
-	remarkResult := service.GetRemarkByID(&newID)
-	c.JSON(200, remarkResult)
+	c.JSON(http.StatusNoContent, gin.H{
+		"result": "remark_status updated successfully",
+	})
 
 }
 
@@ -176,29 +140,37 @@ func UpdateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
 	newid, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
 	err = c.ShouldBind(&remark)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bin JSON remarkUpdate, 400" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	idResult := service.UpdateRemark(&newid, remark)
-	if idResult == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot update JSON, 400" + err.Error(),
-		})
+	err = service.UpdateRemark(&newid, remark)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
 	}
 
-	remarkResult := service.GetRemarkByID(&newid)
-	c.JSON(200, remarkResult)
+	c.JSON(http.StatusNoContent, gin.H{
+		"result": "remark updated successfully",
+	})
 
+}
+
+func JSONMessenger(c *gin.Context, status int, path string, err error) {
+	errorMessage := ""
+	if err != nil {
+		errorMessage = err.Error()
+	}
+	c.JSON(status, gin.H{
+		"status":  status,
+		"message": errorMessage,
+		"error":   err,
+		"path":    path,
+	})
 }

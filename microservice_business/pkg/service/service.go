@@ -192,7 +192,7 @@ func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_
 			return 0, errors.New("error in update business tags statement")
 		}
 	}
-
+  
 	return uint64(businessID), nil
 }
 
@@ -278,6 +278,7 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 		if err := rows.Scan(&business.Business_id, &business.Business_code, &business.Business_name, &business.BusinessSegment.BusinessSegment_id, &business.BusinessSegment.BusinessSegment_description, &business.Status.Status_id, &business.Status.Status_description); err != nil {
 			return &entity.BusinessList{}, nil
 		} else {
+
 			rowsTags, err := database.Query("SELECT DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", business.Business_id)
 			if err != nil {
 				return &entity.BusinessList{}, nil
@@ -304,6 +305,7 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	return list_Business, nil
 }
 
+
 // InsertTagsBusiness insere tags na business
 func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) error {
 	database := ps.dbp.GetDB()
@@ -317,6 +319,7 @@ func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) err
 
 	_, err = stmt.Exec(ID)
 	if err != nil {
+
 		return errors.New("error exec statement exec on business")
 	}
 

@@ -77,3 +77,9 @@ type Business_Update struct {
 	Status_id  int64  `json:"status_id,omitempty"`
 	Tags       []Tag  `json:"tags,omitempty"`
 }
+
+func NewBusiness(name string) *Business {
+	return &Business{
+		Business_name: name,
+	}
+}
