@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetBusiness função que chama o metodo GetBusiness do service e traz todos os dados de Business do banco em formato de lista
 func GetBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
 	list := service.GetBusiness()
@@ -23,6 +24,7 @@ func GetBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	c.JSON(200, list)
 }
 
+// GetBusinessById função que chama o metodo GetBusinessById do service e traz todos os dados de um Business do banco
 func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 	ID := c.Param("id")
 
@@ -43,7 +45,7 @@ func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 			"code":    http.StatusInternalServerError,
-			"path":    "/releasetrains/id/:releasetrain_id",
+			"path":    "/business/:id",
 		})
 		return
 	}
@@ -52,6 +54,7 @@ func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 	c.JSON(http.StatusOK, business)
 }
 
+// CreateBusiness interage com o service de CreateBusiness e cria um Business no banco e tem o retorno do mesmo criado
 func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	// Cria variável do tipo business (inicialmente vazia)
 	var business *entity.Business_Update
@@ -77,10 +80,12 @@ func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		})
 		return
 	}
+
 	// Retorno json com o business
 	c.Status(http.StatusNoContent)
 }
 
+// UpdateBusiness interage com o service de UpdateBusiness e altera a informações de um Business no banco
 func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	ID := c.Param("id")
 
@@ -106,7 +111,7 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	idResult, err := service.UpdateBusiness(newID, business)
+	_, err = service.UpdateBusiness(newID, business)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -116,17 +121,7 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	_, err = service.InsertTagsBusiness(newID, business.Tags)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-			"code":    http.StatusInternalServerError,
-			"path":    "/business/update/:id",
-		})
-		return
-	}
-
-	businessUpdated, err := service.GetBusinessById(idResult)
+	businessUpdated, err := service.GetBusinessById(newID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -139,7 +134,8 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
 }
 
-func SoftDeleteBusiness(c *gin.Context, service service.BusinessServiceInterface) {
+// UpdateStatusBusiness interage com o service de UpdateStatusBusiness e altera o status de Business no banco
+func UpdateStatusBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 	ID := c.Param("id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -150,7 +146,7 @@ func SoftDeleteBusiness(c *gin.Context, service service.BusinessServiceInterface
 		return
 	}
 
-	result := service.SoftDeleteBusiness(&newID)
+	result := service.UpdateStatusBusiness(&newID)
 	if result == 0 {
 		c.JSON(400, gin.H{
 			"error": "cannot update JSON, 400" + err.Error(),
@@ -163,6 +159,7 @@ func SoftDeleteBusiness(c *gin.Context, service service.BusinessServiceInterface
 	})
 }
 
+// GetBusinessByName interage com o service de GetbusinessByname e traz os dados de business pelo nome pesquisado
 func GetBusinessByName(c *gin.Context, service service.BusinessServiceInterface) {
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("Business_name")

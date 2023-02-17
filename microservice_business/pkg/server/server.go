@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Server estrutura de dados para Server
 type Server struct {
 	// Porta do servidor
 	SRV_PORT string
@@ -18,6 +19,7 @@ type Server struct {
 	SERVER *gin.Engine
 }
 
+// NewServer cria um novo Server
 func NewServer(conf *config.Config) Server {
 	return Server{
 		SRV_PORT: conf.SRV_PORT,
@@ -25,6 +27,7 @@ func NewServer(conf *config.Config) Server {
 	}
 }
 
+// Run sobe um Server
 func Run(router *gin.Engine, server Server, service service.BusinessServiceInterface) {
 	log.Print("Server is running at port: ", server.SRV_PORT)
 
