@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Função que chama método GetReleases do service e retorna json com lista de release
+// GetReleasesTrain Função que chama método GetReleasesTrain do service e retorna json com lista de release
 func GetReleasesTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 
 	list, err := service.GetReleasesTrain()
@@ -25,7 +25,7 @@ func GetReleasesTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 	c.JSON(http.StatusOK, list)
 }
 
-// Função que chama método GetReleseTrainByID do service e retorna json com lista de users
+// GetReleaseTrainByID Função que chama método GetReleseTrainByID do service e retorna json
 func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface) {
 
 	ID := c.Param("releasetrain_id")
@@ -55,6 +55,7 @@ func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface
 	c.JSON(http.StatusOK, release)
 }
 
+// UpdateReleaseTrain Função que chama método UpdateReleaseTrain do service e retorna json
 func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 	ID := c.Param("releasetrain_id")
 
@@ -112,7 +113,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 	c.JSON(http.StatusOK, releaseUpdated)
 }
 
-// Função que chama método GetTagsReleaseTrain do service e retorna json com uma lista de tags do client
+// GetTagsReleaseTrain Função que chama método GetTagsReleaseTrain do service e retorna json
 func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 	ID := c.Param("releasetrain_id")
 
@@ -139,7 +140,7 @@ func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface
 	c.JSON(http.StatusOK, tags)
 }
 
-// Função que chama método UpdateStatusReleaseTrain do service e retorna json com mensagem de sucesso
+// UpdateStatusReleaseTrain Função que chama método UpdateStatusReleaseTrain do service e retorna json
 func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("releasetrain_id")
@@ -173,7 +174,7 @@ func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInte
 	})
 }
 
-// Função que chama método GetReleaseTrainByBusiness do service e retorna json com release
+// GetReleaseTrainByBusiness Função que chama método GetReleaseTrainByBusiness do service e retorna json com release
 func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInterface) {
 	ID := c.Param("business_id")
 
@@ -202,7 +203,7 @@ func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInt
 	c.JSON(http.StatusOK, list)
 }
 
-// Função que chama método CreateReleaseTrain do service e retorna json com mensagem de sucesso
+// CreateReleaseTrain Função que chama método CreateReleaseTrain do service e retorna json com mensagem de sucesso
 func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 	// Cria variável do tipo release (inicialmente vazia)
 	var release *entity.Release_Update
