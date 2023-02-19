@@ -99,7 +99,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 		return &entity.Release{}, errors.New("error scanning rows")
 	}
 
-	rowsTags, err := database.Query("select tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ?", ID)
+	rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name", ID)
 	if err != nil {
 		return &entity.Release{}, errors.New("error fetching tags from release train by id")
 	}
