@@ -55,7 +55,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) (*entity.ClientList, er
 		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description); err != nil {
 			return nil, errors.New("error scan client")
 		} else {
-			rowsTags, err := database.Query("SELECT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ?", client.ID)
+			rowsTags, err := database.Query("SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", client.ID)
 			if err != nil {
 				return nil, errors.New("error get tag")
 			}
@@ -104,7 +104,7 @@ func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
 		return nil, errors.New("client not found")
 	}
 
-	rowsTags, err := database.Query("SELECT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ?", ID)
+	rowsTags, err := database.Query("SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", ID)
 	if err != nil {
 		return nil, errors.New("error get tags")
 	}
@@ -132,7 +132,7 @@ func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
 func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("select T.tag_id, T.tag_name from tblTags T inner join tblClientTag TCT on T.tag_id = TCT.tag_id WHERE client_id = ?")
+	stmt, err := database.Prepare("select DISTINCT T.tag_id, T.tag_name from tblTags T inner join tblClientTag TCT on T.tag_id = TCT.tag_id WHERE client_id = ? ORDER BY T.tag_name")
 	if err != nil {
 		return nil, err
 	}
@@ -217,26 +217,14 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate) error {
 func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate) error {
 	database := ps.dbp.GetDB()
 
-	status, err := database.Prepare("SELECT status_id FROM tblClient WHERE client_id = ?")
-	if err != nil {
-		return err
-	}
-
-	var statusID uint64
-
-	err = status.QueryRow(ID).Scan(&statusID)
-	if err != nil {
-		return errors.New("status not found")
-	}
-
-	stmt, err := database.Prepare("UPDATE tblClient SET client_name = ?, client_email = ?, client_role = ?, customer_id = ?, business_id = ?, user_id = ?, status_id = ? WHERE client_id = ?")
+	stmt, err := database.Prepare("UPDATE tblClient SET client_name = ?, client_email = ?, client_role = ?, customer_id = ?, business_id = ?, user_id = ? WHERE client_id = ?")
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(client.Name, client.Email, client.Role, client.Customer_ID, client.Business_ID, client.User_ID, statusID, ID)
+	result, err := stmt.Exec(client.Name, client.Email, client.Role, client.Customer_ID, client.Business_ID, client.User_ID, ID)
 	if err != nil {
 		return errors.New("unable to update client")
 	}
