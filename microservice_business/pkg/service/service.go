@@ -134,7 +134,7 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update) err
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(business.Code, business.Name, business.Segment_Id, business.Status_id)
+	result, err := stmt.Exec(business.Code, business.Name, business.Segment_Id, 1)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -167,7 +167,7 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update) err
 func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update) (uint64, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ?, status_id = ? WHERE business_id = ?")
+	stmt, err := database.Prepare("UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ? WHERE business_id = ?")
 	if err != nil {
 		return 0, errors.New("error prepare update business")
 	}
@@ -176,7 +176,7 @@ func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_
 
 	var businessID int64
 
-	result, err := stmt.Exec(business.Name, business.Code, business.Segment_Id, business.Status_id, ID)
+	result, err := stmt.Exec(business.Name, business.Code, business.Segment_Id, ID)
 	if err != nil {
 		return 0, errors.New("error exec update business")
 	}
