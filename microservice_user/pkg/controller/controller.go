@@ -402,6 +402,13 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		})
 		return
 	}
+	// Verifica se o user é inativo
+	if user.Status != "ATIVO" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "inactive user",
+		})
+		return
+	}
 
 	// Chama método que compara o hash com a senha, para verificar se são iguais
 	err = security.ValidatePassword(hash, user.Password)
