@@ -13,7 +13,7 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Remark (tudo que tiver os métodos abaixo do CRUD são serviços de Remark)
 type RemarkServiceInterface interface {
 	// Pega todos os Remarks, logo lista todos os Remarks
-	GetSubmissiveRemarks(ID *uint64) (*entity.RemarkList, error)
+	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
 	GetRemarkByID(ID *uint64) (*entity.Remark, error)
 	CreateRemark(remark *entity.RemarkUpdate) error
 	GetBarChartRemark(ID *uint64) *entity.Remark
@@ -35,7 +35,7 @@ func NewRemarkService(dabase_pool database.DatabaseInterface) *remark_service {
 }
 
 // Função que retorna lista de Remarks
-func (ps *remark_service) GetSubmissiveRemarks(ID *uint64) (*entity.RemarkList, error) {
+func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
@@ -110,7 +110,7 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) error {
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, remark.Status_ID)
+	_, err = stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, 21)
 	if err != nil {
 		return errors.New("error insert remark")
 	}
@@ -211,14 +211,14 @@ func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark) 
 func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) error {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("UPDATE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?  WHERE remark_id = ?")
+	stmt, err := database.Prepare("UPDATE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ?  WHERE remark_id = ?")
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, ID)
+	_, err = stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, remark.Status_ID, ID)
 	if err != nil {
 		return errors.New("error update remark")
 	}

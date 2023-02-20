@@ -1,26 +1,36 @@
 package controller
 
 import (
+	"fmt"
 	"microservice_subject/pkg/entity"
+	"microservice_subject/pkg/security"
 	"microservice_subject/pkg/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetSubjectList retorna uma lista de Subjects de um determinado usuario
-func GetSubjectList(c *gin.Context, service service.SubjectServiceInterface) {
-
-	id := c.Param("id")
-
-	newid, err := strconv.ParseUint(id, 10, 64)
-
+// GetSubmissiveSubjects retorna uma lista de Subjects de um determinado usuario
+func GetSubmissiveSubjects(c *gin.Context, service service.SubjectServiceInterface) {
+	// Pega permissões do usuário
+	permissions, err := security.GetPermissions(c)
 	if err != nil {
-		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id passada como token na rota
+	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
-	list, err := service.GetSubjectList(newid)
+	list, err := service.GetSubmissiveSubjects(id)
 
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
@@ -31,8 +41,8 @@ func GetSubjectList(c *gin.Context, service service.SubjectServiceInterface) {
 
 }
 
-// GetSubject retorna um Subject pelo id
-func GetSubject(c *gin.Context, service service.SubjectServiceInterface) {
+// GetSubjectByID retorna um Subject pelo id
+func GetSubjectByID(c *gin.Context, service service.SubjectServiceInterface) {
 
 	id := c.Param("id")
 
@@ -43,7 +53,7 @@ func GetSubject(c *gin.Context, service service.SubjectServiceInterface) {
 		return
 	}
 
-	subject, err := service.GetSubject(newid)
+	subject, err := service.GetSubjectByID(newid)
 
 	if err != nil {
 		JSONMessenger(c, 404, c.Request.URL.Path, err)
