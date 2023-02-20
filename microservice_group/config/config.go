@@ -3,6 +3,8 @@ package config
 import (
 	// Package "os" - usado para manipulação de arquivos
 	"os"
+	// Package "strconv" - implementa conversões de tipos primitivos, ex: String para int
+	"strconv"
 )
 
 const (
@@ -14,16 +16,25 @@ const (
 	PRODUCTION = "production"
 )
 
+var (
+	// Secret - para fazer criptografia de chaves
+	Secret string
+)
+
 // Estrutura para armazenar as configurações da aplicação - Config
 type Config struct {
 	// Porta do servidor - Ex: 8080
 	SRV_PORT string `json:"srv_port"`
-
+	// Web UI (Interface de Usuário Web) - Atividada/Desativada
+	WEB_UI bool `json:"web_ui"`
 	// Modo de uso da API - DEVELOPER, HOMOLOGATION ou PRODUCTION
 	Mode string `json:"mode"`
 	// Abrir o navegador - Atividada/Desativada
+	OpenBrowser bool `json:"open_browser"`
 	// Configurações do DataBase
 	DBConfig `json:"dbconfig"`
+	// Secret de criptografia de Token
+	Secret string `json:"secret"`
 }
 
 // Estrutura para armazenar as configurações do banco de dados - DBConfig
@@ -71,6 +82,13 @@ func NewConfig(config *Config) *Config {
 		conf.Mode = SRV_MODE
 	}
 
+	// Atribui uma variável de ambiente para interface de Usuário Web
+	SRV_WEB_UI := os.Getenv("SRV_WEB_UI")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_WEB_UI != "" {
+		conf.WEB_UI, _ = strconv.ParseBool(SRV_WEB_UI)
+	}
+
 	// Atribui uma variável de ambiente para drive do DataBase
 	SRV_DB_DRIVE := os.Getenv("SRV_DB_DRIVE")
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
@@ -113,6 +131,14 @@ func NewConfig(config *Config) *Config {
 		conf.DBConfig.DB_NAME = SRV_DB_NAME
 	}
 
+	// Atribui uma variável de ambiente para nome do Database
+	SRV_SECRET := os.Getenv("SECRET")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_SECRET != "" {
+		conf.Secret = SRV_SECRET
+		Secret = SRV_SECRET
+	}
+
 	// Retorna a nova configuração
 	return config
 }
@@ -121,7 +147,9 @@ func NewConfig(config *Config) *Config {
 func DefaultConfig() *Config {
 	// Cria e atribui já valores para a configuração padrão
 	default_config := Config{
-		SRV_PORT: "8085",
+		SRV_PORT:    "8087",
+		WEB_UI:      true,
+		OpenBrowser: true,
 		DBConfig: DBConfig{
 			DB_DRIVE: "mysql",
 			DB_HOST:  "localhost",
@@ -130,8 +158,10 @@ func DefaultConfig() *Config {
 			DB_PASS:  "",
 			DB_NAME:  "",
 		},
-		Mode: PRODUCTION,
+		Mode:   PRODUCTION,
+		Secret: "",
 	}
 
+	// retorna o endereço de memória da configuração padrão (aumentar eficiência evitando copias)
 	return &default_config
 }
