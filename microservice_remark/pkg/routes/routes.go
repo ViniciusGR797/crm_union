@@ -20,7 +20,7 @@ func ConfigRoutes(router *gin.Engine, service service.RemarkServiceInterface) *g
 			remarks.GET("/remarks/id/:remark_id", func(c *gin.Context) {
 				controller.GetRemarkByID(c, service)
 			})
-			remarks.POST("/remarks/", func(c *gin.Context) {
+			remarks.POST("/remarks", func(c *gin.Context) {
 				controller.CreateRemark(c, service)
 			})
 			remarks.GET("/remarks/barchart/:user_ID", func(c *gin.Context) {

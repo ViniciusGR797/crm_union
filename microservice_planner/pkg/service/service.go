@@ -472,19 +472,6 @@ func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdat
 
 	database := ps.dbp.GetDB()
 
-	/*var statusID uint64
-
-	rowStatus, err := database.Query("SELECT status_id FROM tblStatus WHERE status_dominio = 'PLANNER' AND status_description = 'SCHEDULED'")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	rowStatus.Next()
-
-	if err := rowStatus.Scan(&statusID); err != nil {
-		fmt.Println(err.Error())
-	}*/
-
 	stmt, err := database.Prepare("UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?")
 	if err != nil {
 		fmt.Println(err.Error())
