@@ -150,6 +150,7 @@ func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 			"message": "group without users",
 		})
 		return
+
 	}
 
 	c.JSON(200, UserGroup)
