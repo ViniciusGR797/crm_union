@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Server é Estrutura de dados para armazenar o servidor HTTP
+// Estrutura de dados para armazenar o servidor HTTP
 type Server struct {
 	// Porta do servidor
 	SRV_PORT string
@@ -20,7 +20,7 @@ type Server struct {
 	SERVER *gin.Engine
 }
 
-// NewServer cria novo servidor HTTP, de acordo com as config passadas por parâmetro
+// Cria novo servidor HTTP, de acordo com as config passadas por parâmetro
 func NewServer(conf *config.Config) Server {
 	return Server{
 		SRV_PORT: conf.SRV_PORT,
@@ -28,7 +28,7 @@ func NewServer(conf *config.Config) Server {
 	}
 }
 
-// Run roda o servidor HTTP, tendo as rotas do framework gin, servidor HTTP, serviço CRUD de user
+// Rodar servidor HTTP, tendo as rotas do framework gin, servidor HTTP, serviço CRUD de user
 func Run(router *gin.Engine, server Server, service service.UserServiceInterface) {
 	// Imprime que servidor HTTP está rodando na porta tal
 	log.Print("Server is running at port: ", server.SRV_PORT)

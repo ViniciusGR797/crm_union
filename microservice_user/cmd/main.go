@@ -32,8 +32,7 @@ func main() {
 	}
 
 	// Converte JSON byte em uma struct, no caso a struct default_conf
-	err = json.Unmarshal(jsonByte, &default_conf)
-	if err != nil {
+	if err := json.Unmarshal(jsonByte, &default_conf); err != nil {
 		log.Print(err)
 	}
 

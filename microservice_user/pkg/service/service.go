@@ -10,7 +10,7 @@ import (
 	"microservice_user/pkg/entity"
 )
 
-// UserServiceInterface para padronizar comportamento de CRUD User (tudo que tiver os métodos abaixo do CRUD são serviços de user)
+// Estrutura interface para padronizar comportamento de CRUD User (tudo que tiver os métodos abaixo do CRUD são serviços de user)
 type UserServiceInterface interface {
 	// Pega todos os users, logo lista todos os users
 	GetUsers() (*entity.UserList, error)
@@ -30,19 +30,19 @@ type UserServiceInterface interface {
 	Login(user *entity.User) (string, error)
 }
 
-// User_service para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
+// Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
 type User_service struct {
 	dbp database.DatabaseInterface
 }
 
-// NewUserService cria novo serviço de CRUD para pool de conexão
+// Cria novo serviço de CRUD para pool de conexão
 func NewUserService(dabase_pool database.DatabaseInterface) *User_service {
 	return &User_service{
 		dabase_pool,
 	}
 }
 
-// GetUsers retorna lista de todos os users
+// Função que retorna lista de users
 func (ps *User_service) GetUsers() (*entity.UserList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
@@ -80,7 +80,7 @@ func (ps *User_service) GetUsers() (*entity.UserList, error) {
 	return lista_users, nil
 }
 
-// GetUserByID retorna user específico
+// Função que retorna user
 func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 	// pega database
 	database := ps.dbp.GetDB()
@@ -108,7 +108,7 @@ func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 	return &user, nil
 }
 
-// GetUserByName retorna lista de users com esse nome
+// Função que retorna lista de users
 func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 	nameString := fmt.Sprint("%", *name, "%")
 	query := "SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ? ORDER BY U.user_name"
@@ -149,7 +149,7 @@ func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 	return lista_users, nil
 }
 
-// GetSubmissiveUsers retorna lista de users submissos ao atual
+// Função que retorna lista de users
 func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error) {
 	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
 
@@ -165,30 +165,30 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 	}
 
 	// variável do tipo UserList (vazia)
-	var groupIDList []int
+	groupIDList := &entity.GroupIDList{}
 
 	// Pega todo resultado da query linha por linha
 	for rows.Next() {
 		// variável do tipo User (vazia)
-		var groupID int
+		groupID := entity.GroupID{}
 
 		// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(groupID); err != nil {
+		if err := rows.Scan(&groupID.ID); err != nil {
 			fmt.Println(err.Error())
 		} else {
 			// caso não tenha erro, adiciona a lista de users
-			groupIDList = append(groupIDList, groupID)
+			groupIDList.List = append(groupIDList.List, &groupID)
 		}
 	}
 
 	// variável do tipo UserList (vazia)
 	lista_users := &entity.UserList{}
 
-	for _, groupID := range groupIDList {
+	for _, groupID := range groupIDList.List {
 		query := "SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
 
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, groupID, level)
+		rows, err := database.Query(query, groupID.ID, level)
 		// verifica se teve erro
 		if err != nil {
 			fmt.Println(err.Error())
@@ -216,7 +216,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 	return lista_users, nil
 }
 
-// CreateUser cadastra usuário
+// Função que retorna user
 func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	// pega database
 	database := ps.dbp.GetDB()
@@ -253,7 +253,6 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	return uint64(lastId), nil
 }
 
-// UpdateStatusUser altera o status do usuário
 func (ps *User_service) UpdateStatusUser(ID *uint64) (int64, error) {
 	database := ps.dbp.GetDB()
 
@@ -300,7 +299,7 @@ func (ps *User_service) UpdateStatusUser(ID *uint64) (int64, error) {
 	return rowsaff, nil
 }
 
-// UpdateUser altera o usuário
+// Função que altera o usuário
 func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 	// pega database
 	database := ps.dbp.GetDB()
@@ -335,7 +334,6 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 	return int(rowsaff), nil
 }
 
-// Login retorna o hash correspondente a um email cadastrado
 func (ps *User_service) Login(user *entity.User) (string, error) {
 	// pega database
 	database := ps.dbp.GetDB()

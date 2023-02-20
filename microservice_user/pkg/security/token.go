@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// NewToken cria um token para o usuário logando
 func NewToken(userID uint64, level uint, status string) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
@@ -24,7 +23,6 @@ func NewToken(userID uint64, level uint, status string) (string, error) {
 	return token.SignedString([]byte(config.Secret))
 }
 
-// ValidateToken se certifica de que o token é válido
 func ValidateToken(token string) error {
 	_, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		_, isValid := t.Method.(*jwt.SigningMethodHMAC)
@@ -44,7 +42,6 @@ func ValidateToken(token string) error {
 	return err
 }
 
-// ExtractToken extrai os claims do token
 func ExtractToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, keyFunc)
 	if err != nil {
@@ -68,7 +65,6 @@ func keyFunc(t *jwt.Token) (interface{}, error) {
 	return []byte(config.Secret), nil
 }
 
-// GetToken busca o token do contexto da requisição
 func GetToken(c *gin.Context) (string, error) {
 	const bearer_schema = "Bearer "
 	header := c.GetHeader("Authorization")
@@ -86,7 +82,6 @@ func GetToken(c *gin.Context) (string, error) {
 	return token, nil
 }
 
-// GetPermissions lê as permissões do token
 func GetPermissions(c *gin.Context) (jwt.MapClaims, error) {
 	token, err := GetToken(c)
 	if err != nil {
@@ -101,7 +96,7 @@ func GetPermissions(c *gin.Context) (jwt.MapClaims, error) {
 	return permissions, nil
 }
 
-// IsActive verifica se o user é ATIVO, se for retorna nil, senão retorna erro
+// Função que verifica se o user é ATIVO, se for retorna nil, senão retorna erro
 func IsActive(token string) error {
 	// pega permissões do token
 	permissions, err := ExtractToken(token)
@@ -119,7 +114,7 @@ func IsActive(token string) error {
 	}
 }
 
-// IsUser verifica se o user é um Adm, se for retorna nil, senão retorna erro
+// Função que verifica se o user é um Adm, se for retorna nil, senão retorna erro
 func IsUser(c *gin.Context) error {
 	// pega permissões do token
 	permissions, err := GetPermissions(c)

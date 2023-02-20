@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ConfigRoutes configura todas as rotas da api
+// Função que configura todas as rotas da api
 func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin.Engine {
 	main := router.Group("union")
 	{
