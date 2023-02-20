@@ -12,7 +12,7 @@ import (
 	"os"
 )
 
-// Função principal (primeira executada) - chama config para fazer conexão BD, service, server, router e roda servidor http
+// main: Função principal (primeira executada) - chama config para fazer conexão BD, service, server, router e roda servidor http
 func main() {
 	// Atribui o endereço da estrutura de uma configuração padrão do sistema
 	default_conf := &config.Config{}
