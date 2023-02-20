@@ -11,7 +11,7 @@ import (
 
 // Estrutura interface para padronizar comportamento de CRUD Client (tudo que tiver os métodos abaixo do CRUD são serviços de client)
 type ClientServiceInterface interface {
-	GetClientsMyGroups(ID *uint64) (*entity.ClientList, error)
+	GetClientsMyGroups(ID *int) (*entity.ClientList, error)
 	GetClientByID(ID *uint64) (*entity.Client, error)
 	GetTagsClient(ID *uint64) ([]*entity.Tag, error)
 	CreateClient(client *entity.ClientUpdate) error
@@ -33,7 +33,7 @@ func NewClientService(dabase_pool database.DatabaseInterface) *Client_service {
 }
 
 // GetClientsMyGroups: Retorna lista de client pelo group
-func (ps *Client_service) GetClientsMyGroups(ID *uint64) (*entity.ClientList, error) {
+func (ps *Client_service) GetClientsMyGroups(ID *int) (*entity.ClientList, error) {
 	database := ps.dbp.GetDB()
 
 	rows, err := database.Query("call pcGetAllClientsGroup(?)", ID)
@@ -45,11 +45,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) (*entity.ClientList, er
 
 	list_client := &entity.ClientList{}
 
-	hasResult := false
-
 	for rows.Next() {
-		hasResult = true
-
 		client := entity.Client{}
 
 		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description); err != nil {
@@ -76,10 +72,6 @@ func (ps *Client_service) GetClientsMyGroups(ID *uint64) (*entity.ClientList, er
 
 			list_client.List = append(list_client.List, &client)
 		}
-	}
-
-	if !hasResult {
-		return nil, errors.New("clients not found for group")
 	}
 
 	return list_client, nil

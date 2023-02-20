@@ -72,32 +72,6 @@ func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 }
 
 func GetPlannerByName(c *gin.Context, service service.PlannerServiceInterface) {
-
-	// Pega name passada como parâmetro na URL da rota
-	/*name := c.Param("name")
-
-	// Chama método GetPlannerByName passando name como parâmetro
-	list, err := service.GetPlannerByName(&name)
-
-	// Verifica se teve ao buscar Planner no banco
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not fetch Planner",
-		})
-		return
-	}
-	// Verifica se a lista de Planner tem tamanho zero (caso for não tem Planner com esse name)
-	if len(list.List) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "no Planner found",
-		})
-		return
-	}
-
-	// Retorno json com Planner
-	c.JSON(http.StatusOK, list)
-	*/
-
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("name")
 

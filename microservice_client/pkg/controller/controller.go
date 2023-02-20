@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"errors"
+	"fmt"
 	"microservice_client/pkg/entity"
+	"microservice_client/pkg/security"
 	"microservice_client/pkg/service"
 	"net/http"
 	"strconv"
@@ -11,24 +14,32 @@ import (
 
 // GetClientsMyGroups: Retorna json com lista de clients
 func GetClientsMyGroups(c *gin.Context, service service.ClientServiceInterface) {
-
-	ID := c.Param("user_id")
-
-	newID, err := strconv.ParseUint(ID, 10, 64)
+	// Pega permissões do usuário
+	permissions, err := security.GetPermissions(c)
 	if err != nil {
-		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id passada como token na rota
+	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
 	// Chama método GetUsers e retorna list de users
-	list, err := service.GetClientsMyGroups(&newID)
+	list, err := service.GetClientsMyGroups(&id)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
 	}
 	// Verifica se a lista está vazia (tem tamanho zero)
 	if len(list.List) == 0 {
-		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, err)
+		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, errors.New("clients not found for group"))
 		return
 	}
 	//retorna sucesso 200 e retorna json da lista de users
