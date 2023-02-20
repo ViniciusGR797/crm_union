@@ -402,6 +402,13 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		})
 		return
 	}
+	// Verifica se o user é inativo
+	if user.Status != "ATIVO" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "inactive user",
+		})
+		return
+	}
 
 	// Chama método que compara o hash com a senha, para verificar se são iguais
 	err = security.ValidatePassword(hash, user.Password)
@@ -414,7 +421,7 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	// Gera token com base no ID do user logado com sucesso
-	token, err := security.NewToken(user.ID, user.Level)
+	token, err := security.NewToken(user.ID, user.Level, user.Status)
 	// Verifica se teve erro ao gerar o token
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

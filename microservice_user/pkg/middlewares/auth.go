@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"microservice_user/pkg/security"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,7 +12,7 @@ func Auth() gin.HandlerFunc {
 		const bearer_schema = "Bearer "
 		header := c.GetHeader("Authorization")
 		if header == "" {
-			c.AbortWithStatus(401)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
@@ -19,7 +20,7 @@ func Auth() gin.HandlerFunc {
 
 		err := security.ValidateToken(token)
 		if err != nil {
-			c.AbortWithStatus(401)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 	}
