@@ -2,6 +2,7 @@ package routes
 
 import (
 	"microservice_subject/pkg/controller"
+	"microservice_subject/pkg/middlewares"
 	"microservice_subject/pkg/service"
 
 	"github.com/gin-gonic/gin"
@@ -12,23 +13,22 @@ func ConfigRoutes(router *gin.Engine, service service.SubjectServiceInterface) *
 	{
 		subject := main.Group("/v1")
 		{
-			subject.GET("/subjects/user/:id", func(c *gin.Context) {
-				controller.GetSubjectList(c, service)
+			subject.GET("/subjects/submissives", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetSubmissiveSubjects(c, service)
+			})
+			subject.GET("/subjects/id/:id", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetSubjectByID(c, service)
 			})
 
-			subject.GET("/subjects/:id", func(c *gin.Context) {
-				controller.GetSubject(c, service)
-			})
-
-			subject.PUT("/subjects/update/finished/:id", func(c *gin.Context) {
+			subject.PUT("/subjects/update/finished/:id", middlewares.Auth(), func(c *gin.Context) {
 				controller.UpdateStatusSubjectFinished(c, service)
 			})
 
-			subject.PUT("/subjects/update/canceled/:id", func(c *gin.Context) {
+			subject.PUT("/subjects/update/canceled/:id", middlewares.Auth(), func(c *gin.Context) {
 				controller.UpdateStatusSubjectCanceled(c, service)
 			})
 
-			subject.PUT("/subjects/update/:id", func(c *gin.Context) {
+			subject.PUT("/subjects/update/:id", middlewares.Auth(), func(c *gin.Context) {
 				controller.UpdateSubject(c, service)
 			})
 

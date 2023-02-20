@@ -7,8 +7,8 @@ import (
 )
 
 type SubjectServiceInterface interface {
-	GetSubjectList(id uint64) (*entity.Subject_list, error)
-	GetSubject(id uint64) (*entity.SubjectID, error)
+	GetSubmissiveSubjects(id int) (*entity.Subject_list, error)
+	GetSubjectByID(id uint64) (*entity.SubjectID, error)
 	UpdateStatusSubjectFinished(id uint64) (int64, error)
 	UpdateStatusSubjectCanceled(id uint64) (int64, error)
 	CreateSubject(subject *entity.CreateSubject, id uint64) (*entity.SubjectID, error)
@@ -25,8 +25,8 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Subject_service {
 	}
 }
 
-// GetSubjectList retorna uma lista de Subjects de um determinado usuario
-func (s *Subject_service) GetSubjectList(id uint64) (*entity.Subject_list, error) {
+// GetSubmissiveSubjects retorna uma lista de Subjects de um determinado usuario
+func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, error) {
 
 	database := s.dbp.GetDB()
 
@@ -74,8 +74,8 @@ func (s *Subject_service) GetSubjectList(id uint64) (*entity.Subject_list, error
 
 }
 
-// GetSubject retorna um Subject pelo id
-func (s *Subject_service) GetSubject(id uint64) (*entity.SubjectID, error) {
+// GetSubjectByID retorna um Subject pelo id
+func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 
 	database := s.dbp.GetDB()
 
