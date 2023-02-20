@@ -11,11 +11,11 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Customer (tudo que tiver os métodos abaixo do CRUD são serviços de customer)
 type CustomerServiceInterface interface {
 	// Pega todos os users, logo lista todos os customer
-	GetAllCustomer() (*entity.CustomerList, error)
+	GetCustomers() (*entity.CustomerList, error)
 	GetCustomerByID(ID *uint64) (*entity.Customer, error)
 	CreateCustomer(customer *entity.Customer) error
 	UpdateCustomer(ID *uint64, customer *entity.Customer) error
-	SoftDeleteCustomer(ID *uint64) error
+	UpdateStatusCustomer(ID *uint64) error
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -31,12 +31,12 @@ func NewCostumerService(dabase_pool database.DatabaseInterface) *customer_servic
 }
 
 // Função que retorna lista de users
-func (ps *customer_service) GetAllCustomer() (*entity.CustomerList, error) {
+func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
 	// manda uma query para ser executada no database
-	rows, err := database.Query("SELECT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id")
+	rows, err := database.Query("SELECT DISTINCT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id ORDER BY C.customer_name")
 	// verifica se teve erro
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (ps *customer_service) GetAllCustomer() (*entity.CustomerList, error) {
 		if err := rows.Scan(&customer.ID, &customer.Name, &customer.Status); err != nil {
 			return nil, errors.New("error scan customer")
 		} else {
-			rowsTags, err := database.Query("SELECT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ?", customer.ID)
+			rowsTags, err := database.Query("SELECT DISTINCT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", customer.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -110,7 +110,7 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 		return nil, errors.New("error get id")
 	}
 
-	rowsTags, err := database.Query("SELECT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ?", ID)
+	rowsTags, err := database.Query("SELECT DISTINCT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", ID)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer
 	return nil
 }
 
-func (ps *customer_service) SoftDeleteCustomer(ID *uint64) error {
+func (ps *customer_service) UpdateStatusCustomer(ID *uint64) error {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblCustomer WHERE customer_id = ?")

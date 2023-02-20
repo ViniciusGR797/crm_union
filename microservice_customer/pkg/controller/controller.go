@@ -2,6 +2,7 @@ package controller
 
 import (
 	"microservice_customer/pkg/entity"
+	"microservice_customer/pkg/security"
 	"microservice_customer/pkg/service"
 	"net/http"
 	"strconv"
@@ -10,9 +11,9 @@ import (
 )
 
 // Função que chama método GetCustomer do service e retorna json com lista
-func GetAllCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+func GetCustomers(c *gin.Context, service service.CustomerServiceInterface) {
 
-	lista, err := service.GetAllCustomer()
+	lista, err := service.GetCustomers()
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -22,6 +23,13 @@ func GetAllCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
 // buscar customer por ID
 func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	id := c.Param("id")
 
@@ -42,6 +50,13 @@ func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
 }
 
 func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	var customer *entity.Customer
 	err := c.ShouldBindJSON(&customer)
@@ -60,6 +75,14 @@ func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 }
 
 func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	id := c.Param("id")
 
 	var customer *entity.Customer
@@ -85,7 +108,15 @@ func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
 }
 
-func SoftDeleteCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+func UpdateStatusCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+	// Verifica se tal rota/função é exclusiva de adm
+	if err := security.IsAdm(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	ID := c.Param("id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -95,7 +126,7 @@ func SoftDeleteCustomer(c *gin.Context, service service.CustomerServiceInterface
 
 	}
 
-	err = service.SoftDeleteCustomer(&newID)
+	err = service.UpdateStatusCustomer(&newID)
 	if err != nil {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
@@ -105,6 +136,7 @@ func SoftDeleteCustomer(c *gin.Context, service service.CustomerServiceInterface
 		"response": "Customer Status Updated",
 	})
 }
+
 func JSONMessenger(c *gin.Context, status int, path string, err error) {
 	errorMessage := ""
 	if err != nil {
