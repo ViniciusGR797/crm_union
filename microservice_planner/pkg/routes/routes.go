@@ -15,10 +15,10 @@ func ConfigRoutes(router *gin.Engine, service service.PlannerServiceInterface) *
 		planner := main.Group("/v1")
 		{
 			// Rota que retorna lista de planners (GET que dispara método GetPlannerByID controller)
-			planner.GET("/planners/id/:id", func(c *gin.Context) {
+			planner.GET("/planners/id/:id", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetPlannerByID(c, service)
 			})
-			planner.POST("/planners", func(c *gin.Context) {
+			planner.POST("/planners", middlewares.Auth(), func(c *gin.Context) {
 				controller.CreatePlanner(c, service)
 			})
 			planner.GET("/planners/name/:name", middlewares.Auth(), func(c *gin.Context) {
@@ -29,13 +29,13 @@ func ConfigRoutes(router *gin.Engine, service service.PlannerServiceInterface) *
 				controller.GetSubmissivePlanners(c, service)
 			})
 
-			planner.GET("/planners/business/:business_name", func(c *gin.Context) {
+			planner.GET("/planners/business/:business_name", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetPlannerByBusiness(c, service)
 			})
-			planner.GET("/planners/guest/client/:id", func(c *gin.Context) {
+			planner.GET("/planners/guest/client/:id", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetGuestClientPlanners(c, service)
 			})
-			planner.PUT("/planners/update/:id", func(c *gin.Context) {
+			planner.PUT("/planners/update/:id", middlewares.Auth(), func(c *gin.Context) {
 				controller.UpdatePlanner(c, service)
 			})
 		}
