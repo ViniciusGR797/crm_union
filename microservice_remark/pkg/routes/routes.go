@@ -15,7 +15,7 @@ func ConfigRoutes(router *gin.Engine, service service.RemarkServiceInterface) *g
 		remarks := main.Group("/v1")
 		{
 			// Rota que retorna lista de users (GET que dispara método GetUsers controller)
-			remarks.GET("/remarks/submissives/:user_ID", middlewares.Auth(), func(c *gin.Context) {
+			remarks.GET("/remarks/submissives", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetSubmissiveRemarks(c, service)
 			})
 			remarks.GET("/remarks/id/:remark_id", middlewares.Auth(), func(c *gin.Context) {

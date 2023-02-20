@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"microservice_remark/pkg/entity"
+	"microservice_remark/pkg/security"
 	"microservice_remark/pkg/service"
 	"net/http"
 	"strconv"
@@ -11,14 +13,31 @@ import (
 
 // Função que chama método GetSubmissiveRemark do service e retorna json com lista
 func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface) {
-	ID := c.Param("user_ID")
+	// Pega permissões do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id passada como token na rota
+	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	/*ID := c.Param("user_ID")
 	NewID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
-	}
+	}*/
 
-	remarks, err := service.GetSubmissiveRemarks(&NewID)
+	remarks, err := service.GetSubmissiveRemarks(&id)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return

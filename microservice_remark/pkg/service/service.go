@@ -13,7 +13,7 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Remark (tudo que tiver os métodos abaixo do CRUD são serviços de Remark)
 type RemarkServiceInterface interface {
 	// Pega todos os Remarks, logo lista todos os Remarks
-	GetSubmissiveRemarks(ID *uint64) (*entity.RemarkList, error)
+	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
 	GetRemarkByID(ID *uint64) (*entity.Remark, error)
 	CreateRemark(remark *entity.RemarkUpdate) error
 	GetBarChartRemark(ID *uint64) *entity.Remark
@@ -35,7 +35,7 @@ func NewRemarkService(dabase_pool database.DatabaseInterface) *remark_service {
 }
 
 // Função que retorna lista de Remarks
-func (ps *remark_service) GetSubmissiveRemarks(ID *uint64) (*entity.RemarkList, error) {
+func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
