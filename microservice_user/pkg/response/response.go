@@ -21,6 +21,7 @@ func Send(c *gin.Context, code int, obj any) {
 	c.JSON(code, obj)
 }
 
+// Send envia nada ao client em caso de sucesso na requisição
 func SendNoContent(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }

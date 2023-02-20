@@ -15,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Função que chama método GetUsers do service e retorna json com lista de users
+// GetUsers chama método GetUsers do service e retorna json com lista de users
 func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 	// Chama método GetUsers e retorna list de users
 	list, err := service.GetUsers()
@@ -33,7 +33,7 @@ func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 	response.Send(c, http.StatusOK, list)
 }
 
-// Função que chama método GetUserByID do service e retorna json com user
+// GetUserByID chama método GetUserByID do service e retorna json com user
 func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
@@ -62,7 +62,7 @@ func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 	response.Send(c, http.StatusOK, user)
 }
 
-// Função que chama método GetUserByName do service e retorna json com user
+// GetUserByNamechama método GetUserByName do service e retorna json com user
 func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("user_name")
@@ -126,7 +126,7 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 	response.Send(c, http.StatusOK, list)
 }
 
-// Função que chama método CreateUser do service e retorna json com mensagem de sucesso
+// CreateUser chama método CreateUser do service e retorna json com mensagem de sucesso
 func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	// Cria variável do tipo user (inicialmente vazia)
 	var user *entity.User
@@ -172,7 +172,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	})
 }
 
-// Função que chama método UpdateStatusUser do service e retorna json com mensagem de sucesso
+// UpdateStatusUser chama método UpdateStatusUser do service e retorna json com mensagem de sucesso
 func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
@@ -201,7 +201,7 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 	response.SendNoContent(c)
 }
 
-// Função que chama método UpdateUser do service e retorna json com mensagem de sucesso
+// UpdateUser chama método UpdateUser do service e retorna json com mensagem de sucesso
 func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
@@ -252,7 +252,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	response.SendNoContent(c)
 }
 
-// Função que chama método Login do service e retorna json com token
+// Login chama método Login do service e retorna json com token
 func Login(c *gin.Context, service service.UserServiceInterface) {
 	// Cria variável do tipo user (inicialmente vazia)
 	var user *entity.User
@@ -317,7 +317,7 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	})
 }
 
-// Função que chama método GetUserMe do service e retorna json com user
+// GetUserMe chama método GetUserMe do service e retorna json com user
 func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)

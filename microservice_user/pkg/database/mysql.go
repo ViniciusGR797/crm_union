@@ -9,8 +9,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// Função que faz a conexão com BD e retorna uma pool de conexão
-func Mysql(conf *config.Config) *dabase_pool {
+// MySQL faz a conexão com BD e retorna uma pool de conexão
+func MySQL(conf *config.Config) *dabase_pool {
 	// Verifica se já tem uma pool de conexão (precisa só de uma), caso tiver apenas retorna
 	if dbpool != nil && dbpool.DB != nil {
 		return dbpool

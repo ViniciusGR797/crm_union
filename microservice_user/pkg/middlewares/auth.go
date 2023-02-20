@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Auth é a middleware que se certifica de que o usuário foi validado
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const bearer_schema = "Bearer "
@@ -28,6 +29,7 @@ func Auth() gin.HandlerFunc {
 	}
 }
 
+// Auth é a middleware que se certifica de que o usuário foi validado e é administrador
 func AuthAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const bearer_schema = "Bearer "

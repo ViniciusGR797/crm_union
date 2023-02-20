@@ -21,7 +21,7 @@ var (
 	Secret string
 )
 
-// Estrutura para armazenar as configurações da aplicação - Config
+// Config - Estrutura para armazenar as configurações da aplicação
 type Config struct {
 	// Porta do servidor - Ex: 8080
 	SRV_PORT string `json:"srv_port"`
@@ -37,7 +37,7 @@ type Config struct {
 	Secret string `json:"secret"`
 }
 
-// Estrutura para armazenar as configurações do banco de dados - DBConfig
+// DBConfig - Estrutura para armazenar as configurações do banco de dados
 type DBConfig struct {
 	// Drive do DataBase - Ex: MySql
 	DB_DRIVE string `json:"db_drive"`
@@ -55,7 +55,7 @@ type DBConfig struct {
 	DB_DSN string `json:"-"`
 }
 
-// NewConfig - Cria uma nova configuração - passada por parâmetro
+// NewConfig - Cria uma nova configuração passada por parâmetro
 func NewConfig(config *Config) *Config {
 
 	// Variável que armazenará as novas configurações
@@ -143,7 +143,7 @@ func NewConfig(config *Config) *Config {
 	return config
 }
 
-// Configurações padrão da aplicação - defaultConf
+// DefaultConfig - Configurações padrão da aplicação
 func DefaultConfig() *Config {
 	// Cria e atribui já valores para a configuração padrão
 	default_config := Config{

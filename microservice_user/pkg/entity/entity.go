@@ -13,7 +13,7 @@ type UserInterface interface {
 	String() string
 }
 
-// Estrutura de dados de User
+// User é a estrutura de dados do usuário
 type User struct {
 	ID         uint64 `json:"id,omitempty"`
 	Name       string `json:"name,omitempty"`
@@ -25,7 +25,7 @@ type User struct {
 	Hash       string `json:"-"`
 }
 
-// Método de user - retorna string com json do user ou erro
+// String retorna string com json do user ou erro
 func (p *User) String() string {
 	data, err := json.Marshal(p)
 
@@ -38,12 +38,12 @@ func (p *User) String() string {
 	return string(data)
 }
 
-// Estrutura de dados para lista de Users
+// UserList é Estrutura de dados para lista de Users
 type UserList struct {
 	List []*User `json:"list"`
 }
 
-// Método de UserList - retorna string com json da lista de users ou erro
+// String retorna string com json da lista de users ou erro
 func (pl *UserList) String() string {
 	data, err := json.Marshal(pl)
 
@@ -56,7 +56,7 @@ func (pl *UserList) String() string {
 	return string(data)
 }
 
-// Construtor de User - recebe dados no parâmetro e transforma em um user
+// NewUser recebe dados no parâmetro e transforma em um user
 func NewUser(name, email, created_at, status string, level uint, id uint64) *User {
 	return &User{
 		ID:         id,
@@ -68,16 +68,7 @@ func NewUser(name, email, created_at, status string, level uint, id uint64) *Use
 	}
 }
 
-// Estrutura de dados de groupID
-type GroupID struct {
-	ID uint64
-}
-
-// Estrutura de dados para lista de groupID
-type GroupIDList struct {
-	List []*GroupID
-}
-
+// Prepare valida e formata o usuário
 func (user *User) Prepare() error {
 	if erro := user.validate(); erro != nil {
 		return erro
