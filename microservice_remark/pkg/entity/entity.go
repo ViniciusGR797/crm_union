@@ -6,11 +6,12 @@ import (
 	"time"
 )
 
+// RemarkInterface que define um único método chamado String. A interface é usada para especificar um contrato que um tipo deve cumprir para ser considerado um Remark.
 type RemarkInterface interface {
 	String() string
 }
 
-// Estrutura de dados de Remark
+// Remark Estrutura de dados de Remark
 type Remark struct {
 	ID                 uint64     `json:"id,omitempty"`
 	Remark_Name        string     `json:"remark_name,omitempty"`
@@ -27,7 +28,7 @@ type Remark struct {
 	Business_Name      string     `json:"business_name,omitempty"`
 }
 
-// Estrutura de dados de Remark utilizada para criar, atualizar e efetuar softdelete
+//RemarkUpdate Estrutura de dados de Remark utilizada para criar, atualizar e efetuar softdelete
 
 type RemarkUpdate struct {
 	Remark_Name string     `json:"remark_name,omitempty"`
@@ -41,7 +42,7 @@ type RemarkUpdate struct {
 	Status_ID   uint64     `json:"status_id,omitempty"`
 }
 
-// Método de Remark - retorna string com json do Remark ou erro
+// String para o tipo Remark, que implementa a interface RemarkInterface. Método de Remark - retorna string com json do Remark ou erro
 func (p *Remark) String() string {
 	data, err := json.Marshal(p)
 
@@ -54,12 +55,12 @@ func (p *Remark) String() string {
 	return string(data)
 }
 
-// Estrutura de dados para lista de Remark
+// RemarkList Estrutura de dados para lista de Remark
 type RemarkList struct {
 	List []*Remark `json:"list"`
 }
 
-// Método de RemarkList - retorna string com json da lista de Remarks ou erro
+// String Método de RemarkList - retorna string com json da lista de Remarks ou erro
 func (pl *RemarkList) String() string {
 	data, err := json.Marshal(pl)
 

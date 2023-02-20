@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Função que chama método GetCustomer do service e retorna json com lista
+// GetCustomers Função que chama método GetCustomer do service e retorna json com lista
 func GetCustomers(c *gin.Context, service service.CustomerServiceInterface) {
 
 	lista, err := service.GetCustomers()
@@ -21,7 +21,7 @@ func GetCustomers(c *gin.Context, service service.CustomerServiceInterface) {
 	c.JSON(http.StatusOK, lista)
 }
 
-// buscar customer por ID
+// GetCustomerByID buscar customer por ID
 func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
 	// Verifica se tal rota/função é exclusiva de adm
 	if err := security.IsAdm(c); err != nil {
@@ -49,6 +49,7 @@ func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
 
 }
 
+// CreateCustomer verifica se a rota e a função são exclusivas do administrador.
 func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 	// Verifica se tal rota/função é exclusiva de adm
 	if err := security.IsAdm(c); err != nil {
@@ -108,6 +109,7 @@ func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
 }
 
+// UpdateCustomer é uma rota para atualizar um cliente existente. Primeiro, ele verifica se o usuário que faz a solicitação é um administrador usando a função security.IsAdm
 func UpdateStatusCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 	// Verifica se tal rota/função é exclusiva de adm
 	if err := security.IsAdm(c); err != nil {
@@ -137,6 +139,7 @@ func UpdateStatusCustomer(c *gin.Context, service service.CustomerServiceInterfa
 	})
 }
 
+// JSONMessenger é utilizada para formatar as respostas em JSON enviadas para o cliente.
 func JSONMessenger(c *gin.Context, status int, path string, err error) {
 	errorMessage := ""
 	if err != nil {
