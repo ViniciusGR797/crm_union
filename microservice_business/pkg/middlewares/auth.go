@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Auth verifica se o cabeçalho de autorização contém um token JWT válido para autenticar um usuário.
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const bearer_schema = "Bearer "
