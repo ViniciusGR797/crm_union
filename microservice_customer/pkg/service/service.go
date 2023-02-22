@@ -18,19 +18,19 @@ type CustomerServiceInterface interface {
 	UpdateStatusCustomer(ID *uint64) error
 }
 
-// Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
+// ustomer_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
 type customer_service struct {
 	dbp database.DatabaseInterface
 }
 
-// Cria novo serviço de CRUD para pool de conexão
+// NewCostumerService Cria novo serviço de CRUD para pool de conexão
 func NewCostumerService(dabase_pool database.DatabaseInterface) *customer_service {
 	return &customer_service{
 		dabase_pool,
 	}
 }
 
-// Função que retorna lista de users
+// GetCustomers Função que retorna lista de users
 func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
@@ -42,7 +42,7 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 		return nil, err
 	}
 
-	// fecha linha da query, quando sair da função
+	// Close fecha linha da query, quando sair da função
 	defer rows.Close()
 
 	// variável do tipo CostumerList (vazia)
@@ -50,7 +50,7 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 
 	hasResult := false
 
-	// Pega todo resultado da query linha por linha
+	// Next Pega todo resultado da query linha por linha
 	for rows.Next() {
 
 		hasResult = true
@@ -58,7 +58,7 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 		// variável do tipo Customer (vazia)
 		customer := entity.Customer{}
 
-		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
+		// Scan pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
 		if err := rows.Scan(&customer.ID, &customer.Name, &customer.Status); err != nil {
 			return nil, errors.New("error scan customer")
 		} else {
@@ -93,6 +93,7 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 	return lista_customer, nil
 }
 
+// GetCustomerByID é responsável por buscar um cliente no banco de dados pelo seu ID.
 func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error) {
 	database := ps.dbp.GetDB()
 
@@ -134,6 +135,7 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 	return &customer, nil
 }
 
+// CreatCustomer Esta é uma função que cria um novo registro de cliente no banco de dados.
 func (ps *customer_service) CreateCustomer(customer *entity.Customer) error {
 	database := ps.dbp.GetDB()
 
@@ -181,6 +183,7 @@ func (ps *customer_service) CreateCustomer(customer *entity.Customer) error {
 	return nil
 }
 
+// UpdateCustomer é responsável por atualizar um registro de cliente em um banco de dados.
 func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer) error {
 	database := ps.dbp.GetDB()
 
@@ -199,6 +202,7 @@ func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer
 	return nil
 }
 
+// UpdateStatusCustomer atualiza o status do cliente no banco de dados.
 func (ps *customer_service) UpdateStatusCustomer(ID *uint64) error {
 	database := ps.dbp.GetDB()
 

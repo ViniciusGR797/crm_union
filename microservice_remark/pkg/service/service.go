@@ -10,7 +10,7 @@ import (
 	"microservice_remark/pkg/entity"
 )
 
-// Estrutura interface para padronizar comportamento de CRUD Remark (tudo que tiver os métodos abaixo do CRUD são serviços de Remark)
+// RemarkServiceInterface Estrutura interface para padronizar comportamento de CRUD Remark (tudo que tiver os métodos abaixo do CRUD são serviços de Remark)
 type RemarkServiceInterface interface {
 	// Pega todos os Remarks, logo lista todos os Remarks
 	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
@@ -22,19 +22,19 @@ type RemarkServiceInterface interface {
 	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) error
 }
 
-// Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
+// remark_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
 type remark_service struct {
 	dbp database.DatabaseInterface
 }
 
-// Cria novo serviço de CRUD para pool de conexão
+// NewRemarkService Cria novo serviço de CRUD para pool de conexão
 func NewRemarkService(dabase_pool database.DatabaseInterface) *remark_service {
 	return &remark_service{
 		dabase_pool,
 	}
 }
 
-// Função que retorna lista de Remarks
+// GetSubmissiveRemarks Função que retorna lista de Remarks
 func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
@@ -71,14 +71,14 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, err
 	}
 
 	if !hasResult {
-		return nil, errors.New("Remarks not found")
+		return nil, errors.New("remarks not found")
 	}
 
-	// retorna lista de produtos
+	// lista_Remarks retorna lista de produtos
 	return lista_Remarks, nil
 }
 
-// Função que retorna um Remark pelo ID
+// GetRemarkByID Função que retorna um Remark pelo ID
 func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
 
@@ -99,7 +99,7 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 	return &remark, nil
 }
 
-// Função que cria um Remark
+// CreateRemark que usa uma estrutura RemarkUpdate como argumento e retorna um erro. Função que cria um Remark
 func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) error {
 	database := ps.dbp.GetDB()
 
@@ -118,6 +118,7 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) error {
 	return nil
 }
 
+// GetBarChartRemark retorna um gráfico de barras mostrando a contagem de avaliações em relação ao tempo (atrasado, próximo, no prazo) para o usuário com o ID especificado na URL, disparando o método controller.GetBarChartRemark.
 func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
@@ -139,6 +140,7 @@ func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 
 }
 
+// GetPieChartRemark retorna um gráfico de pizza mostrando a contagem de avaliações em relação ao status (pendente, aprovado, rejeitado) para o usuário com o ID especificado na URL, disparando o método controller.GetPieChartRemark
 func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
 
@@ -160,7 +162,7 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 
 }
 
-// Função que atualiza o Status do Remark
+// UpdateStatusRemark Função que atualiza o Status do Remark
 func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark) error {
 	database := ps.dbp.GetDB()
 
@@ -207,7 +209,7 @@ func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark) 
 	return nil
 }
 
-// Função que atualiza um Remark
+// UpdateRemark Função que atualiza um Remark
 func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) error {
 	database := ps.dbp.GetDB()
 
