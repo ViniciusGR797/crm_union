@@ -16,22 +16,22 @@ func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) 
 			Business.GET("/business", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetBusiness(c, service)
 			})
-			Business.GET("/business/id/:id", middlewares.Auth(), func(c *gin.Context) {
+			Business.GET("/business/id/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.GetBusinessById(c, service)
 			})
-			Business.POST("/business", middlewares.Auth(), func(c *gin.Context) {
+			Business.POST("/business", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.CreateBusiness(c, service)
 			})
-			Business.PUT("/business/update/:id", middlewares.Auth(), func(c *gin.Context) {
+			Business.PUT("/business/update/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.UpdateBusiness(c, service)
 			})
-			Business.PUT("/business/update/status/:id", middlewares.Auth(), func(c *gin.Context) {
+			Business.PUT("/business/update/status/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.UpdateStatusBusiness(c, service)
 			})
-			Business.GET("/business/name/:Business_name", middlewares.Auth(), func(c *gin.Context) {
+			Business.GET("/business/name/:Business_name", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.GetBusinessByName(c, service)
 			})
-			Business.GET("/business/tag/:id", middlewares.Auth(), func(c *gin.Context) {
+			Business.GET("/business/tag/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.GetTagsBusiness(c, service)
 			})
 		}
