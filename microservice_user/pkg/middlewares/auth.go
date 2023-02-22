@@ -48,19 +48,19 @@ func AuthAdmin() gin.HandlerFunc {
 		// pega permissões do token
 		permissions, err := security.GetPermissions(c)
 		if err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 		// Pega level nas permissões do token
 		level, err := strconv.Atoi(fmt.Sprint(permissions["level"]))
 		if err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
 		// Verifica se o user é um admin (level acima de 1)
 		if level <= 1 {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 	}
