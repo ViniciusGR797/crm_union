@@ -2,7 +2,6 @@ package controller
 
 import (
 	"microservice_business/pkg/entity"
-	"microservice_business/pkg/security"
 	"microservice_business/pkg/service"
 	"net/http"
 	"strconv"
@@ -27,14 +26,6 @@ func GetBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
 // GetBusinessById função que chama o metodo GetBusinessById do service e traz todos os dados de um Business do banco
 func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("id")
 
 	newId, err := strconv.ParseUint(ID, 10, 64)
@@ -65,14 +56,6 @@ func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 
 // CreateBusiness interage com o service de CreateBusiness e cria um Business no banco e tem o retorno do mesmo criado
 func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Cria variável do tipo business (inicialmente vazia)
 	var business *entity.Business_Update
 
@@ -104,14 +87,6 @@ func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
 // UpdateBusiness interage com o service de UpdateBusiness e altera a informações de um Business no banco
 func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -161,14 +136,6 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
 // UpdateStatusBusiness interage com o service de UpdateStatusBusiness e altera o status de Business no banco
 func UpdateStatusBusiness(c *gin.Context, service service.BusinessServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -194,14 +161,6 @@ func UpdateStatusBusiness(c *gin.Context, service service.BusinessServiceInterfa
 
 // GetBusinessByName interage com o service de GetbusinessByname e traz os dados de business pelo nome pesquisado
 func GetBusinessByName(c *gin.Context, service service.BusinessServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("Business_name")
 	// Chama método GetBusinessByName passando name como parâmetro
@@ -227,14 +186,6 @@ func GetBusinessByName(c *gin.Context, service service.BusinessServiceInterface)
 
 // GetTagsBusiness interage com o service de Business e taz as tags de um business
 func GetTagsBusiness(c *gin.Context, service service.BusinessServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
