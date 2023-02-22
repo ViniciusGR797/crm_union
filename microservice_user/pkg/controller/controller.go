@@ -16,14 +16,6 @@ import (
 
 // Função que chama método GetUsers do service e retorna json com lista de users
 func GetUsers(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Chama método GetUsers e retorna list de users
 	list, err := service.GetUsers()
 	// Verifica se teve ao buscar user no banco
@@ -42,14 +34,6 @@ func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método GetUserByID do service e retorna json com user
 func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
 
@@ -79,14 +63,6 @@ func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método GetUserByName do service e retorna json com user
 func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("user_name")
 	// Chama método GetUserByName passando name como parâmetro
@@ -151,14 +127,6 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método CreateUser do service e retorna json com mensagem de sucesso
 func CreateUser(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Cria variável do tipo user (inicialmente vazia)
 	var user *entity.User
 
@@ -205,14 +173,6 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método UpdateStatusUser do service e retorna json com mensagem de sucesso
 func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
 
@@ -242,14 +202,6 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método UpdateUser do service e retorna json com mensagem de sucesso
 func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
 	// Cria variável do tipo user (inicialmente vazia)

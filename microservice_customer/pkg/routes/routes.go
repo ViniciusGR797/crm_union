@@ -19,19 +19,19 @@ func ConfigRoutes(router *gin.Engine, service service.CustomerServiceInterface) 
 				controller.GetCustomers(c, service)
 			})
 			// GET /customers/id/:id: Retorna um cliente específico a partir do seu ID. A rota dispara o método GetCustomerByID do controlador controller.
-			customer.GET("/customers/id/:id", middlewares.Auth(), func(c *gin.Context) {
+			customer.GET("/customers/id/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.GetCustomerByID(c, service)
 			})
 			// POST /customers: Cria um novo cliente na base de dados. A rota dispara o método CreateCustomer do controlador controller.
-			customer.POST("/customers", middlewares.Auth(), func(c *gin.Context) {
+			customer.POST("/customers", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.CreateCustomer(c, service)
 			})
 			// PUT /customers/update/:id: Atualiza as informações de um cliente existente na base de dados. A rota dispara o método UpdateCustomer do controlador controller.
-			customer.PUT("/customers/update/:id", middlewares.Auth(), func(c *gin.Context) {
+			customer.PUT("/customers/update/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.UpdateCustomer(c, service)
 			})
 			// PUT /customers/update/status/:id: Atualiza o status de um cliente existente na base de dados. A rota dispara o método UpdateStatusCustomer do controlador controller.
-			customer.PUT("/customers/update/status/:id", middlewares.Auth(), func(c *gin.Context) {
+			customer.PUT("/customers/update/status/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.UpdateStatusCustomer(c, service)
 			})
 

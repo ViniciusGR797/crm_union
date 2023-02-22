@@ -2,9 +2,7 @@ package controller
 
 import (
 	"microservice_group/pkg/entity"
-	"microservice_group/pkg/security"
 	"microservice_group/pkg/service"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -12,14 +10,6 @@ import (
 
 // GetGroups lista todos os grupos do usuario
 func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
@@ -44,14 +34,6 @@ func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 
 // GetGroupByID lista um grupo pelo id
 func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
@@ -77,14 +59,6 @@ func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
 
 // UpdateStatusGroup altera o status do grupo para ativo ou inativo
 func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
@@ -122,14 +96,6 @@ func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 // GetUsersGroup lista todos os usuarios do grupo
 func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
@@ -158,14 +124,6 @@ func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 // CreateGroup cria um novo grupo
 func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	var group entity.CreateGroup
 
 	if err := c.ShouldBindJSON(&group); err != nil {
@@ -183,14 +141,6 @@ func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 // AttachUserGroup adiciona um ou varios  usuario ao grupo
 func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	group_id, err := strconv.ParseUint(id, 10, 64)
@@ -223,14 +173,6 @@ func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 // DetachUserGroup remove um ou varios  usuario do grupo
 func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	group_id, err := strconv.ParseUint(id, 10, 64)
@@ -265,14 +207,6 @@ func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 // CountUsersGroup conta a quantidade de usuarios do grupo
 func CountUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)

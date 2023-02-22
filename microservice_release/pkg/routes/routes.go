@@ -18,18 +18,18 @@ func ConfigRoutes(router *gin.Engine, service service.ReleaseServiceInterface) *
 				controller.GetReleasesTrain(c, service)
 			})
 			// Rota que retorna release pelo ID (GET que dispara método GetReleaseTrainByID controller)
-			release.GET("/releasetrains/id/:releasetrain_id", middlewares.Auth(), func(c *gin.Context) {
+			release.GET("/releasetrains/id/:releasetrain_id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.GetReleaseTrainByID(c, service)
 			})
-			release.PUT("/releasetrains/update/:releasetrain_id", middlewares.Auth(), func(c *gin.Context) {
+			release.PUT("/releasetrains/update/:releasetrain_id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.UpdateReleaseTrain(c, service)
 			})
-			release.GET("/releasetrains/tag/:releasetrain_id", middlewares.Auth(), func(c *gin.Context) {
+			release.GET("/releasetrains/tag/:releasetrain_id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.GetTagsReleaseTrain(c, service)
 			})
 
 			// Rota que altera status ativo/inativo (PUT que dispara método UpdateStatusReleaseTrain controller)
-			release.PUT("/releasetrains/update/status/:releasetrain_id", middlewares.Auth(), func(c *gin.Context) {
+			release.PUT("/releasetrains/update/status/:releasetrain_id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.UpdateStatusReleaseTrain(c, service)
 			})
 			// Rota que retorna release pelo business ID (GET que dispara método GetReleaseTrainByBusiness controller)
@@ -37,7 +37,7 @@ func ConfigRoutes(router *gin.Engine, service service.ReleaseServiceInterface) *
 				controller.GetReleaseTrainByBusiness(c, service)
 			})
 			// Rota que cadastra release (POST que dispara método CreateReleaseTrain controller)
-			release.POST("/releasetrains", middlewares.Auth(), func(c *gin.Context) {
+			release.POST("/releasetrains", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.CreateReleaseTrain(c, service)
 			})
 		}
