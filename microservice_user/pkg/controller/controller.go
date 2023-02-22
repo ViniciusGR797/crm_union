@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"microservice_user/pkg/entity"
+	"microservice_user/pkg/response"
 	"microservice_user/pkg/security"
 	"microservice_user/pkg/service"
 	"net/http"
@@ -27,20 +29,16 @@ func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 	list, err := service.GetUsers()
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not fetch users",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a lista está vazia (tem tamanho zero - não tem users no banco)
 	if len(list.List) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "no users found",
-		})
+		response.Error(c, http.StatusNotFound, errors.New("no users found"))
 		return
 	}
 	//retorna sucesso 200 e retorna json da lista de users
-	c.JSON(http.StatusOK, list)
+	response.Send(c, http.StatusOK, list)
 }
 
 // Função que chama método GetUserByID do service e retorna json com user
@@ -60,30 +58,24 @@ func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID has to be interger",
-		})
+		response.Error(c, http.StatusBadRequest, errors.New("ID must be an integer"))
 		return
 	}
 	// Chama método GetUserByID passando id como parâmetro
 	user, err := service.GetUserByID(&newId)
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not fetch users",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao buscar o user no banco)
 	if user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "user not found",
-		})
+		response.Error(c, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 
 	// Retorno json com user
-	c.JSON(http.StatusOK, user)
+	response.Send(c, http.StatusOK, user)
 }
 
 // Função que chama método GetUserByName do service e retorna json com user
@@ -102,21 +94,17 @@ func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 	list, err := service.GetUserByName(&name)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not fetch users",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a lista de users tem tamanho zero (caso for não tem user com esse name)
 	if len(list.List) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "no users found",
-		})
+		response.Error(c, http.StatusNotFound, errors.New("no user found"))
 		return
 	}
 
 	// Retorno json com user
-	c.JSON(http.StatusOK, list)
+	response.Send(c, http.StatusOK, list)
 }
 
 // Função que chama método GetSubmissiveUsers do service e retorna json com user
@@ -124,57 +112,42 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Pega id e nivel passada como token na rota
 	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	level, err := strconv.Atoi(fmt.Sprint(permissions["level"]))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	// Verifica se o user é level 1, logo não tem user submissive
 	if level <= 1 {
-		c.Status(http.StatusNoContent)
+		response.SendNoContent(c)
 		return
 	}
 
-	// Verifica se teve erro na conversão
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID has to be interger",
-		})
-		return
-	}
 	// Chama método GetSubmissiveUsers passando id como parâmetro
 	list, err := service.GetSubmissiveUsers(&id, level)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not fetch users",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a lista de users tem tamanho zero (caso for user não tem users submissive)
 	if len(list.List) == 0 {
-		c.Status(http.StatusNoContent)
+		response.SendNoContent(c)
 		return
 	}
 
 	// Retorno json com user
-	c.JSON(http.StatusOK, list)
+	response.Send(c, http.StatusOK, list)
 }
 
 // Função que chama método CreateUser do service e retorna json com mensagem de sucesso
@@ -194,9 +167,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	err := c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "cannot bind JSON user" + err.Error(),
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -204,9 +175,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// Prepara e valida dados
 	if err = user.Prepare(); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -216,9 +185,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	user.Hash, err = security.HashPassword(user.Password)
 	// Verifica se teve erro ao fazer hash
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not hash password: " + err.Error(),
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -226,14 +193,12 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	_, err = service.CreateUser(user)
 	// Verifica se teve erro na criação de user
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "cannot create user",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	// Retorno json com o user
-	c.JSON(http.StatusCreated, gin.H{
+	response.Send(c, http.StatusCreated, gin.H{
 		"email":    user.Email,
 		"password": user.Password,
 	})
@@ -256,32 +221,24 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 	newID, err := strconv.ParseUint(id, 10, 64)
 	// Verifica se teve erro na conversão
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Chama método UpdateStatusUser passando id como parâmetro
 	result, err := service.UpdateStatusUser(&newID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "cannot update JSON",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
 	if result == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "user not found",
-		})
+		response.Error(c, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 
 	// Retorno json com mensagem de sucesso
-	c.JSON(http.StatusOK, gin.H{
-		"response": "User Status Updated",
-	})
+	response.SendNoContent(c)
 }
 
 // Função que chama método UpdateUser do service e retorna json com mensagem de sucesso
@@ -303,9 +260,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID has to be interger, 400" + err.Error(),
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -313,25 +268,19 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	err = c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "cannot bind JSON produto, 400" + err.Error(),
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
 	if err = user.Prepare(); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Verifica se senha tem o tamanho mínimo de caracteres
 	user.Hash, err = security.HashPassword(user.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not hash password: " + err.Error(),
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -339,20 +288,16 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	idResult, err := service.UpdateUser(&newId, user)
 	// Verifica se teve erro na edição de user
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "user not found",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
 	if idResult == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "cannot update user",
-		})
+		response.Error(c, http.StatusNotFound, errors.New("cannot update user"))
 		return
 	}
 	// Retorna json com o status 200
-	c.Status(http.StatusOK)
+	response.SendNoContent(c)
 }
 
 // Função que chama método Login do service e retorna json com token
@@ -364,25 +309,19 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	err := c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "cannot bind JSON user" + err.Error(),
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Verifica se email formato válido
 	if err := checkmail.ValidateFormat(user.Email); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid email",
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Verifica se senha tem o tamanho mínimo de caracteres
 	if len(user.Password) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "password too short",
-		})
+		response.Error(c, http.StatusBadRequest, errors.New("password too short"))
 		return
 	}
 
@@ -390,23 +329,17 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	hash, err := service.Login(user)
 	// Verifica se teve erro ao buscar user no banco
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "cannot fetch credentials",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a senha com hash está vazia
 	if hash == "" {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "email not found",
-		})
+		response.Error(c, http.StatusUnauthorized, errors.New("incorrect credentials"))
 		return
 	}
 	// Verifica se o user é inativo
 	if user.Status != "ATIVO" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "inactive user",
-		})
+		response.Error(c, http.StatusUnauthorized, errors.New("inactive user"))
 		return
 	}
 
@@ -414,9 +347,7 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	err = security.ValidatePassword(hash, user.Password)
 	// Caso coloque a senha errada, cai nesse erro
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "incorrect credentials",
-		})
+		response.Error(c, http.StatusUnauthorized, errors.New("incorrect credentials"))
 		return
 	}
 
@@ -424,14 +355,12 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	token, err := security.NewToken(user.ID, user.Level, user.Status)
 	// Verifica se teve erro ao gerar o token
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "cannot create token",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	// Retorna JSON com o token
-	c.JSON(http.StatusOK, gin.H{
+	response.Send(c, http.StatusOK, gin.H{
 		"token": token,
 	})
 }
@@ -441,9 +370,7 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -453,9 +380,7 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID has to be interger",
-		})
+		response.Error(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -463,19 +388,15 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 	user, err := service.GetUserByID(&newId)
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not fetch users",
-		})
+		response.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao buscar o user no banco)
 	if user.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "user not found",
-		})
+		response.Error(c, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 
 	// Retorno json com user
-	c.JSON(http.StatusOK, user)
+	response.Send(c, http.StatusOK, user)
 }
