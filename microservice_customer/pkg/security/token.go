@@ -106,7 +106,7 @@ func IsActive(token string) error {
 	}
 }
 
-// Função que verifica se o user é um Adm, se for retorna nil, senão retorna erro
+// IsUser verifica se o user é um Adm, se for retorna nil, senão retorna erro
 func IsUser(c *gin.Context) error {
 	// pega permissões do token
 	permissions, err := GetPermissions(c)
