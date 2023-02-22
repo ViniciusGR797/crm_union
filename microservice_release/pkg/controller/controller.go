@@ -2,7 +2,6 @@ package controller
 
 import (
 	"microservice_release/pkg/entity"
-	"microservice_release/pkg/security"
 	"microservice_release/pkg/service"
 	"net/http"
 	"strconv"
@@ -28,14 +27,6 @@ func GetReleasesTrain(c *gin.Context, service service.ReleaseServiceInterface) {
 
 // GetReleaseTrainByID Função que chama método GetReleseTrainByID do service e retorna json
 func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("releasetrain_id")
 
 	newId, err := strconv.ParseUint(ID, 10, 64)
@@ -65,14 +56,6 @@ func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface
 
 // UpdateReleaseTrain Função que chama método UpdateReleaseTrain do service e retorna json
 func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("releasetrain_id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -131,14 +114,6 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 
 // GetTagsReleaseTrain Função que chama método GetTagsReleaseTrain do service e retorna json
 func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("releasetrain_id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -166,14 +141,6 @@ func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface
 
 // UpdateStatusReleaseTrain Função que chama método UpdateStatusReleaseTrain do service e retorna json
 func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("releasetrain_id")
 
@@ -237,14 +204,6 @@ func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInt
 
 // CreateReleaseTrain Função que chama método CreateReleaseTrain do service e retorna json com mensagem de sucesso
 func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// Cria variável do tipo release (inicialmente vazia)
 	var release *entity.Release_Update
 
