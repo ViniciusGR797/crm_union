@@ -28,16 +28,16 @@ func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 	list, err := service.GetUsers()
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a lista está vazia (tem tamanho zero - não tem users no banco)
 	if len(list.List) == 0 {
-		SendError(c, http.StatusNotFound, errors.New("no users found"))
+		sendError(c, http.StatusNotFound, errors.New("no users found"))
 		return
 	}
 	//retorna sucesso 200 e retorna json da lista de users
-	Send(c, http.StatusOK, list)
+	send(c, http.StatusOK, list)
 }
 
 // Função que chama método GetUserByID do service e retorna json com user
@@ -57,24 +57,24 @@ func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		SendError(c, http.StatusBadRequest, errors.New("ID must be an integer"))
+		sendError(c, http.StatusBadRequest, errors.New("ID must be an integer"))
 		return
 	}
 	// Chama método GetUserByID passando id como parâmetro
 	user, err := service.GetUserByID(&newId)
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao buscar o user no banco)
 	if user.ID == 0 {
-		SendError(c, http.StatusNotFound, errors.New("user not found"))
+		sendError(c, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 
 	// Retorno json com user
-	Send(c, http.StatusOK, user)
+	send(c, http.StatusOK, user)
 }
 
 // Função que chama método GetUserByName do service e retorna json com user
@@ -93,17 +93,17 @@ func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 	list, err := service.GetUserByName(&name)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a lista de users tem tamanho zero (caso for não tem user com esse name)
 	if len(list.List) == 0 {
-		SendError(c, http.StatusNotFound, errors.New("no user found"))
+		sendError(c, http.StatusNotFound, errors.New("no user found"))
 		return
 	}
 
 	// Retorno json com user
-	Send(c, http.StatusOK, list)
+	send(c, http.StatusOK, list)
 }
 
 // Função que chama método GetSubmissiveUsers do service e retorna json com user
@@ -111,24 +111,24 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Pega id e nivel passada como token na rota
 	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	level, err := strconv.Atoi(fmt.Sprint(permissions["level"]))
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	// Verifica se o user é level 1, logo não tem user submissive
 	if level <= 1 {
-		SendNoContent(c)
+		sendNoContent(c)
 		return
 	}
 
@@ -136,17 +136,17 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 	list, err := service.GetSubmissiveUsers(&id, level)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a lista de users tem tamanho zero (caso for user não tem users submissive)
 	if len(list.List) == 0 {
-		SendNoContent(c)
+		sendNoContent(c)
 		return
 	}
 
 	// Retorno json com user
-	Send(c, http.StatusOK, list)
+	send(c, http.StatusOK, list)
 }
 
 // Função que chama método CreateUser do service e retorna json com mensagem de sucesso
@@ -166,7 +166,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	err := c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -174,7 +174,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// Prepara e valida dados
 	if err = user.Prepare(); err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -184,7 +184,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	user.Hash, err = security.HashPassword(user.Password)
 	// Verifica se teve erro ao fazer hash
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -192,12 +192,12 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	_, err = service.CreateUser(user)
 	// Verifica se teve erro na criação de user
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	// Retorno json com o user
-	Send(c, http.StatusCreated, gin.H{
+	send(c, http.StatusCreated, gin.H{
 		"email":    user.Email,
 		"password": user.Password,
 	})
@@ -220,24 +220,24 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 	newID, err := strconv.ParseUint(id, 10, 64)
 	// Verifica se teve erro na conversão
 	if err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Chama método UpdateStatusUser passando id como parâmetro
 	result, err := service.UpdateStatusUser(&newID)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
 	if result == 0 {
-		SendError(c, http.StatusNotFound, errors.New("user not found"))
+		sendError(c, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 
 	// Retorno json com mensagem de sucesso
-	SendNoContent(c)
+	sendNoContent(c)
 }
 
 // Função que chama método UpdateUser do service e retorna json com mensagem de sucesso
@@ -259,7 +259,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -267,19 +267,19 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	err = c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
 	if err = user.Prepare(); err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Verifica se senha tem o tamanho mínimo de caracteres
 	user.Hash, err = security.HashPassword(user.Password)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -287,16 +287,16 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	idResult, err := service.UpdateUser(&newId, user)
 	// Verifica se teve erro na edição de user
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
 	if idResult == 0 {
-		SendError(c, http.StatusNotFound, errors.New("cannot update user"))
+		sendError(c, http.StatusNotFound, errors.New("cannot update user"))
 		return
 	}
 	// Retorna json com o status 200
-	SendNoContent(c)
+	sendNoContent(c)
 }
 
 // Função que chama método Login do service e retorna json com token
@@ -308,19 +308,19 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	err := c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Verifica se email formato válido
 	if err := checkmail.ValidateFormat(user.Email); err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
 	// Verifica se senha tem o tamanho mínimo de caracteres
 	if len(user.Password) < 8 {
-		SendError(c, http.StatusBadRequest, errors.New("password too short"))
+		sendError(c, http.StatusBadRequest, errors.New("password too short"))
 		return
 	}
 
@@ -328,17 +328,17 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	hash, err := service.Login(user)
 	// Verifica se teve erro ao buscar user no banco
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se a senha com hash está vazia
 	if hash == "" {
-		SendError(c, http.StatusUnauthorized, errors.New("incorrect credentials"))
+		sendError(c, http.StatusUnauthorized, errors.New("incorrect credentials"))
 		return
 	}
 	// Verifica se o user é inativo
 	if user.Status != "ATIVO" {
-		SendError(c, http.StatusUnauthorized, errors.New("inactive user"))
+		sendError(c, http.StatusUnauthorized, errors.New("inactive user"))
 		return
 	}
 
@@ -346,7 +346,7 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	err = security.ValidatePassword(hash, user.Password)
 	// Caso coloque a senha errada, cai nesse erro
 	if err != nil {
-		SendError(c, http.StatusUnauthorized, errors.New("incorrect credentials"))
+		sendError(c, http.StatusUnauthorized, errors.New("incorrect credentials"))
 		return
 	}
 
@@ -354,12 +354,12 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 	token, err := security.NewToken(user.ID, user.Level, user.Status)
 	// Verifica se teve erro ao gerar o token
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	// Retorna JSON com o token
-	Send(c, http.StatusOK, gin.H{
+	send(c, http.StatusOK, gin.H{
 		"token": token,
 	})
 }
@@ -369,7 +369,7 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -379,7 +379,7 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 	newId, err := strconv.Atoi(strings.Replace(id, ":", "", 1))
 	// Verifica se teve erro na conversão
 	if err != nil {
-		SendError(c, http.StatusBadRequest, err)
+		sendError(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -387,15 +387,15 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 	user, err := service.GetUserByID(&newId)
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
-		SendError(c, http.StatusInternalServerError, err)
+		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 	// Verifica se o id é zero (caso for deu erro ao buscar o user no banco)
 	if user.ID == 0 {
-		SendError(c, http.StatusNotFound, errors.New("user not found"))
+		sendError(c, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 
 	// Retorno json com user
-	Send(c, http.StatusOK, user)
+	send(c, http.StatusOK, user)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // SendError organiza um JSON para responder ao client em caso de erro
-func SendError(c *gin.Context, status int, err error) {
+func sendError(c *gin.Context, status int, err error) {
 	c.JSON(status, gin.H{
 		"status":     status,
 		"statusText": http.StatusText(status),
@@ -17,11 +17,11 @@ func SendError(c *gin.Context, status int, err error) {
 }
 
 // Send envia o objeto ao client em caso de sucesso na requisição
-func Send(c *gin.Context, code int, obj any) {
+func send(c *gin.Context, code int, obj any) {
 	c.JSON(code, obj)
 }
 
 // Send envia nada ao client em caso de sucesso na requisição
-func SendNoContent(c *gin.Context) {
+func sendNoContent(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
