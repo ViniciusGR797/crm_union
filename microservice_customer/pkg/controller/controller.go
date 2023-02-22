@@ -2,7 +2,6 @@ package controller
 
 import (
 	"microservice_customer/pkg/entity"
-	"microservice_customer/pkg/security"
 	"microservice_customer/pkg/service"
 	"net/http"
 	"strconv"
@@ -23,14 +22,6 @@ func GetCustomers(c *gin.Context, service service.CustomerServiceInterface) {
 
 // GetCustomerByID buscar customer por ID
 func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	newID, err := strconv.ParseUint(id, 10, 64)
@@ -51,14 +42,6 @@ func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
 
 // CreateCustomer verifica se a rota e a função são exclusivas do administrador.
 func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	var customer *entity.Customer
 	err := c.ShouldBindJSON(&customer)
 	if err != nil {
@@ -76,14 +59,6 @@ func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 }
 
 func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	id := c.Param("id")
 
 	var customer *entity.Customer
@@ -111,14 +86,6 @@ func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 
 // UpdateCustomer é uma rota para atualizar um cliente existente. Primeiro, ele verifica se o usuário que faz a solicitação é um administrador usando a função security.IsAdm
 func UpdateStatusCustomer(c *gin.Context, service service.CustomerServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	ID := c.Param("id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
