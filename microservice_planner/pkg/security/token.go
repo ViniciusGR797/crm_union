@@ -10,6 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var secret []byte
+
+func SecretConfig(config *config.Config) {
+	secret = []byte(config.Secret)
+}
+
 // ValidateToken recebe uma string token como argumento e verifica se o token é válido ou não.
 func ValidateToken(token string) error {
 	_, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
@@ -19,7 +25,7 @@ func ValidateToken(token string) error {
 			return nil, errors.New("invalid token: " + token)
 		}
 
-		return []byte(config.Secret), nil
+		return secret, nil
 	})
 	if err != nil {
 		return err
@@ -52,7 +58,7 @@ func keyFunc(t *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("invalid method: %v", t.Header["alg"])
 	}
 
-	return []byte(config.Secret), nil
+	return secret, nil
 }
 
 // GetToken recebe um objeto gin.Context, que é usado para acessar os headers da requisição.

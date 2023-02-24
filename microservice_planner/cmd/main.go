@@ -10,6 +10,7 @@ import (
 	"microservice_planner/config"
 	"microservice_planner/pkg/database"
 	"microservice_planner/pkg/routes"
+	"microservice_planner/pkg/security"
 	"microservice_planner/pkg/server"
 	"microservice_planner/pkg/service"
 )
@@ -48,6 +49,9 @@ func main() {
 
 	// Cria serviços de um planner (CRUD) com a pool de conexão passada por parâmetro
 	service := service.NewPlannerService(dbpool)
+
+	// Configura a chave de segurança dos tokens
+	security.SecretConfig(conf)
 
 	// Cria servidor HTTP com as config passadas por parâmetro
 	serv := server.NewServer(conf)

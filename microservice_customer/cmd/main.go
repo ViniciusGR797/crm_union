@@ -10,6 +10,7 @@ import (
 	"microservice_customer/config"
 	"microservice_customer/pkg/database"
 	"microservice_customer/pkg/routes"
+	"microservice_customer/pkg/security"
 	"microservice_customer/pkg/server"
 	"microservice_customer/pkg/service"
 )
@@ -48,6 +49,9 @@ func main() {
 
 	// Cria serviços de um customer (CRUD) com a pool de conexão passada por parâmetro
 	service := service.NewCostumerService(dbpool)
+
+	// Configura a chave de segurança dos tokens
+	security.SecretConfig(conf)
 
 	// Cria servidor HTTP com as config passadas por parâmetro
 	serv := server.NewServer(conf)

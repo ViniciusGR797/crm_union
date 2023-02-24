@@ -7,6 +7,7 @@ import (
 	"microservice_remark/config"
 	"microservice_remark/pkg/database"
 	"microservice_remark/pkg/routes"
+	"microservice_remark/pkg/security"
 	"microservice_remark/pkg/server"
 	"microservice_remark/pkg/service"
 	"os"
@@ -46,6 +47,9 @@ func main() {
 
 	// Cria serviços de um user (CRUD) com a pool de conexão passada por parâmetro
 	service := service.NewRemarkService(dbpool)
+
+	// Configura a chave de segurança dos tokens
+	security.SecretConfig(conf)
 
 	// Cria servidor HTTP com as config passadas por parâmetro
 	serv := server.NewServer(conf)

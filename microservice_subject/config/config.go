@@ -16,11 +16,6 @@ const (
 	PRODUCTION = "production"
 )
 
-var (
-	// Secret - para fazer criptografia de chaves
-	Secret string
-)
-
 // Estrutura para armazenar as configurações da aplicação - Config
 type Config struct {
 	// Porta do servidor - Ex: 8080
@@ -136,7 +131,6 @@ func NewConfig(config *Config) *Config {
 	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
 	if SRV_SECRET != "" {
 		conf.Secret = SRV_SECRET
-		Secret = SRV_SECRET
 	}
 
 	// Retorna a nova configuração

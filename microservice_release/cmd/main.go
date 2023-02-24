@@ -10,6 +10,7 @@ import (
 	"microservice_release/config"
 	"microservice_release/pkg/database"
 	"microservice_release/pkg/routes"
+	"microservice_release/pkg/security"
 	"microservice_release/pkg/server"
 	"microservice_release/pkg/service"
 )
@@ -48,6 +49,9 @@ func main() {
 
 	// Cria serviços de um release (CRUD) com a pool de conexão passada por parâmetro
 	service := service.NewReleaseService(dbpool)
+
+	// Configura a chave de segurança dos tokens
+	security.SecretConfig(conf)
 
 	// Cria servidor HTTP com as config passadas por parâmetro
 	serv := server.NewServer(conf)
