@@ -2,8 +2,8 @@ package routes
 
 import (
 	"microservice_customer/pkg/controller"
+	"microservice_customer/pkg/middlewares"
 	"microservice_customer/pkg/service"
-	"microservice_user/pkg/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
