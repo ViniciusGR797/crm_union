@@ -12,8 +12,12 @@ import (
 
 var secret []byte
 
-func SecretConfig(config *config.Config) {
+func SecretConfig(config *config.Config) error {
 	secret = []byte(config.Secret)
+	if len(secret) == 0 {
+		return errors.New("env token secret not set!")
+	}
+	return nil
 }
 
 // ValidateToken recebe uma string token como argumento e verifica se o token é válido ou não.

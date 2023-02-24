@@ -13,8 +13,12 @@ import (
 
 var secret []byte
 
-func SecretConfig(config *config.Config) {
+func SecretConfig(config *config.Config) error {
 	secret = []byte(config.Secret)
+	if len(secret) == 0 {
+		return errors.New("env token secret not set!")
+	}
+	return nil
 }
 
 func NewToken(userID uint64, level uint, status string) (string, error) {
