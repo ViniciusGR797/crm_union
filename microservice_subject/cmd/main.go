@@ -7,6 +7,7 @@ import (
 	"microservice_subject/config"
 	"microservice_subject/pkg/database"
 	"microservice_subject/pkg/routes"
+	"microservice_subject/pkg/security"
 	"microservice_subject/pkg/server"
 	"microservice_subject/pkg/service"
 	"os"
@@ -20,18 +21,18 @@ func main() {
 	// Abre o arquivo JSON com as variáveis de ambiente
 	file, err := os.Open("microservice_subject/env.json") // file.json has the json content
 	if err != nil {
-		log.Print(err)
+		panic(err)
 	}
 
 	// Lé todo JSON e transforma em um JSON byte
 	jsonByte, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Print(err)
+		panic(err)
 	}
 
 	// Converte JSON byte em uma struct, no caso a struct default_conf
 	if err := json.Unmarshal(jsonByte, &default_conf); err != nil {
-		log.Print(err)
+		panic(err)
 	}
 
 	// Atribui para conf as novas configurações do sistema
@@ -46,6 +47,12 @@ func main() {
 
 	// Cria serviços de um user (CRUD) com a pool de conexão passada por parâmetro
 	service := service.NewGroupService(dbpool)
+
+	// Configura a chave de segurança dos tokens
+	err = security.SecretConfig(conf)
+	if err != nil {
+		panic(err)
+	}
 
 	// Cria servidor HTTP com as config passadas por parâmetro
 	serv := server.NewServer(conf)

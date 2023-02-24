@@ -11,6 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var secret []byte
+
+func SecretConfig(config *config.Config) error {
+	secret = []byte(config.Secret)
+	if len(secret) == 0 {
+		return errors.New("env token secret not set!")
+	}
+	return nil
+}
+
 func NewToken(userID uint64, level uint, status string) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
@@ -20,7 +30,7 @@ func NewToken(userID uint64, level uint, status string) (string, error) {
 	permissions["status"] = status
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissions)
-	return token.SignedString([]byte(config.Secret))
+	return token.SignedString(secret)
 }
 
 func ValidateToken(token string) error {
@@ -31,7 +41,7 @@ func ValidateToken(token string) error {
 			return nil, errors.New("invalid token: " + token)
 		}
 
-		return []byte(config.Secret), nil
+		return secret, nil
 	})
 	if err != nil {
 		return err
@@ -62,7 +72,7 @@ func keyFunc(t *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("invalid method: %v", t.Header["alg"])
 	}
 
-	return []byte(config.Secret), nil
+	return secret, nil
 }
 
 func GetToken(c *gin.Context) (string, error) {
