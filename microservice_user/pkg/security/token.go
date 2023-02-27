@@ -11,26 +11,44 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewToken(userID uint64, level uint) (string, error) {
+var secret []byte
+
+func SecretConfig(config *config.Config) error {
+	secret = []byte(config.Secret)
+	if len(secret) == 0 {
+		return errors.New("env token secret not set!")
+	}
+	return nil
+}
+
+func NewToken(userID uint64, level uint, status string) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
-	permissions["level"] = level
 	permissions["exp"] = time.Now().Add(time.Hour * 6).Unix()
 	permissions["userID"] = userID
+	permissions["level"] = level
+	permissions["status"] = status
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissions)
-	return token.SignedString([]byte(config.Secret))
+	return token.SignedString(secret)
 }
 
 func ValidateToken(token string) error {
 	_, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		_, isValid := t.Method.(*jwt.SigningMethodHMAC)
 		if !isValid {
+
 			return nil, errors.New("invalid token: " + token)
 		}
 
-		return []byte(config.Secret), nil
+		return secret, nil
 	})
+	if err != nil {
+		return err
+	}
+
+	err = IsActive(token)
+
 	return err
 }
 
@@ -54,7 +72,7 @@ func keyFunc(t *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("invalid method: %v", t.Header["alg"])
 	}
 
-	return []byte(config.Secret), nil
+	return secret, nil
 }
 
 func GetToken(c *gin.Context) (string, error) {
@@ -88,8 +106,26 @@ func GetPermissions(c *gin.Context) (jwt.MapClaims, error) {
 	return permissions, nil
 }
 
+// Função que verifica se o user é ATIVO, se for retorna nil, senão retorna erro
+func IsActive(token string) error {
+	// pega permissões do token
+	permissions, err := ExtractToken(token)
+	if err != nil {
+		return errors.New("error getting permissions")
+	}
+	// Pega status nas permissões do token
+	status := fmt.Sprint(permissions["status"])
+
+	// Verifica se o user é está ativo
+	if status == "ATIVO" {
+		return nil
+	} else {
+		return errors.New("inactive user")
+	}
+}
+
 // Função que verifica se o user é um Adm, se for retorna nil, senão retorna erro
-func IsAdm(c *gin.Context) error {
+func IsUser(c *gin.Context) error {
 	// pega permissões do token
 	permissions, err := GetPermissions(c)
 	if err != nil {
@@ -102,7 +138,7 @@ func IsAdm(c *gin.Context) error {
 	}
 
 	// Verifica se o user é um admin (level acima de 1)
-	if level > 1 {
+	if level == 1 {
 		return nil
 	} else {
 		return errors.New("admin exclusive route")

@@ -1,50 +1,52 @@
 package config
 
 import (
-	// Package "os" - usado para manipulação de arquivos
+	//os Package - usado para manipulação de arquivos
 	"os"
-	// Package "strconv" - implementa conversões de tipos primitivos, ex: String para int
+	//strconv Package- implementa conversões de tipos primitivos, ex: String para int
 	"strconv"
 )
 
 const (
-	// DEVELOPER - Modo de desenvolvimento - Ambiente programável
+	//DEVELOPER - Modo de desenvolvimento - Ambiente programável
 	DEVELOPER = "developer"
-	// HOMOLOGATION - Modo de homologação - Fase de testes
+	//HOMOLOGATION - Modo de homologação - Fase de testes
 	HOMOLOGATION = "homologation"
-	// PRODUCTION - Modo de produção - Usuário final
+	//PRODUCTION - Modo de produção - Usuário final
 	PRODUCTION = "production"
 )
 
 // Estrutura para armazenar as configurações da aplicação - Config
 type Config struct {
-	// Porta do servidor - Ex: 8080
+	// SRV_PORT Porta do servidor - Ex: 8080
 	SRV_PORT string `json:"srv_port"`
 	// Web UI (Interface de Usuário Web) - Atividada/Desativada
 	WEB_UI bool `json:"web_ui"`
-	// Modo de uso da API - DEVELOPER, HOMOLOGATION ou PRODUCTION
+	// Mode Modo de uso da API - DEVELOPER, HOMOLOGATION ou PRODUCTION
 	Mode string `json:"mode"`
-	// Abrir o navegador - Atividada/Desativada
+	//OpenBrowser Abrir o navegador - Atividada/Desativada
 	OpenBrowser bool `json:"open_browser"`
-	// Configurações do DataBase
+	//DBConfig Configurações do DataBase
 	DBConfig `json:"dbconfig"`
+	// Secret de criptografia de Token
+	Secret string `json:"secret"`
 }
 
-// Estrutura para armazenar as configurações do banco de dados - DBConfig
+// DBConfig Estrutura para armazenar as configurações do banco de dados - DBConfig
 type DBConfig struct {
-	// Drive do DataBase - Ex: MySql
+	//DB_DRIVE Drive do DataBase - Ex: MySql
 	DB_DRIVE string `json:"db_drive"`
-	// Host do Database - Ex: LocalHost
+	//DB_HOST Host do Database - Ex: LocalHost
 	DB_HOST string `json:"db_host"`
-	// Porta do Database - Ex: 3306
+	//DB_PORT Porta do Database - Ex: 3306
 	DB_PORT string `json:"db_port"`
-	// Usuário do Database - Ex: root
+	//DB_USER Usuário do Database - Ex: root
 	DB_USER string `json:"db_user"`
-	// Senha do Database - Ex: ******
+	//DB_PASS Senha do Database - Ex: ******
 	DB_PASS string `json:"db_pass"`
-	// Nome do Database - Ex: golangdb
+	//DB_NAME Nome do Database - Ex: golangdb
 	DB_NAME string `json:"db_name"`
-	// Data source name (Nome da Fonte de Dados) - Converter nome do site em IP - Ex: Google.com em 8.8.8.8
+	//DB_DSN Data source name (Nome da Fonte de Dados) - Converter nome do site em IP - Ex: Google.com em 8.8.8.8
 	DB_DSN string `json:"-"`
 }
 
@@ -124,15 +126,22 @@ func NewConfig(config *Config) *Config {
 		conf.DBConfig.DB_NAME = SRV_DB_NAME
 	}
 
+	// Atribui uma variável de ambiente para nome do Database
+	SRV_SECRET := os.Getenv("SECRET")
+	// Caso tenha essa variável de ambiente (não esteja vazia), atribui as novas configurações
+	if SRV_SECRET != "" {
+		conf.Secret = SRV_SECRET
+	}
+
 	// Retorna a nova configuração
 	return config
 }
 
-// Configurações padrão da aplicação - defaultConf
+// DefaultConfig Configurações padrão da aplicação - defaultConf
 func DefaultConfig() *Config {
 	// Cria e atribui já valores para a configuração padrão
 	default_config := Config{
-		SRV_PORT:    "8088",
+		SRV_PORT:    "8087",
 		WEB_UI:      true,
 		OpenBrowser: true,
 		DBConfig: DBConfig{
@@ -143,7 +152,8 @@ func DefaultConfig() *Config {
 			DB_PASS:  "",
 			DB_NAME:  "",
 		},
-		Mode: PRODUCTION,
+		Mode:   PRODUCTION,
+		Secret: "",
 	}
 
 	// retorna o endereço de memória da configuração padrão (aumentar eficiência evitando copias)

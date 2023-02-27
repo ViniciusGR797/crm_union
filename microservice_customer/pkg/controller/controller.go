@@ -1,71 +1,121 @@
 package controller
 
 import (
-	"fmt"
 	"microservice_customer/pkg/entity"
 	"microservice_customer/pkg/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-// Função que chama método GetCustomer do service e retorna json com lista
-func GetAllCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+// GetCustomers Função que chama método GetCustomer do service e retorna json com lista
+func GetCustomers(c *gin.Context, service service.CustomerServiceInterface) {
 
-	lista := service.GetAllCustomer()
-	if len(lista.List) == 0 {
-		c.JSON(404, gin.H{
-			"error": "lista not found, 404",
-		})
+	lista, err := service.GetCustomers()
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
 	}
-	fmt.Printf("tudo certo")
-	c.JSON(200, lista)
+	c.JSON(http.StatusOK, lista)
 }
 
-// buscar customer por ID
+// GetCustomerByID buscar customer por ID
 func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
-
 	id := c.Param("id")
 
 	newID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be interger, 400",
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	produto := service.GetCustomerByID(&newID)
-	if produto.ID == 0 {
-		c.JSON(404, gin.H{
-			"error": "produto not found, 404",
-		})
+	customer, err := service.GetCustomerByID(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, err)
 		return
 	}
 
-	c.JSON(200, produto)
+	c.JSON(http.StatusOK, customer)
 
 }
 
+// CreateCustomer verifica se a rota e a função são exclusivas do administrador.
 func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
-
 	var customer *entity.Customer
-	err := c.ShouldBind(&customer)
+	err := c.ShouldBindJSON(&customer)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bind JSON customer" + err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	id := service.CreateCustomer(customer)
-	if id == 0 {
-		c.JSON(400, gin.H{
-			"error": "cannot create JSON: " + err.Error(),
-		})
+	err = service.CreateCustomer(customer)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
 	}
 
-	customer = service.GetCustomerByID(&id)
-	c.JSON(200, customer)
+	c.JSON(http.StatusNoContent, nil)
+}
+
+func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+	id := c.Param("id")
+
+	var customer *entity.Customer
+
+	newID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
+	}
+
+	err = c.ShouldBindJSON(&customer)
+	if err != nil {
+		JSONMessenger(c, http.StatusUnprocessableEntity, c.Request.URL.Path, err)
+		return
+	}
+
+	err = service.UpdateCustomer(&newID, customer)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
+		return
+	}
+	c.JSON(http.StatusNoContent, nil)
+
+}
+
+// UpdateCustomer é uma rota para atualizar um cliente existente. Primeiro, ele verifica se o usuário que faz a solicitação é um administrador usando a função security.IsAdm
+func UpdateStatusCustomer(c *gin.Context, service service.CustomerServiceInterface) {
+	ID := c.Param("id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
+
+	}
+
+	err = service.UpdateStatusCustomer(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"response": "Customer Status Updated",
+	})
+}
+
+// JSONMessenger é utilizada para formatar as respostas em JSON enviadas para o cliente.
+func JSONMessenger(c *gin.Context, status int, path string, err error) {
+	errorMessage := ""
+	if err != nil {
+		errorMessage = err.Error()
+	}
+	c.JSON(status, gin.H{
+		"status":  status,
+		"message": errorMessage,
+		"error":   err,
+		"path":    path,
+	})
 }

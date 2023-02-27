@@ -9,15 +9,22 @@ type CustomerInterface interface {
 	String() string
 }
 
-// Estrutura de dados de Costumer
+// Customer Estrutura de dados de Costumer
 type Customer struct {
 	ID         uint64 `json:"id,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Created_At string `json:"created_at,omitempty"`
 	Status     string `json:"status,omitempty"`
+	Tags       []Tag  `json:"tags,omitempty"`
 }
 
-// Método de customer - retorna string com json do customer ou erro
+// Tag Estrutura de dados de Costumer
+type Tag struct {
+	Tag_ID   uint64 `json:"tag_id,omitempty"`
+	Tag_Name string `json:"tag_name,omitempty"`
+}
+
+// String Método de customer - retorna string com json do customer ou erro
 func (p *Customer) String() string {
 	data, err := json.Marshal(p)
 
@@ -30,12 +37,12 @@ func (p *Customer) String() string {
 	return string(data)
 }
 
-// Estrutura de dados para lista de costumer
+// CustomerList Estrutura de dados para lista de costumer
 type CustomerList struct {
 	List []*Customer `json:"list"`
 }
 
-// Método de CustomerList - retorna string com json da lista de Customers ou erro
+// String Método de CustomerList - retorna string com json da lista de Customers ou erro
 func (pl *CustomerList) String() string {
 	data, err := json.Marshal(pl)
 
@@ -48,14 +55,9 @@ func (pl *CustomerList) String() string {
 	return string(data)
 }
 
-// Construtor de Customer - recebe dados no parâmetro e transforma em um user
-func NewCostumer(name, created_at, status string, id uint64) *Customer {
+// NewCustomer Construtor de Customer - recebe dados no parâmetro
+func NewCustomer(name string) *Customer {
 	return &Customer{
-		ID:         id,
-		Name:       name,
-		Created_At: created_at,
-		Status:     status,
+		Name: name,
 	}
 }
-
-// testetetetete
