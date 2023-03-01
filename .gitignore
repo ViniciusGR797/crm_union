@@ -9,5 +9,4 @@
 *.exe
 
 # Arquivos Docker
-*/Dockerfile
 */.dockerignore
