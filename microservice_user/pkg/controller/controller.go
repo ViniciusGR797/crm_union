@@ -187,11 +187,28 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Cria variável do tipo user (inicialmente vazia)
 	var user *entity.User
 
 	// Converte json em user
-	err := c.ShouldBind(&user)
+	err = c.ShouldBind(&user)
 	// Verifica se tem erro
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -223,7 +240,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	// Chama método Create passando user como parâmetro, cadastra no banco user
-	_, err = service.CreateUser(user)
+	_, err = service.CreateUser(user, &logID)
 	// Verifica se teve erro na criação de user
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -249,6 +266,23 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("user_id")
 
@@ -263,7 +297,7 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	// Chama método UpdateStatusUser passando id como parâmetro
-	result, err := service.UpdateStatusUser(&newID)
+	result, err := service.UpdateStatusUser(&newID, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "cannot update JSON",
@@ -289,6 +323,23 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	// Verifica se tal rota/função é exclusiva de adm
 	if err := security.IsAdm(c); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -336,7 +387,7 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	}
 
 	// Chama método UpdateUser passando user e id como parâmetro
-	idResult, err := service.UpdateUser(&newId, user)
+	idResult, err := service.UpdateUser(&newId, user, &logID)
 	// Verifica se teve erro na edição de user
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
