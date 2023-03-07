@@ -46,30 +46,6 @@ func GetClientsMyGroups(c *gin.Context, service service.ClientServiceInterface) 
 	c.JSON(http.StatusOK, list)
 }
 
-// GetTagsClient: Retorna json com uma lista de tags do client
-func GetTagsClient(c *gin.Context, service service.ClientServiceInterface) {
-	ID := c.Param("client_id")
-
-	newID, err := strconv.ParseUint(ID, 10, 64)
-	if err != nil {
-		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
-		return
-	}
-
-	tags, err := service.GetTagsClient(&newID)
-	if err != nil {
-		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
-		return
-	}
-
-	if len(tags) == 0 {
-		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, tags)
-}
-
 // GetClientByID: Retorna json com um client
 func GetClientByID(c *gin.Context, service service.ClientServiceInterface) {
 
@@ -97,6 +73,56 @@ func GetClientByID(c *gin.Context, service service.ClientServiceInterface) {
 	c.JSON(http.StatusOK, client)
 }
 
+// GetClientByReleaseID: Retorna uma lista json de clients
+func GetClientByReleaseID(c *gin.Context, service service.ClientServiceInterface) {
+	ID := c.Param("release_id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
+	}
+
+	// Chama método GetClientByReleaseID e retorna list de clients
+	clients, err := service.GetClientByReleaseID(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
+		return
+	}
+	// Verifica se a lista está vazia (tem tamanho zero)
+	if clients.List == nil {
+		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, err)
+		return
+	}
+
+	//retorna sucesso 200 e retorna json da lista de users
+	c.JSON(http.StatusOK, clients)
+}
+
+// GetTagsClient: Retorna json com uma lista de tags do client
+func GetTagsClient(c *gin.Context, service service.ClientServiceInterface) {
+	ID := c.Param("client_id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
+	}
+
+	tags, err := service.GetTagsClient(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
+		return
+	}
+
+	if len(tags) == 0 {
+		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, tags)
+}
+
 // CreateClient: Chama o serviço para criar um client
 func CreateClient(c *gin.Context, service service.ClientServiceInterface) {
 	var client entity.ClientUpdate
@@ -106,7 +132,24 @@ func CreateClient(c *gin.Context, service service.ClientServiceInterface) {
 		return
 	}
 
-	err := service.CreateClient(&client)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = service.CreateClient(&client, &logID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -132,7 +175,24 @@ func UpdateClient(c *gin.Context, service service.ClientServiceInterface) {
 		return
 	}
 
-	err = service.UpdateClient(&newID, &client)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = service.UpdateClient(&newID, &client, &logID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -153,7 +213,24 @@ func UpdateStatusClient(c *gin.Context, service service.ClientServiceInterface) 
 		return
 	}
 
-	err = service.UpdateStatusClient(&newID)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = service.UpdateStatusClient(&newID, &logID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
