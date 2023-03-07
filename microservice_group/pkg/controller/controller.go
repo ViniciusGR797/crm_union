@@ -1,8 +1,11 @@
 package controller
 
 import (
+	"fmt"
 	"microservice_group/pkg/entity"
+	"microservice_group/pkg/security"
 	"microservice_group/pkg/service"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -67,7 +70,24 @@ func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	result, err := service.UpdateStatusGroup(newid)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	result, err := service.UpdateStatusGroup(newid, &logID)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
@@ -131,7 +151,24 @@ func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	service.CreateGroup(&group)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	service.CreateGroup(&group, &logID)
 
 	c.JSON(201, gin.H{
 		"message": "group created",
@@ -157,7 +194,24 @@ func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	idReturn, err := service.AttachUserGroup(&users, group_id)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	idReturn, err := service.AttachUserGroup(&users, group_id, &logID)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
@@ -189,7 +243,24 @@ func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	idReturn, err := service.DetachUserGroup(&users, group_id)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	idReturn, err := service.DetachUserGroup(&users, group_id, &logID)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return

@@ -2,7 +2,7 @@
 
 Union é um sistema de CRM (Customer Relationship Management) no qual faz gestão de relacionamento com o cliente.
 
-### 🔧 Instalação
+### 🔧 Instalação - Local
 <!-- 
 Uma série de exemplos passo-a-passo que informam o que você deve executar para ter um ambiente de desenvolvimento em execução.
 
@@ -18,6 +18,15 @@ Para executar um micro serviço específico:
 
 ```
 go run microservice_user/cmd/main.go
+```
+
+### 🔧 Instalação - Docker
+Para rodar o projeto com docker basta seguir o passo abaixo:
+ -->
+O que você deve fazer para executar:
+
+```
+docker-compose -p crm-union up
 ```
 <!-- 
 Termine com um exemplo de como obter dados do sistema ou como usá-los para uma pequena demonstração.

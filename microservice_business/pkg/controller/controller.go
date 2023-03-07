@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"microservice_business/pkg/entity"
+	"microservice_business/pkg/security"
 	"microservice_business/pkg/service"
 	"net/http"
 	"strconv"
@@ -71,7 +73,24 @@ func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	err = service.CreateBusiness(business)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = service.CreateBusiness(business, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -111,7 +130,24 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	_, err = service.UpdateBusiness(newID, business)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	_, err = service.UpdateBusiness(newID, business, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -146,7 +182,24 @@ func UpdateStatusBusiness(c *gin.Context, service service.BusinessServiceInterfa
 		return
 	}
 
-	result := service.UpdateStatusBusiness(&newID)
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	result := service.UpdateStatusBusiness(&newID, &logID)
 	if result == 0 {
 		c.JSON(400, gin.H{
 			"error": "cannot update JSON, 400" + err.Error(),
