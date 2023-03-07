@@ -70,15 +70,32 @@ func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 // CreateRemark Função que cria um Remark
 func CreateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	var remark *entity.RemarkUpdate
 
-	err := c.ShouldBindJSON(&remark)
+	err = c.ShouldBindJSON(&remark)
 	if err != nil {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	err = service.CreateRemark(remark)
+	err = service.CreateRemark(remark, &logID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -125,6 +142,23 @@ func GetPieChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
 // UpdateStatusRemark é responsável por atualizar o status de um remark específico.
 func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) {
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	ID := c.Param("remark_id")
 
 	var remark *entity.Remark
@@ -141,7 +175,7 @@ func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) 
 		return
 	}
 
-	err = service.UpdateStatusRemark(&newID, remark)
+	err = service.UpdateStatusRemark(&newID, remark, &logID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -155,6 +189,22 @@ func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) 
 
 // UpdateStatusRemark é responsável por atualizar o status de um remark existente.
 func UpdateRemark(c *gin.Context, service service.RemarkServiceInterface) {
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	id := c.Param("remark_id")
 
@@ -172,7 +222,7 @@ func UpdateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 		return
 	}
 
-	err = service.UpdateRemark(&newid, remark)
+	err = service.UpdateRemark(&newid, remark, &logID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return

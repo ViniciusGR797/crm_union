@@ -67,6 +67,23 @@ func GetSubjectByID(c *gin.Context, service service.SubjectServiceInterface) {
 // UpdateStatusSubjectFinished atualiza o status de um Subject para "finished" pelo id
 func UpdateStatusSubjectFinished(c *gin.Context, service service.SubjectServiceInterface) {
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
@@ -76,7 +93,7 @@ func UpdateStatusSubjectFinished(c *gin.Context, service service.SubjectServiceI
 		return
 	}
 
-	_, err = service.UpdateStatusSubjectFinished(newid)
+	_, err = service.UpdateStatusSubjectFinished(newid, &logID)
 
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
@@ -94,6 +111,23 @@ func UpdateStatusSubjectFinished(c *gin.Context, service service.SubjectServiceI
 // UpdateStatusSubjectCanceled atualiza o status de um Subject para "canceled" pelo id
 func UpdateStatusSubjectCanceled(c *gin.Context, service service.SubjectServiceInterface) {
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
@@ -103,7 +137,7 @@ func UpdateStatusSubjectCanceled(c *gin.Context, service service.SubjectServiceI
 		return
 	}
 
-	_, err = service.UpdateStatusSubjectCanceled(newid)
+	_, err = service.UpdateStatusSubjectCanceled(newid, &logID)
 
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
@@ -121,6 +155,23 @@ func UpdateStatusSubjectCanceled(c *gin.Context, service service.SubjectServiceI
 // CreateSubject cria um novo Subject
 func CreateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	id := c.Param("id")
 
 	newid, err := strconv.ParseUint(id, 10, 64)
@@ -136,7 +187,7 @@ func CreateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 		return
 	}
 
-	subjectCreated, err := service.CreateSubject(&subject, newid)
+	subjectCreated, err := service.CreateSubject(&subject, newid, &logID)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
@@ -148,6 +199,23 @@ func CreateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 
 // UpdateSubject atualiza um Subject
 func UpdateSubject(c *gin.Context, service service.SubjectServiceInterface) {
+
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	id := c.Param("id")
 
@@ -165,7 +233,7 @@ func UpdateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 		return
 	}
 
-	_, err = service.UpdateSubject(newid, &subject)
+	_, err = service.UpdateSubject(newid, &subject, &logID)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
