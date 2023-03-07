@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"microservice_release/pkg/entity"
 	"microservice_release/pkg/security"
 	"microservice_release/pkg/service"
@@ -73,6 +74,23 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	ID := c.Param("releasetrain_id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -97,7 +115,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	idResult, err := service.UpdateReleaseTrain(newID, release)
+	idResult, err := service.UpdateReleaseTrain(newID, release, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -107,7 +125,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	_, err = service.InsertTagsReleaseTrain(newID, release.Tags)
+	_, err = service.InsertTagsReleaseTrain(newID, release.Tags, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -174,6 +192,23 @@ func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInte
 		return
 	}
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Pega id passada como parâmetro na URL da rota
 	id := c.Param("releasetrain_id")
 
@@ -190,7 +225,7 @@ func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInte
 	}
 
 	// Chama método UpdateStatusUser passando id como parâmetro
-	_, err = service.UpdateStatusReleaseTrain(&newID)
+	_, err = service.UpdateStatusReleaseTrain(&newID, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -245,11 +280,28 @@ func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Cria variável do tipo release (inicialmente vazia)
 	var release *entity.Release_Update
 
 	// Converte json em release
-	err := c.ShouldBind(&release)
+	err = c.ShouldBind(&release)
 	// Verifica se tem erro
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -260,7 +312,7 @@ func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	err = service.CreateReleaseTrain(release)
+	err = service.CreateReleaseTrain(release, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
