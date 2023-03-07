@@ -7,3 +7,6 @@
 
 # Arquivos Compilados
 *.exe
+
+# Arquivos Docker
+*/.dockerignore
