@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Função que chama método GetSubmissiveRemark do service e retorna json com lista
+// GetSubmissiveRemarks Função que chama método GetSubmissiveRemark do service e retorna json com lista
 func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface) {
 	// Pega permissões do usuário
 	permissions, err := security.GetPermissions(c)
@@ -47,7 +47,7 @@ func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface
 
 }
 
-// Função que chama método GetRemarkByID do service e retorna json com um client
+// GetRemarkByID Função que chama método GetRemarkByID do service e retorna json com um client
 func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("remark_id")
 
@@ -67,7 +67,7 @@ func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 
 }
 
-// Função que cria um Remark
+// CreateRemark Função que cria um Remark
 func CreateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
 	// pegar informamções do usuário
@@ -106,6 +106,7 @@ func CreateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	})
 }
 
+// GetBarChartRemark é responsável por retornar um gráfico de barras dos dados dos remarks de um usuário específico.
 func GetBarChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("user_ID")
 
@@ -122,6 +123,7 @@ func GetBarChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	c.JSON(200, remark)
 }
 
+// GetPieChartRemark é responsável por retornar um gráfico de pizza dos dados dos remarks de um usuário específico.
 func GetPieChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("user_ID")
 
@@ -138,7 +140,7 @@ func GetPieChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	c.JSON(200, remark)
 }
 
-// Função que chama método UpdateStatusRemark do service e realiza o softdelete
+// UpdateStatusRemark é responsável por atualizar o status de um remark específico.
 func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
@@ -185,6 +187,7 @@ func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) 
 
 }
 
+// UpdateStatusRemark é responsável por atualizar o status de um remark existente.
 func UpdateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
@@ -231,6 +234,7 @@ func UpdateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 
 }
 
+// JSONMessenger é responsável por enviar uma mensagem JSON de erro para o cliente.
 func JSONMessenger(c *gin.Context, status int, path string, err error) {
 	errorMessage := ""
 	if err != nil {

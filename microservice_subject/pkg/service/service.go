@@ -3,8 +3,8 @@ package service
 import (
 	"errors"
 	"fmt"
+	"microservice_subject/pkg/database"
 	"microservice_subject/pkg/entity"
-	"microservice_user/pkg/database"
 )
 
 type SubjectServiceInterface interface {
