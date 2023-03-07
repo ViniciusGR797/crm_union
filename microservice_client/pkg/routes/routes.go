@@ -20,6 +20,9 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 			clients.GET("/clients/id/:client_id", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetClientByID(c, service)
 			})
+			clients.GET("clients/release/id/:release_id", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetClientByReleaseID(c, service)
+			})
 			clients.GET("/clients/tag/:client_id", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetTagsClient(c, service)
 			})

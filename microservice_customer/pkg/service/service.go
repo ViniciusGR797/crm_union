@@ -13,9 +13,9 @@ type CustomerServiceInterface interface {
 	// Pega todos os users, logo lista todos os customer
 	GetCustomers() (*entity.CustomerList, error)
 	GetCustomerByID(ID *uint64) (*entity.Customer, error)
-	CreateCustomer(customer *entity.Customer) error
-	UpdateCustomer(ID *uint64, customer *entity.Customer) error
-	UpdateStatusCustomer(ID *uint64) error
+	CreateCustomer(customer *entity.Customer, logID *int) error
+	UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int) error
+	UpdateStatusCustomer(ID *uint64, logID *int) error
 }
 
 // ustomer_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -136,12 +136,18 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 }
 
 // CreatCustomer Esta é uma função que cria um novo registro de cliente no banco de dados.
-func (ps *customer_service) CreateCustomer(customer *entity.Customer) error {
+func (ps *customer_service) CreateCustomer(customer *entity.Customer, logID *int) error {
 	database := ps.dbp.GetDB()
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
 	}
 
 	var statusID uint64
@@ -184,12 +190,18 @@ func (ps *customer_service) CreateCustomer(customer *entity.Customer) error {
 }
 
 // UpdateCustomer é responsável por atualizar um registro de cliente em um banco de dados.
-func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer) error {
+func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int) error {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("UPDATE tblCustomer SET customer_name = ? WHERE customer_id = ?")
 	if err != nil {
 		return nil
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
 	}
 
 	defer stmt.Close()
@@ -203,12 +215,18 @@ func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer
 }
 
 // UpdateStatusCustomer atualiza o status do cliente no banco de dados.
-func (ps *customer_service) UpdateStatusCustomer(ID *uint64) error {
+func (ps *customer_service) UpdateStatusCustomer(ID *uint64, logID *int) error {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblCustomer WHERE customer_id = ?")
 	if err != nil {
 		return err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
 	}
 
 	defer stmt.Close()

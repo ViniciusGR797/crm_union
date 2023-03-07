@@ -13,12 +13,12 @@ import (
 type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
 	GetPlannerByID(ID *uint64) (*entity.Planner, error)
-	CreatePlanner(planner *entity.PlannerUpdate) error
+	CreatePlanner(planner *entity.PlannerUpdate, logID *int) error
 	GetPlannerByName(ID *int, level int, name *string) (*entity.PlannerList, error)
 	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
 	GetPlannerByBusiness(name *string) (*entity.PlannerList, error)
 	GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error)
-	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate) (uint64, error)
+	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int) (uint64, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -85,9 +85,15 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 }
 
 // CreateBlanner cria um blanner no banco
-func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate) error {
+func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate, logID *int) error {
 
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
 
 	var statusID uint64
 
@@ -468,9 +474,15 @@ func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client,
 	return guests, nil
 }
 
-func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate) (uint64, error) {
+func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int) (uint64, error) {
 
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?")
 	if err != nil {

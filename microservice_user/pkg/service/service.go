@@ -21,11 +21,11 @@ type UserServiceInterface interface {
 	// Pega users submissos passando o id de um user como parâmetro
 	GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error)
 	// Cadastra users passando suas informações
-	CreateUser(user *entity.User) (uint64, error)
+	CreateUser(user *entity.User, logID *int) (uint64, error)
 	// Altera status do user
-	UpdateStatusUser(ID *uint64) (int64, error)
+	UpdateStatusUser(ID *uint64, logID *int) (int64, error)
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
-	UpdateUser(ID *int, user *entity.User) (int, error)
+	UpdateUser(ID *int, user *entity.User, logID *int) (int, error)
 	// Busca o hash do usuário por email
 	Login(user *entity.User) (string, error)
 }
@@ -217,9 +217,15 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 }
 
 // Função que retorna user
-func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
+func (ps *User_service) CreateUser(user *entity.User, logID *int) (uint64, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	// prepara query para ser executada no database
 	stmt, err := database.Prepare("INSERT INTO tblUser (user_name, user_email, user_pwd, user_level, status_id) VALUES (?, ?, ?, ?, ?)")
@@ -253,8 +259,14 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	return uint64(lastId), nil
 }
 
-func (ps *User_service) UpdateStatusUser(ID *uint64) (int64, error) {
+func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int) (int64, error) {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblUser WHERE user_id = ?")
 	if err != nil {
@@ -300,9 +312,15 @@ func (ps *User_service) UpdateStatusUser(ID *uint64) (int64, error) {
 }
 
 // Função que altera o usuário
-func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
+func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int) (int, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	// prepara query para ser executada no database
 	stmt, err := database.Prepare("UPDATE tblUser SET user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ? ")
