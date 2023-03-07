@@ -127,14 +127,6 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método CreateUser do service e retorna json com mensagem de sucesso
 func CreateUser(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
@@ -198,14 +190,6 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método UpdateStatusUser do service e retorna json com mensagem de sucesso
 func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
@@ -252,14 +236,6 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método UpdateUser do service e retorna json com mensagem de sucesso
 func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {

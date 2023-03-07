@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"microservice_release/pkg/entity"
+	"microservice_release/pkg/security"
 	"microservice_release/pkg/service"
 	"net/http"
 	"strconv"
@@ -57,14 +58,6 @@ func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface
 
 // UpdateReleaseTrain Função que chama método UpdateReleaseTrain do service e retorna json
 func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
@@ -167,14 +160,6 @@ func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface
 
 // UpdateStatusReleaseTrain Função que chama método UpdateStatusReleaseTrain do service e retorna json
 func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
@@ -255,14 +240,6 @@ func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInt
 
 // CreateReleaseTrain Função que chama método CreateReleaseTrain do service e retorna json com mensagem de sucesso
 func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface) {
-	// Verifica se tal rota/função é exclusiva de adm
-	if err := security.IsAdm(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
