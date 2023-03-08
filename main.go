@@ -33,9 +33,4 @@ func main() {
 		}
 	}
 
-	// for _, cmd := range cmds {
-	// 	command := exec.Command("go", "run", cmd)
-	// 	command.Start()
-	// }
-
 }
