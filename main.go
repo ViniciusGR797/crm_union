@@ -17,6 +17,7 @@ func main() {
 		"microservice_remark",
 		"microservice_user",
 		"microservice_subject",
+		"microservice_tags",
 	}
 
 	for _, cmd := range cmds {
@@ -32,10 +33,5 @@ func main() {
 			return
 		}
 	}
-
-	// for _, cmd := range cmds {
-	// 	command := exec.Command("go", "run", cmd)
-	// 	command.Start()
-	// }
 
 }
