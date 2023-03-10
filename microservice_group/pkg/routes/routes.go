@@ -9,6 +9,8 @@ import (
 )
 
 func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gin.Engine {
+
+	router.Use(middlewares.CORS())
 	main := router.Group("union")
 	{
 		Group := main.Group("/v1")

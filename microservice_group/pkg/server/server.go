@@ -16,10 +16,8 @@ type Server struct {
 	// Porta do servidor
 	SRV_PORT string
 
-	
 	SERVER *gin.Engine
 }
-
 
 func NewServer(conf *config.Config) Server {
 	return Server{
@@ -28,9 +26,8 @@ func NewServer(conf *config.Config) Server {
 	}
 }
 
-
 func Run(router *gin.Engine, server Server, service service.GroupServiceInterface) {
 	log.Print("Server is running at port: ", server.SRV_PORT)
-	
+
 	log.Fatal(router.Run(":" + server.SRV_PORT))
 }

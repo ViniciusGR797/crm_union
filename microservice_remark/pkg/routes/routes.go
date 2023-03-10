@@ -10,6 +10,9 @@ import (
 
 // ConfigRoutes recebe uma instância do gin.Engine e uma instância do service.RemarkServiceInterface e configura as rotas para as requisições HTTP no servidor.
 func ConfigRoutes(router *gin.Engine, service service.RemarkServiceInterface) *gin.Engine {
+
+	router.Use(middlewares.CORS())
+
 	main := router.Group("union")
 	{
 		remarks := main.Group("/v1")
