@@ -55,6 +55,8 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 		&planner.Client,
 		&planner.Business,
 		&planner.Release,
+		&planner.Remark_subject,
+		&planner.Remark_text,
 		&planner.User,
 		&planner.Created_At,
 		&planner.Status)
@@ -409,7 +411,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 		return &entity.PlannerList{}, errors.New("error fetching Planner")
 	}
 
-	// defer rows.Close()
+	defer rows.Close()
 
 	planner_list := &entity.PlannerList{}
 
@@ -429,11 +431,13 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 			&planner.Client,
 			&planner.Business,
 			&planner.Release,
+			&planner.Remark_subject,
+			&planner.Remark_text,
 			&planner.User,
 			&planner.Created_At,
 			&planner.Status); err != nil {
 
-			return &entity.PlannerList{}, nil
+			return nil, errors.New("error scan planner")
 
 		} else {
 			// Adiciona o planner na lista a cada iteração
