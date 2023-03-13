@@ -49,23 +49,15 @@ func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface
 
 // GetAllRemarkUser Função que chama método GetAllRemarkUser do service e retorna json com os remarks de um client
 func GetAllRemarkUser(c *gin.Context, service service.RemarkServiceInterface) {
-	permissions, err := security.GetPermissions(c)
+	ID := c.Param("remark_id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	// Pega id passada como token na rota
-	ID, err := strconv.ParseUint(fmt.Sprint(permissions["userID"]), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
 	}
 
-	remarks, err := service.GetAllRemarkUser(&ID)
+	remarks, err := service.GetAllRemarkUser(&newID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
