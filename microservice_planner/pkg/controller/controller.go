@@ -187,7 +187,7 @@ func GetSubmissivePlanners(c *gin.Context, service service.PlannerServiceInterfa
 
 func GetPlannerByBusiness(c *gin.Context, service service.PlannerServiceInterface) {
 
-	name := c.Param("name")
+	name := c.Param("business_name")
 
 	planner, err := service.GetPlannerByBusiness(&name)
 	if err != nil {
