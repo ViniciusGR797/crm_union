@@ -241,7 +241,7 @@ func (ps *User_service) CreateUser(user *entity.User, logID *int) (uint64, error
 	result, err := stmt.Exec(user.Name, user.Email, user.Hash, user.Level, 9) // TODO implement status
 	if err != nil {
 		log.Println(err.Error())
-		return 0, errors.New("error executing statement")
+		return 0, err
 	}
 
 	// pega id do último usuário inserido
