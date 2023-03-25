@@ -61,7 +61,6 @@ func main() {
 
 	// Cria rotas passsando o servidor HTTP e os serviços do user (CRUD)
 	router := routes.ConfigRoutes(serv.SERVER, service)
-
 	// Se tiver ativada a interface de usuário, criar as rotas para o front end (WEB UI)
 	// if conf.WEB_UI {
 	// 	webui.RegisterUIHandlers(router)

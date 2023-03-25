@@ -20,7 +20,7 @@ type Business struct {
 	Tags            []Tag `json:"tags,omitempty"`
 }
 
-// Tag estrtura de dados de Tag
+// Tag estrutura de dados de Tag
 type Tag struct {
 	Tag_ID   uint64 `json:"tag_id,omitempty"`
 	Tag_Name string `json:"tag_name,omitempty"`

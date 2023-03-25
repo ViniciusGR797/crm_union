@@ -12,18 +12,20 @@ type PlannerInterface interface {
 
 // Estrutura de dados de Planner para GET
 type Planner struct {
-	ID         uint64   `json:"id,omitempty"`
-	Name       string   `json:"name,omitempty"`
-	Date       string   `json:"date,omitempty"`
-	Duration   uint64   `json:"duration,omitempty"`
-	Subject    string   `json:"subject,omitempty"`
-	Client     string   `json:"client,omitempty"`
-	Business   string   `json:"business,omitempty"`
-	Release    string   `json:"release,omitempty"`
-	User       string   `json:"user,omitempty"`
-	Status     string   `json:"status"`
-	Created_At string   `json:"created_at,omitempty"`
-	Guest      []Client `json:"guest,omitempty"`
+	ID             uint64   `json:"id,omitempty"`
+	Name           string   `json:"name,omitempty"`
+	Date           string   `json:"date,omitempty"`
+	Duration       uint64   `json:"duration,omitempty"`
+	Subject        string   `json:"subject,omitempty"`
+	Remark_subject string   `json:"remark_subject,omitempty"`
+	Remark_text    string   `json:"remark_text,omitempty"`
+	Client         string   `json:"client,omitempty"`
+	Business       string   `json:"business,omitempty"`
+	Release        string   `json:"release,omitempty"`
+	User           string   `json:"user,omitempty"`
+	Status         string   `json:"status"`
+	Created_At     string   `json:"created_at,omitempty"`
+	Guest          []Client `json:"guest,omitempty"`
 }
 
 // Estrutura de dados de Planner para CREATE e UPDATE
@@ -35,6 +37,7 @@ type PlannerUpdate struct {
 	Subject    uint64   `json:"subject,omitempty"`
 	Client     uint64   `json:"client,omitempty"`
 	Release    uint64   `json:"release,omitempty"`
+	Remark     uint64   `json:"remark,omitempty"`
 	User       uint64   `json:"user,omitempty"`
 	Status     uint64   `json:"status"`
 	Created_At string   `json:"created_at,omitempty"`

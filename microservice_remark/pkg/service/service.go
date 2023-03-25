@@ -14,6 +14,7 @@ import (
 type RemarkServiceInterface interface {
 	// Pega todos os Remarks, logo lista todos os Remarks
 	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
+	GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error)
 	GetRemarkByID(ID *uint64) (*entity.Remark, error)
 	CreateRemark(remark *entity.RemarkUpdate, logID *int) error
 	GetBarChartRemark(ID *uint64) *entity.Remark
@@ -76,6 +77,33 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, err
 
 	// lista_Remarks retorna lista de produtos
 	return lista_Remarks, nil
+}
+
+// GetAllRemarkUser Função que retorna os Remarks de um ID
+func (ps *remark_service) GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error) {
+	database := ps.dbp.GetDB()
+
+	rows, err := database.Query("call pcGetAllRemarkUser (?)", ID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	listRemark := entity.RemarkList{}
+
+	for rows.Next() {
+		remark := entity.Remark{}
+		err = rows.Scan(&remark.ID, &remark.Remark_Name, &remark.Subject_Name, &remark.Client_Name, &remark.Client_Email, &remark.Business_Name, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return)
+		if err != nil {
+			return nil, errors.New("remark not found")
+		} else {
+			listRemark.List = append(listRemark.List, &remark)
+		}
+
+	}
+
+	return &listRemark, nil
 }
 
 // GetRemarkByID Função que retorna um Remark pelo ID

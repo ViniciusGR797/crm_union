@@ -9,6 +9,9 @@ import (
 )
 
 func ConfigRoutes(router *gin.Engine, service service.SubjectServiceInterface) *gin.Engine {
+
+	router.Use(middlewares.CORS())
+
 	main := router.Group("union")
 	{
 		subject := main.Group("/v1")

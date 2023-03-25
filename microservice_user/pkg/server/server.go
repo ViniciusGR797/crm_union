@@ -8,6 +8,7 @@ import (
 	"microservice_user/pkg/service"
 
 	// Import externo do github
+
 	"github.com/gin-gonic/gin"
 )
 

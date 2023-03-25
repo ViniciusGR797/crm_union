@@ -45,3 +45,8 @@ services:
     build: ./microservice_subject
     ports:
       - 8089:8089
+
+  ms_tags:
+    build: ./microservice_tags
+    ports:
+      - 8090:8090

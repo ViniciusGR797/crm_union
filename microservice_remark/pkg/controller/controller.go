@@ -47,6 +47,26 @@ func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface
 
 }
 
+// GetAllRemarkUser Função que chama método GetAllRemarkUser do service e retorna json com os remarks de um client
+func GetAllRemarkUser(c *gin.Context, service service.RemarkServiceInterface) {
+	ID := c.Param("remark_id")
+
+	newID, err := strconv.ParseUint(ID, 10, 64)
+	if err != nil {
+		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
+		return
+	}
+
+	remarks, err := service.GetAllRemarkUser(&newID)
+	if err != nil {
+		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, remarks)
+
+}
+
 // GetRemarkByID Função que chama método GetRemarkByID do service e retorna json com um client
 func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 	ID := c.Param("remark_id")

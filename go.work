@@ -11,4 +11,5 @@ use (
 	./microservice_remark
 	./microservice_subject
 	./microservice_user
+	./microservice_tags
 )

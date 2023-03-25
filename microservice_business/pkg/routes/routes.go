@@ -9,6 +9,8 @@ import (
 )
 
 func ConfigRoutes(router *gin.Engine, service service.BusinessServiceInterface) *gin.Engine {
+
+	router.Use(middlewares.CORS())
 	main := router.Group("union")
 	{
 		Business := main.Group("/v1")

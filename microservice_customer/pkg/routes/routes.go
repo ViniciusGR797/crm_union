@@ -10,6 +10,8 @@ import (
 
 // ConfigRoutes Função que configura todas as rotas da api
 func ConfigRoutes(router *gin.Engine, service service.CustomerServiceInterface) *gin.Engine {
+
+	router.Use(middlewares.CORS())
 	main := router.Group("union")
 	{
 		customer := main.Group("/v1")

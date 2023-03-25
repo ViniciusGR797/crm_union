@@ -218,7 +218,7 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate, logID *int) 
 
 	result, err := stmt.Exec(&client.Name, &client.Email, &client.Role, &client.Customer_ID, &client.Release_ID, &client.Business_ID, &client.User_ID, statusID)
 	if err != nil {
-		return errors.New("could not insert client")
+		return err
 	}
 
 	ID, err := result.LastInsertId()
