@@ -16,6 +16,7 @@ type UserInterface interface {
 // Estrutura de dados de User
 type User struct {
 	ID         uint64 `json:"id,omitempty"`
+	TCS_ID     uint64 `json:"tcs_id,omitempty"`
 	Name       string `json:"name,omitempty"`
 	Email      string `json:"email,omitempty"`
 	Level      uint   `json:"level,omitempty"`
@@ -57,9 +58,10 @@ func (pl *UserList) String() string {
 }
 
 // Construtor de User - recebe dados no parâmetro e transforma em um user
-func NewUser(name, email, created_at, status string, level uint, id uint64) *User {
+func NewUser(name, email, created_at, status string, level uint, id, tcs_id uint64) *User {
 	return &User{
 		ID:         id,
+		TCS_ID:     tcs_id,
 		Name:       name,
 		Email:      email,
 		Level:      level,
@@ -97,6 +99,12 @@ func (user *User) format() error {
 }
 
 func (user *User) validate() error {
+	// Verifica se tcs_id está vazio
+	if user.TCS_ID == 0 {
+		return errors.New("the tcs id is mandatory and cannot be blank")
+
+	}
+
 	// Verifica se nome está vazio
 	if user.Name == "" {
 		return errors.New("the name is mandatory and cannot be blank")
