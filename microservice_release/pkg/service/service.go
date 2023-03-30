@@ -49,7 +49,7 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 		hasResult = true
 		release := entity.Release{}
 
-		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description); err != nil {
+		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Business_Id, &release.Name, &release.Status_Description); err != nil {
 			return &entity.ReleaseList{}, errors.New("error scanning release train")
 		} else {
 			rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
