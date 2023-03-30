@@ -49,7 +49,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *int) (*entity.ClientList, error
 	for rows.Next() {
 		client := entity.Client{}
 
-		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description); err != nil {
+		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Business_ID, &client.Release_Name, &client.Release_ID, &client.User_Name, &client.Status_Description); err != nil {
 			return nil, errors.New("error scan client")
 		} else {
 			rowsTags, err := database.Query("SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", client.ID)
@@ -307,7 +307,7 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int) error {
 
 	var statusID uint64
 
-	err = status.QueryRow("CLIENT", "ATIVO").Scan(&statusID)
+	err = status.QueryRow("CLIENT", "Active").Scan(&statusID)
 	if err != nil {
 		return errors.New("status not found")
 	}
