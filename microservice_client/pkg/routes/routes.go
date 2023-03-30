@@ -37,6 +37,9 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 			clients.PUT("/clients/update/status/:client_id", middlewares.Auth(), func(c *gin.Context) {
 				controller.UpdateStatusClient(c, service)
 			})
+			clients.GET("/clients/roles", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetRoles(c, service)
+			})
 		}
 	}
 

@@ -254,3 +254,18 @@ func JSONMessenger(c *gin.Context, status int, path string, err error) {
 		"path":    path,
 	})
 }
+
+// GetRoles função que chama o metodo GetRoles do service e traz todos os dados de Roles do banco em formato de lista
+func GetRoles(c *gin.Context, service service.ClientServiceInterface) {
+
+	list := service.GetRoles()
+
+	if len(list.List) == 0 {
+		c.JSON(404, gin.H{
+			"error": "list not found, 404",
+		})
+		return
+	}
+
+	c.JSON(200, list)
+}
