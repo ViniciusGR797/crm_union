@@ -274,7 +274,7 @@ func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64, logID *int) (int
 
 // Função que retorna lista de releases, filtrando pelo ID business
 func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error) {
-	query := "SELECT DISTINCT V.release_id, V.release_code, V.release_name, V.business_name, V.status_description FROM vwGetAllReleaseTrains V INNER JOIN tblReleaseTrain R ON V.release_id = R.release_id WHERE R.business_id = ? ORDER BY V.release_name"
+	query := "SELECT DISTINCT V.release_id, V.release_code, V.release_name, V.business_name, V.business_id, V.status_description FROM vwGetAllReleaseTrains V INNER JOIN tblReleaseTrain R ON V.release_id = R.release_id WHERE R.business_id = ? ORDER BY V.release_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -299,6 +299,7 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 			&release.Code,
 			&release.Name,
 			&release.Business_Name,
+			&release.Business_Id,
 			&release.Status_Description); err != nil {
 			return &entity.ReleaseList{}, errors.New("error scanning release data")
 		} else {
