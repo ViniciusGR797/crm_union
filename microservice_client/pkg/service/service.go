@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	// Import interno de packages do próprio sistema
@@ -19,6 +20,7 @@ type ClientServiceInterface interface {
 	UpdateClient(ID *uint64, client *entity.ClientUpdate, logID *int) error
 	UpdateStatusClient(ID *uint64, logID *int) error
 	InsertTagClient(ID *uint64, tags *[]entity.Tag, logID *int) error
+	GetRoles() *entity.RoleList
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -374,4 +376,34 @@ func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag, logID 
 	}
 
 	return nil
+}
+
+// GetRoles traz todos os Roles do banco de dados
+func (ps *Client_service) GetRoles() *entity.RoleList {
+
+	database := ps.dbp.GetDB()
+
+	rows, err := database.Query("SELECT domain_id, domain_value FROM tblDomain where domain_name = 'ROLE'")
+	// verifica se teve erro
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer rows.Close()
+
+	list_Role := &entity.RoleList{}
+
+	for rows.Next() {
+		// variável do tipo Tag(vazia)
+		role := entity.Role{}
+
+		// pega dados da query e atribui a variável tag, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&role.Role_ID, &role.Role_Name); err != nil {
+			log.Println(err.Error())
+		} else {
+			list_Role.List = append(list_Role.List, &role)
+		}
+	}
+
+	return list_Role
 }
