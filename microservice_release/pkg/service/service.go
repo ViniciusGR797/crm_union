@@ -94,7 +94,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 
 	release := &entity.Release{}
 
-	err = stmt.QueryRow(ID).Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&release.ID, &release.Code, &release.Business_Name, &release.Business_Id, &release.Name, &release.Status_Description)
 	if err != nil {
 		return &entity.Release{}, errors.New("error scanning rows")
 	}
