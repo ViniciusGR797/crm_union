@@ -119,7 +119,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	releaseUpdated, err := service.GetReleaseTrainByID(idResult)
+	_, err = service.GetReleaseTrainByID(idResult)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -128,7 +128,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		})
 		return
 	}
-	c.JSON(http.StatusOK, releaseUpdated)
+	c.JSON(http.StatusNoContent, nil)
 }
 
 // GetTagsReleaseTrain Função que chama método GetTagsReleaseTrain do service e retorna json
@@ -204,9 +204,7 @@ func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInte
 	}
 
 	// Retorno json com mensagem de sucesso
-	c.JSON(http.StatusOK, gin.H{
-		"response": "Release Train Status Updated",
-	})
+	c.JSON(http.StatusNoContent, nil)
 }
 
 // GetReleaseTrainByBusiness Função que chama método GetReleaseTrainByBusiness do service e retorna json com release

@@ -206,7 +206,7 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate, logID *int) 
 
 	var statusID uint64
 
-	err = status.QueryRow("CLIENT", "ATIVO").Scan(&statusID)
+	err = status.QueryRow("CLIENT", "Active").Scan(&statusID)
 	if err != nil {
 		return errors.New("status not found")
 	}

@@ -198,9 +198,7 @@ func UpdateClient(c *gin.Context, service service.ClientServiceInterface) {
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"result": "Client updated successfully",
-	})
+	c.JSON(http.StatusNoContent, nil)
 }
 
 // UpdateStatusClient: Realiza o softdelete em um client
@@ -236,9 +234,7 @@ func UpdateStatusClient(c *gin.Context, service service.ClientServiceInterface) 
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"response": "Client Status Updated",
-	})
+	c.JSON(http.StatusNoContent, nil)
 }
 
 // JSONMessenger: Estrutura o erro recebido
