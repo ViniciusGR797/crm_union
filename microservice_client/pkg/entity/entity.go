@@ -15,7 +15,9 @@ type Client struct {
 	ID                 uint64 `json:"client_id,omitempty"`
 	Name               string `json:"client_name,omitempty"`
 	Email              string `json:"client_email,omitempty"`
-	Role               string `json:"client_role,omitempty"`
+	Role               string `json:"role_name,omitempty"`
+	Role_ID            uint64 `json:"role_id,omitempty"`
+	Customer_ID        string `json:"customer_id,omitempty"`
 	Customer_Name      string `json:"customer_name,omitempty"`
 	Release            `json:"release,omitempty"`
 	Business_Name      string    `json:"business_name,omitempty"`
