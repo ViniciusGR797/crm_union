@@ -62,7 +62,7 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, err
 		remark := entity.Remark{}
 
 		// pega dados da query e atribui a variável Remark, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&remark.ID, &remark.Remark_Name, &remark.User_Name, &remark.Subject_Name, &remark.Client_Name, &remark.Business_Name, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.Status_Description, &remark.User_ID); err != nil {
+		if err := rows.Scan(&remark.ID, &remark.Remark_Name, &remark.User_Name, &remark.Subject_ID, &remark.Subject_Name, &remark.Client_ID, &remark.Client_Name, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.Status_Description, &remark.User_ID); err != nil {
 			return nil, errors.New("error scan remark")
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs
@@ -119,7 +119,7 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 
 	remark := entity.Remark{}
 
-	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_Name, &remark.Business_Name, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Subject_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
 	if err != nil {
 		return nil, errors.New("remark not found")
 	}
