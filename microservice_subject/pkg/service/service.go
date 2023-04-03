@@ -52,8 +52,11 @@ func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, e
 			&subject.Subject_id,
 			&subject.Subject_title,
 			&subject.User,
+			&subject.Release_id,
 			&subject.Release,
+			&subject.Business_id,
 			&subject.Business,
+			&subject.Client_id,
 			&subject.Client,
 			&subject.Status.Status_id,
 			&subject.Status.Status_description,
@@ -96,12 +99,16 @@ func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 		hasResult = true
 
 		if err := rows.Scan(
+			&subject.User_id,
+			&subject.User_name,
 			&subject.Subject_id,
 			&subject.Subject_title,
 			&subject.Client.Client_id,
 			&subject.Client.Client_email,
 			&subject.Client.Client_name,
+			&subject.Business_id,
 			&subject.Business_name,
+			&subject.Release_id,
 			&subject.Release_name,
 			&subject.Subject_text,
 			&subject.Created_at,
