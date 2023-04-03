@@ -19,12 +19,17 @@ type Remark struct {
 	Date               *time.Time `json:"date,omitempty"`
 	Date_Return        *time.Time `json:"date_return,omitempty"`
 	Status_Description string     `json:"status_description,omitempty"`
+	Client_ID          uint64     `json:"client_id,omitempty"` //auterado
 	Client_Name        string     `json:"client_name,omitempty"`
 	Client_Email       string     `json:"client_email,omitempty"`
 	User_Name          string     `json:"user_name,omitempty"`
 	User_ID            uint64     `json:"user_id,omitempty"`
+	Release_ID         uint64     `json:"release_id,omitempty"` //auterado
 	Release_Name       string     `json:"release_name,omitempty"`
+	Subject_ID         uint64     `json:"subject_id,omitempty"` //auterado
 	Subject_Name       string     `json:"subject_name,omitempty"`
+	Subject_Title      string     `json:"subject_title,omitempty"`
+	Business_ID        uint64     `json:"business_id,omitempty"` //auterado
 	Business_Name      string     `json:"business_name,omitempty"`
 }
 

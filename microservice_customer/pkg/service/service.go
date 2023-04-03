@@ -62,7 +62,7 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 		if err := rows.Scan(&customer.ID, &customer.Name, &customer.Status); err != nil {
 			return nil, errors.New("error scan customer")
 		} else {
-			rowsTags, err := database.Query("SELECT DISTINCT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", customer.ID)
+			rowsTags, err := database.Query("SELECT DISTINCT tblTags.tag_id, tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", customer.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +72,7 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 			for rowsTags.Next() {
 				tag := entity.Tag{}
 
-				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+				if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 					return nil, errors.New("error scan tag")
 				} else {
 					tags = append(tags, tag)
@@ -111,7 +111,7 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 		return nil, errors.New("error get id")
 	}
 
-	rowsTags, err := database.Query("SELECT DISTINCT tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", ID)
+	rowsTags, err := database.Query("SELECT DISTINCT tblTags.tag_id, tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", ID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 	for rowsTags.Next() {
 		tag := entity.Tag{}
 
-		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 			return nil, errors.New("tag not found")
 		} else {
 			tags = append(tags, tag)
