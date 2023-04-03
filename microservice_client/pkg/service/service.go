@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	// Import interno de packages do próprio sistema
@@ -13,11 +14,13 @@ import (
 type ClientServiceInterface interface {
 	GetClientsMyGroups(ID *int) (*entity.ClientList, error)
 	GetClientByID(ID *uint64) (*entity.Client, error)
+	GetClientByReleaseID(ID *uint64) (*entity.ClientList, error)
 	GetTagsClient(ID *uint64) ([]*entity.Tag, error)
-	CreateClient(client *entity.ClientUpdate) error
-	UpdateClient(ID *uint64, client *entity.ClientUpdate) error
-	UpdateStatusClient(ID *uint64) error
-	InsertTagClient(ID *uint64, tags *[]entity.Tag) error
+	CreateClient(client *entity.ClientUpdate, logID *int) error
+	UpdateClient(ID *uint64, client *entity.ClientUpdate, logID *int) error
+	UpdateStatusClient(ID *uint64, logID *int) error
+	InsertTagClient(ID *uint64, tags *[]entity.Tag, logID *int) error
+	GetRoles() *entity.RoleList
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -48,7 +51,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *int) (*entity.ClientList, error
 	for rows.Next() {
 		client := entity.Client{}
 
-		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Release_Name, &client.User_Name, &client.Status_Description); err != nil {
+		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role, &client.Customer_Name, &client.Business_Name, &client.Business_ID, &client.Release_Name, &client.Release_ID, &client.User_Name, &client.Status_Description); err != nil {
 			return nil, errors.New("error scan client")
 		} else {
 			rowsTags, err := database.Query("SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", client.ID)
@@ -120,6 +123,32 @@ func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
 	return &client, nil
 }
 
+// GetClientByReleaseID: Retorna uma lista de clients pelo ID da release
+func (ps *Client_service) GetClientByReleaseID(ID *uint64) (*entity.ClientList, error) {
+	database := ps.dbp.GetDB()
+
+	rows, err := database.Query("SELECT tC.client_id, tC.client_name, tC.client_email FROM tblClient tC WHERE tC.release_id = ?", ID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	list_client := &entity.ClientList{}
+
+	for rows.Next() {
+		client := entity.Client{}
+
+		if err := rows.Scan(&client.ID, &client.Name, &client.Email); err != nil {
+			return nil, errors.New("error scan client")
+		}
+
+		list_client.List = append(list_client.List, &client)
+	}
+
+	return list_client, nil
+}
+
 // GetTagsClient: Retorna uma lista de tag pelo ID do client
 func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
@@ -161,7 +190,7 @@ func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
 }
 
 // CreateClient: Cria um novo client
-func (ps *Client_service) CreateClient(client *entity.ClientUpdate) error {
+func (ps *Client_service) CreateClient(client *entity.ClientUpdate, logID *int) error {
 	database := ps.dbp.GetDB()
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
@@ -169,9 +198,15 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate) error {
 		return err
 	}
 
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
+
 	var statusID uint64
 
-	err = status.QueryRow("CLIENT", "ATIVO").Scan(&statusID)
+	err = status.QueryRow("CLIENT", "Active").Scan(&statusID)
 	if err != nil {
 		return errors.New("status not found")
 	}
@@ -185,7 +220,7 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate) error {
 
 	result, err := stmt.Exec(&client.Name, &client.Email, &client.Role, &client.Customer_ID, &client.Release_ID, &client.Business_ID, &client.User_ID, statusID)
 	if err != nil {
-		return errors.New("could not insert client")
+		return err
 	}
 
 	ID, err := result.LastInsertId()
@@ -196,7 +231,7 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate) error {
 	newID := uint64(ID)
 
 	if client.Tags != nil {
-		err := ps.InsertTagClient(&newID, &client.Tags)
+		err := ps.InsertTagClient(&newID, &client.Tags, logID)
 		if err != nil {
 			return errors.New("could not insert tag in clients")
 		}
@@ -206,12 +241,18 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate) error {
 }
 
 // UpdateClient: Atualiza as informações do client
-func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate) error {
+func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate, logID *int) error {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("UPDATE tblClient SET client_name = ?, client_email = ?, client_role = ?, customer_id = ?, business_id = ?, user_id = ? WHERE client_id = ?")
 	if err != nil {
 		return err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
 	}
 
 	defer stmt.Close()
@@ -228,7 +269,7 @@ func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate) 
 	}
 
 	if client.Tags != nil {
-		err := ps.InsertTagClient(ID, &client.Tags)
+		err := ps.InsertTagClient(ID, &client.Tags, logID)
 		if err != nil {
 			return errors.New("could not insert tag in clients")
 		}
@@ -238,12 +279,18 @@ func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate) 
 }
 
 // UpdateStatusClient: Atualizar o status do client
-func (ps *Client_service) UpdateStatusClient(ID *uint64) error {
+func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int) error {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblClient WHERE client_id = ?")
 	if err != nil {
 		return err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
 	}
 
 	defer stmt.Close()
@@ -262,7 +309,7 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64) error {
 
 	var statusID uint64
 
-	err = status.QueryRow("CLIENT", "ATIVO").Scan(&statusID)
+	err = status.QueryRow("CLIENT", "Active").Scan(&statusID)
 	if err != nil {
 		return errors.New("status not found")
 	}
@@ -293,12 +340,18 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64) error {
 }
 
 // InsertTagClient: Função auxiliar para adicionar tag ao client
-func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag) error {
+func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag, logID *int) error {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("DELETE FROM tblClientTag WHERE client_id = ?")
 	if err != nil {
 		return errors.New("error prepare delete tags on client train")
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
 	}
 
 	defer stmt.Close()
@@ -323,4 +376,34 @@ func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag) error 
 	}
 
 	return nil
+}
+
+// GetRoles traz todos os Roles do banco de dados
+func (ps *Client_service) GetRoles() *entity.RoleList {
+
+	database := ps.dbp.GetDB()
+
+	rows, err := database.Query("SELECT domain_id, domain_value FROM tblDomain where domain_name = 'ROLE'")
+	// verifica se teve erro
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	defer rows.Close()
+
+	list_Role := &entity.RoleList{}
+
+	for rows.Next() {
+		// variável do tipo Tag(vazia)
+		role := entity.Role{}
+
+		// pega dados da query e atribui a variável tag, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&role.Role_ID, &role.Role_Name); err != nil {
+			log.Println(err.Error())
+		} else {
+			list_Role.List = append(list_Role.List, &role)
+		}
+	}
+
+	return list_Role
 }

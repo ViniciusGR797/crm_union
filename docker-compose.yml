@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  ms_user:
+      build: ./microservice_user
+      ports:
+        - 8081:8081
+
+  ms_business:
+    build: ./microservice_business
+    ports:
+      - 8082:8082
+  
+  ms_client:
+    build: ./microservice_client
+    ports:
+      - 8083:8083
+      
+  ms_customer:
+    build: ./microservice_customer
+    ports:
+      - 8084:8084
+
+  ms_group:
+    build: ./microservice_group
+    ports:
+      - 8085:8085
+
+  ms_planner:
+    build: ./microservice_planner
+    ports:
+      - 8086:8086
+
+  ms_release:
+    build: ./microservice_release
+    ports:
+      - 8087:8087
+
+  ms_remark:
+    build: ./microservice_remark
+    ports:
+      - 8088:8088
+      
+  ms_subject:
+    build: ./microservice_subject
+    ports:
+      - 8089:8089
+
+  ms_tags:
+    build: ./microservice_tags
+    ports:
+      - 8090:8090

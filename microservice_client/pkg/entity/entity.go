@@ -19,6 +19,7 @@ type Client struct {
 	Customer_Name      string `json:"customer_name,omitempty"`
 	Release            `json:"release,omitempty"`
 	Business_Name      string    `json:"business_name,omitempty"`
+	Business_ID        string    `json:"business_id,omitempty"`
 	User_Name          string    `json:"user_name,omitempty"`
 	Created_At         time.Time `json:"created_at,omitempty"`
 	Status_Description string    `json:"status_description,omitempty"`
@@ -70,6 +71,28 @@ func (c *Client) String() string {
 // Estrutura de dados para lista de Client
 type ClientList struct {
 	List []*Client `json:"list"`
+}
+
+type Role struct {
+	Role_ID   uint64 `json:"role_id,omitempty"`
+	Role_Name string `json:"role_name,omitempty"`
+}
+
+// RoleList  lista para Role
+type RoleList struct {
+	List []*Role `json:"role_list"`
+}
+
+func (pl *RoleList) String() string {
+	data, err := json.Marshal(pl)
+
+	if err != nil {
+		log.Println("error to convert TagList to JSON")
+		log.Println(err.Error())
+		return ""
+	}
+
+	return string(data)
 }
 
 // Metodo de ClientList, retorna string com json da lista de client ou erro

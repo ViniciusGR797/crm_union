@@ -14,9 +14,9 @@ type BusinessServiceInterface interface {
 	GetBusiness() *entity.BusinessList
 	GetBusinessById(ID uint64) (*entity.Business, error)
 	GetTagsBusiness(ID *uint64) ([]*entity.Tag, error)
-	CreateBusiness(business *entity.Business_Update) error
-	UpdateBusiness(ID uint64, business *entity.Business_Update) (uint64, error)
-	UpdateStatusBusiness(ID *uint64) int64
+	CreateBusiness(business *entity.Business_Update, LogID *int) error
+	UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int) (uint64, error)
+	UpdateStatusBusiness(ID *uint64, logID *int) int64
 	GetBusinessByName(name *string) (*entity.BusinessList, error)
 	InsertTagsBusiness(ID uint64, tags []entity.Tag) error
 }
@@ -123,7 +123,7 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 }
 
 // CreateBusiness cria um Business no banco de dados
-func (ps *Business_service) CreateBusiness(business *entity.Business_Update) error {
+func (ps *Business_service) CreateBusiness(business *entity.Business_Update, logID *int) error {
 
 	database := ps.dbp.GetDB()
 
@@ -133,6 +133,12 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update) err
 	}
 
 	defer stmt.Close()
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
 
 	result, err := stmt.Exec(business.Code, business.Name, business.Segment_Id, 1)
 	if err != nil {
@@ -164,7 +170,7 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update) err
 }
 
 // UpdateBusiness atualiza os dados de um Bussines no banco pelo ID do mesmo
-func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update) (uint64, error) {
+func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int) (uint64, error) {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ? WHERE business_id = ?")
@@ -173,6 +179,12 @@ func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_
 	}
 
 	defer stmt.Close()
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	var businessID int64
 
@@ -197,7 +209,7 @@ func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_
 }
 
 // UpdateStatusBusiness altera o status de um usuario no banco
-func (ps *Business_service) UpdateStatusBusiness(ID *uint64) int64 {
+func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int) int64 {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblBusiness WHERE business_id = ?")
@@ -206,6 +218,12 @@ func (ps *Business_service) UpdateStatusBusiness(ID *uint64) int64 {
 	}
 
 	defer stmt.Close()
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0
+	}
 
 	var statusBusiness uint64
 

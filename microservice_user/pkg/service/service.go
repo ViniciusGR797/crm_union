@@ -21,11 +21,11 @@ type UserServiceInterface interface {
 	// Pega users submissos passando o id de um user como parâmetro
 	GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error)
 	// Cadastra users passando suas informações
-	CreateUser(user *entity.User) (uint64, error)
+	CreateUser(user *entity.User, logID *int) (uint64, error)
 	// Altera status do user
-	UpdateStatusUser(ID *uint64) (int64, error)
+	UpdateStatusUser(ID *uint64, logID *int) (int64, error)
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
-	UpdateUser(ID *int, user *entity.User) (int, error)
+	UpdateUser(ID *int, user *entity.User, logID *int) (int, error)
 	// Busca o hash do usuário por email
 	Login(user *entity.User) (string, error)
 }
@@ -48,7 +48,7 @@ func (ps *User_service) GetUsers() (*entity.UserList, error) {
 	database := ps.dbp.GetDB()
 
 	// manda uma query para ser executada no database
-	rows, err := database.Query("SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id ORDER BY U.user_name")
+	rows, err := database.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id ORDER BY U.user_name")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -67,7 +67,7 @@ func (ps *User_service) GetUsers() (*entity.UserList, error) {
 		user := entity.User{}
 
 		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+		if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
 			log.Println(err.Error())
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs
@@ -86,7 +86,7 @@ func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 	database := ps.dbp.GetDB()
 
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("SELECT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id = ?")
+	stmt, err := database.Prepare("SELECT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id = ?")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -98,7 +98,7 @@ func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 	user := entity.User{}
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	err = stmt.QueryRow(ID).Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status)
+	err = stmt.QueryRow(ID).Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status)
 	// verifica se teve erro
 	if err != nil {
 		return &entity.User{}, nil
@@ -111,7 +111,7 @@ func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 // Função que retorna lista de users
 func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 	nameString := fmt.Sprint("%", *name, "%")
-	query := "SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ? ORDER BY U.user_name"
+	query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ? ORDER BY U.user_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -136,7 +136,7 @@ func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 		user := entity.User{}
 
 		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+		if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
 			log.Println(err.Error())
 		} else {
 			// caso não tenha erro, adiciona a lista de users
@@ -185,7 +185,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 	lista_users := &entity.UserList{}
 
 	for _, groupID := range groupIDList.List {
-		query := "SELECT DISTINCT U.user_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
+		query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
 
 		// manda uma query para ser executada no database
 		rows, err := database.Query(query, groupID.ID, level)
@@ -200,7 +200,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 			user := entity.User{}
 
 			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+			if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
 				fmt.Println(err.Error())
 			} else {
 				// caso não tenha erro, adiciona a lista de users
@@ -217,12 +217,18 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 }
 
 // Função que retorna user
-func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
+func (ps *User_service) CreateUser(user *entity.User, logID *int) (uint64, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
+
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("INSERT INTO tblUser (user_name, user_email, user_pwd, user_level, status_id) VALUES (?, ?, ?, ?, ?)")
+	stmt, err := database.Prepare("INSERT INTO tblUser (tcs_id, user_name, user_email, user_pwd, user_level, status_id) VALUES (?, ?, ?, ?, ?, ?)")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -232,10 +238,10 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	defer stmt.Close()
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.Name, user.Email, user.Hash, user.Level, 9) // TODO implement status
+	result, err := stmt.Exec(user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, 9) // TODO implement status
 	if err != nil {
 		log.Println(err.Error())
-		return 0, errors.New("error executing statement")
+		return 0, err
 	}
 
 	// pega id do último usuário inserido
@@ -253,8 +259,14 @@ func (ps *User_service) CreateUser(user *entity.User) (uint64, error) {
 	return uint64(lastId), nil
 }
 
-func (ps *User_service) UpdateStatusUser(ID *uint64) (int64, error) {
+func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int) (int64, error) {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblUser WHERE user_id = ?")
 	if err != nil {
@@ -300,12 +312,18 @@ func (ps *User_service) UpdateStatusUser(ID *uint64) (int64, error) {
 }
 
 // Função que altera o usuário
-func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
+func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int) (int, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
+
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("UPDATE tblUser SET user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ? ")
+	stmt, err := database.Prepare("UPDATE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ? ")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -315,7 +333,7 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User) (int, error) {
 	defer stmt.Close()
 
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.Name, user.Email, user.Hash, user.Level, ID)
+	result, err := stmt.Exec(user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, ID)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())

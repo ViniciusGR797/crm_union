@@ -10,6 +10,8 @@ import (
 
 // Função que configura todas as rotas da api
 func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *gin.Engine {
+
+	router.Use(middlewares.CORS())
 	main := router.Group("union")
 	{
 		clients := main.Group("/v1")
@@ -19,6 +21,9 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 			})
 			clients.GET("/clients/id/:client_id", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetClientByID(c, service)
+			})
+			clients.GET("clients/release/id/:release_id", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetClientByReleaseID(c, service)
 			})
 			clients.GET("/clients/tag/:client_id", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetTagsClient(c, service)
@@ -31,6 +36,9 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 			})
 			clients.PUT("/clients/update/status/:client_id", middlewares.Auth(), func(c *gin.Context) {
 				controller.UpdateStatusClient(c, service)
+			})
+			clients.GET("/clients/roles", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetRoles(c, service)
 			})
 		}
 	}

@@ -21,7 +21,7 @@ func main() {
 	default_conf := &config.Config{}
 
 	// Abre o arquivo JSON com as variáveis de ambiente
-	file, err := os.Open("microservice_user/env.json") // file.json has the json content
+	file, err := os.Open("./env.json") // file.json has the json content
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +61,6 @@ func main() {
 
 	// Cria rotas passsando o servidor HTTP e os serviços do user (CRUD)
 	router := routes.ConfigRoutes(serv.SERVER, service)
-
 	// Se tiver ativada a interface de usuário, criar as rotas para o front end (WEB UI)
 	// if conf.WEB_UI {
 	// 	webui.RegisterUIHandlers(router)

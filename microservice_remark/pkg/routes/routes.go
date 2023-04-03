@@ -10,6 +10,9 @@ import (
 
 // ConfigRoutes recebe uma instância do gin.Engine e uma instância do service.RemarkServiceInterface e configura as rotas para as requisições HTTP no servidor.
 func ConfigRoutes(router *gin.Engine, service service.RemarkServiceInterface) *gin.Engine {
+
+	router.Use(middlewares.CORS())
+
 	main := router.Group("union")
 	{
 		remarks := main.Group("/v1")
@@ -17,6 +20,10 @@ func ConfigRoutes(router *gin.Engine, service service.RemarkServiceInterface) *g
 			// GET /remarks/submissives/:user_ID: retorna uma lista de todas as avaliações submetidas pelo usuário com o ID especificado na URL, disparando o método controller.GetSubmissiveRemarks.
 			remarks.GET("/remarks/submissives", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetSubmissiveRemarks(c, service)
+			})
+			// GET /remarks/user/id/:remark_id retorna uma lista de todos os Remarks do User especificado na URL, disparando o método controller.GetAllRemarkUser.
+			remarks.GET("/remarks/user/id/:remark_id", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetAllRemarkUser(c, service)
 			})
 			// GET /remarks/id/:remark_id: retorna uma avaliação com o ID especificado na URL, disparando o método controller.GetRemarkByID.
 			remarks.GET("/remarks/id/:remark_id", middlewares.Auth(), func(c *gin.Context) {

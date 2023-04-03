@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"microservice_group/pkg/database"
 	"microservice_group/pkg/entity"
@@ -9,11 +10,11 @@ import (
 type GroupServiceInterface interface {
 	GetGroups(id uint64) (*entity.GroupList, error)
 	GetGroupByID(id uint64) (*entity.GroupID, error)
-	UpdateStatusGroup(id uint64) (int64, error)
+	UpdateStatusGroup(id uint64, logID *int) (int64, error)
 	GetUsersGroup(id uint64) (*entity.UserList, error)
-	CreateGroup(group *entity.CreateGroup) (int64, error)
-	AttachUserGroup(user *entity.GroupIDList, id uint64) (int64, error)
-	DetachUserGroup(user *entity.GroupIDList, id uint64) (int64, error)
+	CreateGroup(group *entity.CreateGroup, logID *int) (int64, error)
+	AttachUserGroup(user *entity.GroupIDList, id uint64, logID *int) (int64, error)
+	DetachUserGroup(user *entity.GroupIDList, id uint64, logID *int) (int64, error)
 	CountUsersGroup(id uint64) (*entity.CountUsersList, error)
 }
 
@@ -134,12 +135,18 @@ func (ps *Group_service) GetGroupByID(id uint64) (*entity.GroupID, error) {
 }
 
 // UpdateStatusGroup atualiza o status do grupo  ATIVO/INATIVO
-func (ps *Group_service) UpdateStatusGroup(id uint64) (int64, error) {
+func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error) {
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblGroup WHERE group_id = ?")
 	if err != nil {
 		return 0, err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
 	}
 
 	var statusGroup uint64
@@ -253,13 +260,19 @@ func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
 }
 
 // CreateGroup cria um novo grupo
-func (ps *Group_service) CreateGroup(group *entity.CreateGroup) (int64, error) {
+func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int) (int64, error) {
 
 	database := ps.dbp.GetDB()
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return 0, err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
 	}
 
 	var statusID uint64
@@ -294,7 +307,7 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup) (int64, error) {
 
 	if group.GroupIDList.List != nil {
 
-		ps.AttachUserGroup(&group.GroupIDList, uint64(newid))
+		ps.AttachUserGroup(&group.GroupIDList, uint64(newid), logID)
 
 	}
 
@@ -303,13 +316,19 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup) (int64, error) {
 }
 
 // AttachUserGroup adiciona usuarios ao grupo
-func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64) (int64, error) {
+func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, logID *int) (int64, error) {
 
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)")
 	if err != nil {
 		return 0, err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
 	}
 
 	defer stmt.Close()
@@ -327,13 +346,19 @@ func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64) (
 }
 
 // DetachUserGroup remove usuarios do grupo
-func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64) (int64, error) {
+func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64, logID *int) (int64, error) {
 
 	database := ps.dbp.GetDB()
 
 	stmt, err := database.Prepare("DELETE FROM tblUserGroup WHERE group_id = ? AND user_id = ?")
 	if err != nil {
 		return 0, err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
 	}
 
 	defer stmt.Close()

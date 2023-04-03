@@ -15,6 +15,7 @@ type Release struct {
 	Code               string `json:"release_code,omitempty"`
 	Name               string `json:"release_name,omitempty"`
 	Business_Name      string `json:"business_name,omitempty"`
+	Business_Id        string `json:"business_id,omitempty"`
 	Status_Description string `json:"status_description,omitempty"`
 	Tags               []Tag  `json:"tags,omitempty"`
 }

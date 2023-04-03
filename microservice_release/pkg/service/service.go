@@ -12,12 +12,12 @@ import (
 type ReleaseServiceInterface interface {
 	GetReleasesTrain() (*entity.ReleaseList, error)
 	GetReleaseTrainByID(ID uint64) (*entity.Release, error)
-	UpdateReleaseTrain(ID uint64, release *entity.Release_Update) (uint64, error)
+	UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int) (uint64, error)
 	GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error)
-	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) (uint64, error)
-	UpdateStatusReleaseTrain(ID *uint64) (int64, error)
+	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int) (uint64, error)
+	UpdateStatusReleaseTrain(ID *uint64, logID *int) (int64, error)
 	GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error)
-	CreateReleaseTrain(release *entity.Release_Update) error
+	CreateReleaseTrain(release *entity.Release_Update, logID *int) error
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -49,7 +49,7 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 		hasResult = true
 		release := entity.Release{}
 
-		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description); err != nil {
+		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Business_Id, &release.Name, &release.Status_Description); err != nil {
 			return &entity.ReleaseList{}, errors.New("error scanning release train")
 		} else {
 			rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
@@ -94,7 +94,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 
 	release := &entity.Release{}
 
-	err = stmt.QueryRow(ID).Scan(&release.ID, &release.Code, &release.Business_Name, &release.Name, &release.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&release.ID, &release.Code, &release.Business_Name, &release.Business_Id, &release.Name, &release.Status_Description)
 	if err != nil {
 		return &entity.Release{}, errors.New("error scanning rows")
 	}
@@ -122,8 +122,14 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 }
 
 // UpdateReleaseTrain atualiza a release train
-func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release_Update) (uint64, error) {
+func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int) (uint64, error) {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("UPDATE tblReleaseTrain SET release_code = ?, release_name = ?, business_id = ? WHERE release_id = ?")
 	if err != nil {
@@ -180,8 +186,14 @@ func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error
 }
 
 // InsertTagsReleaseTrain deleta relese train tag e dps insere novamente as alterações
-func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) (uint64, error) {
+func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int) (uint64, error) {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("DELETE FROM tblReleaseTrainTag WHERE release_id = ?")
 	if err != nil {
@@ -213,8 +225,14 @@ func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag) 
 }
 
 // UpdateStatusReleaseTrain atualiza o status da release train "softdelete"
-func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64) (int64, error) {
+func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64, logID *int) (int64, error) {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblReleaseTrain WHERE release_id = ?")
 	if err != nil {
@@ -256,7 +274,7 @@ func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64) (int64, error) {
 
 // Função que retorna lista de releases, filtrando pelo ID business
 func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error) {
-	query := "SELECT DISTINCT V.release_id, V.release_code, V.release_name, V.business_name, V.status_description FROM vwGetAllReleaseTrains V INNER JOIN tblReleaseTrain R ON V.release_id = R.release_id WHERE R.business_id = ? ORDER BY V.release_name"
+	query := "SELECT DISTINCT V.release_id, V.release_code, V.release_name, V.business_name, V.business_id, V.status_description FROM vwGetAllReleaseTrains V INNER JOIN tblReleaseTrain R ON V.release_id = R.release_id WHERE R.business_id = ? ORDER BY V.release_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -281,6 +299,7 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 			&release.Code,
 			&release.Name,
 			&release.Business_Name,
+			&release.Business_Id,
 			&release.Status_Description); err != nil {
 			return &entity.ReleaseList{}, errors.New("error scanning release data")
 		} else {
@@ -326,8 +345,14 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 }
 
 // CreateReleaseTrain cria release train
-func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update) error {
+func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update, logID *int) error {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("INSERT INTO tblReleaseTrain (release_code, release_name, business_id, status_id) VALUES (?, ?, ?, ?)")
 	if err != nil {

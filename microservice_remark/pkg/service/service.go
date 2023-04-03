@@ -14,12 +14,13 @@ import (
 type RemarkServiceInterface interface {
 	// Pega todos os Remarks, logo lista todos os Remarks
 	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
+	GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error)
 	GetRemarkByID(ID *uint64) (*entity.Remark, error)
-	CreateRemark(remark *entity.RemarkUpdate) error
+	CreateRemark(remark *entity.RemarkUpdate, logID *int) error
 	GetBarChartRemark(ID *uint64) *entity.Remark
 	GetPieChartRemark(ID *uint64) *entity.Remark
-	UpdateStatusRemark(ID *uint64, remark *entity.Remark) error
-	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) error
+	UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int) error
+	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int) error
 }
 
 // remark_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -78,6 +79,33 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, err
 	return lista_Remarks, nil
 }
 
+// GetAllRemarkUser Função que retorna os Remarks de um ID
+func (ps *remark_service) GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error) {
+	database := ps.dbp.GetDB()
+
+	rows, err := database.Query("call pcGetAllRemarkUser (?)", ID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	listRemark := entity.RemarkList{}
+
+	for rows.Next() {
+		remark := entity.Remark{}
+		err = rows.Scan(&remark.ID, &remark.Remark_Name, &remark.Subject_Name, &remark.Client_Name, &remark.Client_Email, &remark.Business_Name, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return)
+		if err != nil {
+			return nil, errors.New("remark not found")
+		} else {
+			listRemark.List = append(listRemark.List, &remark)
+		}
+
+	}
+
+	return &listRemark, nil
+}
+
 // GetRemarkByID Função que retorna um Remark pelo ID
 func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
@@ -100,8 +128,14 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 }
 
 // CreateRemark que usa uma estrutura RemarkUpdate como argumento e retorna um erro. Função que cria um Remark
-func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate) error {
+func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) error {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("INSERT INTO tblRemark (remark_subject, remark_text, remark_date, remark_return, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
@@ -163,8 +197,14 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 }
 
 // UpdateStatusRemark Função que atualiza o Status do Remark
-func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark) error {
+func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int) error {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblRemark WHERE remark_id = ?")
 	if err != nil {
@@ -210,8 +250,14 @@ func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark) 
 }
 
 // UpdateRemark Função que atualiza um Remark
-func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate) error {
+func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int) error {
 	database := ps.dbp.GetDB()
+
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
 
 	stmt, err := database.Prepare("UPDATE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ?  WHERE remark_id = ?")
 	if err != nil {

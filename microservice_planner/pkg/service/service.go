@@ -13,12 +13,12 @@ import (
 type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
 	GetPlannerByID(ID *uint64) (*entity.Planner, error)
-	CreatePlanner(planner *entity.PlannerUpdate) error
+	CreatePlanner(planner *entity.PlannerUpdate, logID *int) error
 	GetPlannerByName(ID *int, level int, name *string) (*entity.PlannerList, error)
 	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
 	GetPlannerByBusiness(name *string) (*entity.PlannerList, error)
 	GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error)
-	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate) (uint64, error)
+	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int) (uint64, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -55,6 +55,8 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 		&planner.Client,
 		&planner.Business,
 		&planner.Release,
+		&planner.Remark_subject,
+		&planner.Remark_text,
 		&planner.User,
 		&planner.Created_At,
 		&planner.Status)
@@ -85,26 +87,31 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 }
 
 // CreateBlanner cria um blanner no banco
-func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate) error {
+func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate, logID *int) error {
 
 	database := ps.dbp.GetDB()
 
+	rowStatus, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return errors.New("session variable error")
+	}
+
 	var statusID uint64
 
-	rowStatus, err := database.Query("SELECT status_id FROM tblStatus WHERE status_dominio = 'PLANNER' AND status_description = 'SCHEDULED'")
+	err = rowStatus.QueryRow("PLANNER", "SCHEDULED").Scan(&statusID)
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
 
-	rowStatus.Next()
-
-	if err := rowStatus.Scan(&statusID); err != nil {
-		fmt.Println(err.Error())
-	}
-
-	stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, remark_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
 
 	defer stmt.Close()
@@ -116,18 +123,18 @@ func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate) error {
 		planner.Subject,
 		planner.Client,
 		planner.Release,
+		planner.Remark,
 		planner.User,
 		statusID)
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
 
-	_, err = result.RowsAffected()
+	ID, err := result.LastInsertId()
 	if err != nil {
-		return errors.New("error rowAffected insert into database")
+		return err
 	}
 
-	ID, _ := result.LastInsertId()
 	planner.ID = uint64(ID)
 
 	stmt, err = database.Prepare("INSERT INTO tblEngagementPlannerGuestInvite (client_id, planner_id)  VALUES (?, ?)")
@@ -217,8 +224,8 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 
 	for _, userID := range lista_users.List {
 
-		query := "SELECT DISTINCT P.planner_id, P.planner_subject, P.planner_date, P.planner_duration, SU.subject_title, C.client_name, B.business_name, R.release_name, U.user_name, P.created_at, S.status_description FROM tblPlanner P INNER JOIN tblSubject SU ON P.subject_id = SU.subject_id INNER JOIN tblClient C ON P.client_id = C.client_id INNER JOIN tblReleaseTrain R ON P.release_id = R.release_id INNER JOIN tblBusiness B ON R.business_id = B.business_id INNER JOIN tblUser U ON P.user_id = U.user_id INNER JOIN tblStatus S ON P.status_id = S.status_id WHERE P.user_id = ? AND P.planner_subject LIKE ? ORDER BY P.planner_subject"
-
+		// query := "SELECT DISTINCT P.planner_id, P.planner_subject, P.planner_date, P.planner_duration, SU.subject_title, C.client_name, B.business_name, R.release_name, U.user_name, P.created_at, S.status_description FROM tblPlanner P INNER JOIN tblSubject SU ON P.subject_id = SU.subject_id INNER JOIN tblClient C ON P.client_id = C.client_id INNER JOIN tblReleaseTrain R ON P.release_id = R.release_id INNER JOIN tblBusiness B ON R.business_id = B.business_id INNER JOIN tblUser U ON P.user_id = U.user_id INNER JOIN tblStatus S ON P.status_id = S.status_id WHERE P.user_id = ? AND P.planner_subject LIKE ? ORDER BY P.planner_subject"
+		query = "SELECT DISTINCT vP.* FROM vwGetAllPlanners vP INNER JOIN tblPlanner P ON vP.planner_id = P.planner_id INNER JOIN tblRemark R ON P.remark_id = R.remark_id WHERE P.user_id = ? AND P.planner_subject LIKE ? ORDER BY P.planner_subject"
 		nameString := fmt.Sprint("%", *name, "%")
 		// manda uma query para ser executada no database
 		rows, err := database.Query(query, userID.ID, nameString)
@@ -233,7 +240,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 			planner := entity.Planner{}
 
 			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject, &planner.Client, &planner.Business, &planner.Release, &planner.User, &planner.Created_At, &planner.Status); err != nil {
+			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject, &planner.Client, &planner.Business, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User, &planner.Created_At, &planner.Status); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan planners")
 			} else {
 				// caso não tenha erro, adiciona a lista de users
@@ -338,8 +345,8 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 	lista_planners := &entity.PlannerList{}
 
 	for _, userID := range lista_users.List {
-		query := "SELECT DISTINCT P.planner_id, P.planner_subject, P.planner_date, P.planner_duration, SU.subject_title, C.client_name, B.business_name, R.release_name, U.user_name, P.created_at, S.status_description FROM tblPlanner P INNER JOIN tblSubject SU ON P.subject_id = SU.subject_id INNER JOIN tblClient C ON P.client_id = C.client_id INNER JOIN tblReleaseTrain R ON P.release_id = R.release_id INNER JOIN tblBusiness B ON R.business_id = B.business_id INNER JOIN tblUser U ON P.user_id = U.user_id INNER JOIN tblStatus S ON P.status_id = S.status_id WHERE P.user_id = ? ORDER BY P.planner_subject"
-
+		// query := "SELECT DISTINCT P.planner_id, P.planner_subject, P.planner_date, P.planner_duration, SU.subject_title, C.client_name, B.business_name, R.release_name, P.remark_subject, P.remark_text, U.user_name, P.created_at, S.status_description FROM tblPlanner P INNER JOIN tblSubject SU ON P.subject_id = SU.subject_id INNER JOIN tblClient C ON P.client_id = C.client_id INNER JOIN tblReleaseTrain R ON P.release_id = R.release_id INNER JOIN tblBusiness B ON R.business_id = B.business_id INNER JOIN tblUser U ON P.user_id = U.user_id INNER JOIN tblStatus S ON P.status_id = S.status_id WHERE P.user_id = ? ORDER BY P.planner_subject"
+		query := "SELECT DISTINCT vP.* FROM vwGetAllPlanners vP INNER JOIN tblPlanner P ON vP.planner_id = P.planner_id INNER JOIN tblRemark R ON P.remark_id = R.remark_id WHERE P.user_id = ? ORDER BY P.planner_subject"
 		// manda uma query para ser executada no database
 		rows, err := database.Query(query, userID.ID)
 		// verifica se teve erro
@@ -353,7 +360,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 			planner := entity.Planner{}
 
 			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject, &planner.Client, &planner.Business, &planner.Release, &planner.User, &planner.Created_At, &planner.Status); err != nil {
+			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject, &planner.Client, &planner.Business, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User, &planner.Created_At, &planner.Status); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan planners")
 			} else {
 				// caso não tenha erro, adiciona a lista de users
@@ -403,7 +410,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 		return &entity.PlannerList{}, errors.New("error fetching Planner")
 	}
 
-	// defer rows.Close()
+	defer rows.Close()
 
 	planner_list := &entity.PlannerList{}
 
@@ -423,11 +430,13 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 			&planner.Client,
 			&planner.Business,
 			&planner.Release,
+			&planner.Remark_subject,
+			&planner.Remark_text,
 			&planner.User,
 			&planner.Created_At,
 			&planner.Status); err != nil {
 
-			return &entity.PlannerList{}, nil
+			return nil, errors.New("error scan planner")
 
 		} else {
 			// Adiciona o planner na lista a cada iteração
@@ -468,11 +477,17 @@ func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client,
 	return guests, nil
 }
 
-func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate) (uint64, error) {
+func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int) (uint64, error) {
 
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?")
+	// Definir a variável de sessão "@user"
+	_, err := database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
+
+	stmt, err := database.Prepare("UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, remark_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -488,6 +503,7 @@ func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdat
 		planner.Subject,
 		planner.Client,
 		planner.Release,
+		planner.Remark,
 		planner.User,
 		planner.Status,
 		ID)

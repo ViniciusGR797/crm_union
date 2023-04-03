@@ -42,11 +42,28 @@ func GetPlannerByID(c *gin.Context, service service.PlannerServiceInterface) {
 }
 
 func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	// Cria variável do tipo Planner (inicialmente vazia)
 	var planner *entity.PlannerUpdate
 
 	// Converte json em Planner
-	err := c.ShouldBind(&planner)
+	err = c.ShouldBind(&planner)
 	// Verifica se tem erro
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -57,7 +74,7 @@ func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
-	err = service.CreatePlanner(planner)
+	err = service.CreatePlanner(planner, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -170,7 +187,7 @@ func GetSubmissivePlanners(c *gin.Context, service service.PlannerServiceInterfa
 
 func GetPlannerByBusiness(c *gin.Context, service service.PlannerServiceInterface) {
 
-	name := c.Param("name")
+	name := c.Param("business_name")
 
 	planner, err := service.GetPlannerByBusiness(&name)
 	if err != nil {
@@ -213,6 +230,23 @@ func GetGuestClientPlanners(c *gin.Context, service service.PlannerServiceInterf
 }
 
 func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	ID := c.Param("id")
 
 	newID, err := strconv.ParseUint(ID, 10, 64)
@@ -240,7 +274,7 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
-	_, err = service.UpdatePlanner(newID, planner)
+	_, err = service.UpdatePlanner(newID, planner, &logID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
