@@ -54,7 +54,7 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 		if err := rows.Scan(&business.Business_id, &business.Business_code, &business.Business_name, &business.BusinessSegment.BusinessSegment_id, &business.BusinessSegment.BusinessSegment_description, &business.Status.Status_id, &business.Status.Status_description); err != nil {
 			return &entity.BusinessList{}
 		} else {
-			rowsTags, err := database.Query("SELECT DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", business.Business_id)
+			rowsTags, err := database.Query("SELECT DISTINCT tag.tag_id ,tag.tag_name  from tblTags tag  inner join tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", business.Business_id)
 			if err != nil {
 				return &entity.BusinessList{}
 			}
@@ -64,7 +64,7 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 			for rowsTags.Next() {
 				tag := entity.Tag{}
 
-				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+				if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 					return &entity.BusinessList{}
 				} else {
 					tags = append(tags, tag)
@@ -100,7 +100,7 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 		return &entity.Business{}, errors.New("error scanning rows")
 	}
 
-	rowsTags, err := database.Query("SELECT DISTINCT tag_name from tblTags INNER JOIN tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", Business.Business_id)
+	rowsTags, err := database.Query("SELECT DISTINCT tag.tag_id, tag.tag_name from tblTags tag INNER JOIN tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", Business.Business_id)
 	if err != nil {
 		return &entity.Business{}, errors.New("error fetching tags from business by id")
 	}
@@ -110,7 +110,7 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 	for rowsTags.Next() {
 		tag := entity.Tag{}
 
-		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 			return &entity.Business{}, errors.New("error scanning tags from business by id")
 		} else {
 			tags = append(tags, tag)
@@ -297,7 +297,7 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 			return &entity.BusinessList{}, nil
 		} else {
 
-			rowsTags, err := database.Query("SELECT DISTINCT tag_name from tblTags inner join tblBusinessTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag_name", business.Business_id)
+			rowsTags, err := database.Query("SELECT DISTINCT tag.tag_id, tag.tag_name from tblTags tag inner join tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", business.Business_id)
 			if err != nil {
 				return &entity.BusinessList{}, nil
 			}
@@ -307,7 +307,7 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 			for rowsTags.Next() {
 				tag := entity.Tag{}
 
-				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+				if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 					return &entity.BusinessList{}, nil
 				} else {
 					tags = append(tags, tag)
