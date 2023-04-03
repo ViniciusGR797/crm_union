@@ -52,7 +52,7 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Business_Id, &release.Name, &release.Status_Description); err != nil {
 			return &entity.ReleaseList{}, errors.New("error scanning release train")
 		} else {
-			rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
+			rowsTags, err := database.Query("select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
 			if err != nil {
 				return &entity.ReleaseList{}, errors.New("error fetching tags")
 			}
@@ -62,7 +62,7 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 			for rowsTags.Next() {
 				tag := entity.Tag{}
 
-				if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+				if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 					return &entity.ReleaseList{}, errors.New("error scanning tags")
 				} else {
 					tags = append(tags, tag)
@@ -99,7 +99,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 		return &entity.Release{}, errors.New("error scanning rows")
 	}
 
-	rowsTags, err := database.Query("select DISTINCT tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name", ID)
+	rowsTags, err := database.Query("select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name", ID)
 	if err != nil {
 		return &entity.Release{}, errors.New("error fetching tags from release train by id")
 	}
@@ -109,7 +109,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 	for rowsTags.Next() {
 		tag := entity.Tag{}
 
-		if err := rowsTags.Scan(&tag.Tag_Name); err != nil {
+		if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
 			return &entity.Release{}, errors.New("error scanning tags from release train by id")
 		} else {
 			tags = append(tags, tag)
