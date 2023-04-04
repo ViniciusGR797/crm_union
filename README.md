@@ -178,6 +178,16 @@ Segue abaixo a lista de pessoas a quem expressamos nossa gratidão pela valiosa 
       </a>
     </td>
     <td align="center">
+      <a href="https://github.com/eu-micaeu">
+        <img src="https://avatars.githubusercontent.com/u/69124656?v=4" width="100px;" alt="Foto do Micael"/><br>
+        <sub>
+          <b>Micael Rocha</b>
+        </sub>
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
       <a href="https://github.com/taglyscostacurta">
         <img src="https://avatars.githubusercontent.com/u/97138443?v=4" width="100px;" alt="Foto do Taglys"/><br>
         <sub>
@@ -185,8 +195,6 @@ Segue abaixo a lista de pessoas a quem expressamos nossa gratidão pela valiosa 
         </sub>
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://github.com/Avelar19">
         <img src="https://avatars.githubusercontent.com/u/118865712?v=4" width="100px;" alt="Foto do Thiago"/><br>
