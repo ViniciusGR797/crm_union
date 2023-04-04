@@ -47,24 +47,12 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	planner := &entity.Planner{}
 
 	err = stmt.QueryRow(ID).Scan(
-		&planner.ID,
-		&planner.Name,
-		&planner.Date,
-		&planner.Duration,
-		&planner.Subject,
-		&planner.Client,
-		&planner.Business,
-		&planner.Release,
-		&planner.Remark_subject,
-		&planner.Remark_text,
-		&planner.User,
-		&planner.Created_At,
-		&planner.Status)
+		&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.Created_At, &planner.Status)
 	if err != nil {
 		return &entity.Planner{}, errors.New("error scanning rows")
 	}
 
-	rowsGuest, err := database.Query("SELECT C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+	rowsGuest, err := database.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
 	if err != nil {
 		return &entity.Planner{}, errors.New("error fetching tags from planner by id")
 	}
@@ -74,7 +62,7 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	for rowsGuest.Next() {
 		client := entity.Client{}
 
-		if err := rowsGuest.Scan(&client.Name); err != nil {
+		if err := rowsGuest.Scan(&client.ID, &client.Name); err != nil {
 			return &entity.Planner{}, errors.New("error scanning guest from planners by id")
 		} else {
 			guest = append(guest, client)
@@ -240,7 +228,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 			planner := entity.Planner{}
 
 			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject, &planner.Client, &planner.Business, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User, &planner.Created_At, &planner.Status); err != nil {
+			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.Created_At, &planner.Status); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan planners")
 			} else {
 				// caso não tenha erro, adiciona a lista de users
@@ -250,7 +238,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 	}
 
 	for _, planner := range lista_planners.List {
-		rowsGuest, err := database.Query("SELECT C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+		rowsGuest, err := database.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching guests")
 		}
@@ -260,7 +248,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 		for rowsGuest.Next() {
 			client := entity.Client{}
 
-			if err := rowsGuest.Scan(&client.Name); err != nil {
+			if err := rowsGuest.Scan(&client.ID, &client.Name); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan guests")
 			} else {
 				guest = append(guest, client)
@@ -360,7 +348,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 			planner := entity.Planner{}
 
 			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject, &planner.Client, &planner.Business, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User, &planner.Created_At, &planner.Status); err != nil {
+			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.Created_At, &planner.Status); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan planners")
 			} else {
 				// caso não tenha erro, adiciona a lista de users
@@ -421,20 +409,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 
 		// O método Scan() atribui o valor das colunas da linha atual e atribui em ordem  as variáveis informadas
 		// no parâmetro. Se ocorrer um erro, este será atribuído a variável 'err'
-		if err := rows.Scan(
-			&planner.ID,
-			&planner.Name,
-			&planner.Date,
-			&planner.Duration,
-			&planner.Subject,
-			&planner.Client,
-			&planner.Business,
-			&planner.Release,
-			&planner.Remark_subject,
-			&planner.Remark_text,
-			&planner.User,
-			&planner.Created_At,
-			&planner.Status); err != nil {
+		if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.Created_At, &planner.Status); err != nil {
 
 			return nil, errors.New("error scan planner")
 
@@ -443,6 +418,28 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 			planner_list.List = append(planner_list.List, &planner)
 		}
 	}
+
+	for _, planner := range planner_list.List {
+		rowsGuest, err := database.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+		if err != nil {
+			return &entity.PlannerList{}, errors.New("error fetching guests")
+		}
+
+		var guest []entity.Client
+
+		for rowsGuest.Next() {
+			client := entity.Client{}
+
+			if err := rowsGuest.Scan(&client.ID, &client.Name); err != nil {
+				return &entity.PlannerList{}, errors.New("error scan guests")
+			} else {
+				guest = append(guest, client)
+			}
+
+		}
+		planner.Guest = guest
+	}
+
 	return planner_list, nil
 }
 
