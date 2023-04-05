@@ -15,13 +15,14 @@ type Planner struct {
 	ID             uint64   `json:"id,omitempty"`
 	Name           string   `json:"name,omitempty"`
 	Date           string   `json:"date,omitempty"`
-	Duration       uint64   `json:"duration,omitempty"`
+	Duration       string   `json:"duration,omitempty"`
 	Subject_id     uint64   `json:"subject_id,omitempty"`
 	Subject        string   `json:"subject,omitempty"`
 	Remark_subject string   `json:"remark_subject,omitempty"`
 	Remark_text    string   `json:"remark_text,omitempty"`
 	Client_id      uint64   `json:"client_id,omitempty"`
 	Client         string   `json:"client,omitempty"`
+	Client_email   string   `json:"client_email,omitempty"`
 	Business_id    uint64   `json:"business_id,omitempty"`
 	Business       string   `json:"business,omitempty"`
 	Release_id     uint64   `json:"release_id,omitempty"`
