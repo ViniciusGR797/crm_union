@@ -15,6 +15,7 @@ type Subject struct {
 	Business      string `json:"business_name,omitempty"`
 	Client_id     uint64 `json:"client_id,omitempty"`
 	Client        string `json:"client_name,omitempty"`
+	Client_email  string `json:"client_email,omitempty"`
 	Status        Status `json:"status,omitempty"`
 	Created_at    string `json:"created_at,omitempty"`
 	Domain        Domain `json:"domain,omitempty"`
@@ -33,8 +34,8 @@ func (p *Subject) String() string {
 }
 
 type SubjectID struct {
-	User_id		  uint64 `json:"user_id,omitempty"`
-	User_name	  string `json:"user_name,omitempty"`
+	User_id       uint64 `json:"user_id,omitempty"`
+	User_name     string `json:"user_name,omitempty"`
 	Subject_id    uint64 `json:"subject_id,omitempty"`
 	Subject_title string `json:"subject_title,omitempty"`
 	Client        Client `json:"client,omitempty"`
