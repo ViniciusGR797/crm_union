@@ -18,8 +18,8 @@ type Planner struct {
 	Duration       string   `json:"duration,omitempty"`
 	Subject_id     uint64   `json:"subject_id,omitempty"`
 	Subject        string   `json:"subject,omitempty"`
-	Remark_subject string   `json:"remark_subject"`
-	Remark_text    string   `json:"remark_text"`
+	Remark_subject *string  `json:"remark_subject,omitempty"`
+	Remark_text    *string  `json:"remark_text,omitempty"`
 	Client_id      uint64   `json:"client_id,omitempty"`
 	Client         string   `json:"client,omitempty"`
 	Client_email   string   `json:"client_email,omitempty"`
@@ -39,7 +39,7 @@ type PlannerUpdate struct {
 	ID         uint64   `json:"id,omitempty"`
 	Name       string   `json:"name,omitempty"`
 	Date       string   `json:"date,omitempty"`
-	Duration   int      `json:"duration,omitempty"`
+	Duration   string   `json:"duration,omitempty"`
 	Subject    uint64   `json:"subject,omitempty"`
 	Client     uint64   `json:"client,omitempty"`
 	Release    uint64   `json:"release,omitempty"`
