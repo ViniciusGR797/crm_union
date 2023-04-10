@@ -52,7 +52,7 @@ func TestPlanner_service_GetPlannerByID(t *testing.T) {
 
 func TestPlanner_service_CreatePlanner(t *testing.T) {
 	type args struct {
-		planner *entity.PlannerUpdate
+		planner *entity.CreatePlanner
 		logID   *int
 	}
 	tests := []struct {
