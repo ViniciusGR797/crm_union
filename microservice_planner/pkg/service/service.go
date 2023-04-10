@@ -333,12 +333,13 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 
 	for _, userID := range lista_users.List {
 		// query := "SELECT DISTINCT P.planner_id, P.planner_subject, P.planner_date, P.planner_duration, SU.subject_title, C.client_name, B.business_name, R.release_name, P.remark_subject, P.remark_text, U.user_name, P.created_at, S.status_description FROM tblPlanner P INNER JOIN tblSubject SU ON P.subject_id = SU.subject_id INNER JOIN tblClient C ON P.client_id = C.client_id INNER JOIN tblReleaseTrain R ON P.release_id = R.release_id INNER JOIN tblBusiness B ON R.business_id = B.business_id INNER JOIN tblUser U ON P.user_id = U.user_id INNER JOIN tblStatus S ON P.status_id = S.status_id WHERE P.user_id = ? ORDER BY P.planner_subject"
-		query := "SELECT DISTINCT vP.* FROM vwGetAllPlanners vP INNER JOIN tblPlanner P ON vP.planner_id = P.planner_id INNER JOIN tblRemark R ON P.remark_id = R.remark_id WHERE P.user_id = ? ORDER BY P.planner_subject"
+		query := "SELECT DISTINCT vP.* FROM vwGetAllPlanners vP INNER JOIN tblPlanner P ON vP.planner_id = P.planner_id LEFT JOIN tblRemark R ON P.remark_id = R.remark_id WHERE P.user_id = ? ORDER BY P.planner_subject"
 		// manda uma query para ser executada no database
 		rows, err := database.Query(query, userID.ID)
 		// verifica se teve erro
 		if err != nil {
-			return &entity.PlannerList{}, errors.New("error fetching planners")
+			return &entity.PlannerList{}, err
+			//  errors.New("error fetching planners")
 		}
 
 		// Pega todo resultado da query linha por linha
