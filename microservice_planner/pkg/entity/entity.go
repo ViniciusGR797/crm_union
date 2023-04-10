@@ -50,6 +50,20 @@ type PlannerUpdate struct {
 	Guest      []Client `json:"guest,omitempty"`
 }
 
+type CreatePlanner struct {
+	ID         uint64   `json:"id,omitempty"`
+	Name       string   `json:"name,omitempty"`
+	Date       string   `json:"date,omitempty"`
+	Duration   string   `json:"duration,omitempty"`
+	Subject    uint64   `json:"subject,omitempty"`
+	Client     uint64   `json:"client,omitempty"`
+	Release    uint64   `json:"release,omitempty"`
+	User       uint64   `json:"user,omitempty"`
+	Status     uint64   `json:"status"`
+	Created_At string   `json:"created_at,omitempty"`
+	Guest      []Client `json:"guest,omitempty"`
+}
+
 // Estrutura de dados de Client
 type Client struct {
 	ID    uint64 `json:"client_id,omitempty"`

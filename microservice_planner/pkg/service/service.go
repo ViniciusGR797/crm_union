@@ -13,7 +13,7 @@ import (
 type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
 	GetPlannerByID(ID *uint64) (*entity.Planner, error)
-	CreatePlanner(planner *entity.PlannerUpdate, logID *int) error
+	CreatePlanner(planner *entity.CreatePlanner, logID *int) error
 	GetPlannerByName(ID *int, level int, name *string) (*entity.PlannerList, error)
 	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
 	GetPlannerByBusiness(name *string) (*entity.PlannerList, error)
@@ -75,7 +75,7 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 }
 
 // CreateBlanner cria um blanner no banco
-func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate, logID *int) error {
+func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *int) error {
 
 	database := ps.dbp.GetDB()
 
@@ -97,7 +97,7 @@ func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate, logID *i
 		return err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, remark_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,6 @@ func (ps *Planner_service) CreatePlanner(planner *entity.PlannerUpdate, logID *i
 		planner.Subject,
 		planner.Client,
 		planner.Release,
-		planner.Remark,
 		planner.User,
 		statusID)
 	if err != nil {

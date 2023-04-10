@@ -60,7 +60,7 @@ func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 	}
 
 	// Cria variável do tipo Planner (inicialmente vazia)
-	var planner *entity.PlannerUpdate
+	var planner *entity.CreatePlanner
 
 	// Converte json em Planner
 	err = c.ShouldBind(&planner)
