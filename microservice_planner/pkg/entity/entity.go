@@ -18,8 +18,8 @@ type Planner struct {
 	Duration       string   `json:"duration,omitempty"`
 	Subject_id     uint64   `json:"subject_id,omitempty"`
 	Subject        string   `json:"subject,omitempty"`
-	Remark_subject string   `json:"remark_subject,omitempty"`
-	Remark_text    string   `json:"remark_text,omitempty"`
+	Remark_subject string   `json:"remark_subject"`
+	Remark_text    string   `json:"remark_text"`
 	Client_id      uint64   `json:"client_id,omitempty"`
 	Client         string   `json:"client,omitempty"`
 	Client_email   string   `json:"client_email,omitempty"`

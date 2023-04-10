@@ -262,7 +262,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 		return nil, err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?,?)")
+	stmt, err := database.Prepare("INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
@@ -289,12 +289,16 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 	for rows.Next() {
 
 		if err := rows.Scan(
+			&subjectID.User_id,
+			&subjectID.User_name,
 			&subjectID.Subject_id,
 			&subjectID.Subject_title,
 			&subjectID.Client.Client_id,
 			&subjectID.Client.Client_email,
 			&subjectID.Client.Client_name,
+			&subjectID.Business_id,
 			&subjectID.Business_name,
+			&subjectID.Release_id,
 			&subjectID.Release_name,
 			&subjectID.Subject_text,
 			&subjectID.Created_at,
