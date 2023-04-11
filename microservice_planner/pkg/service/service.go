@@ -327,7 +327,6 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 
 	// fecha linha da query, quando sair da função
 	defer rows.Close()
-
 	// variável do tipo PlannerList (vazia)
 	lista_planners := &entity.PlannerList{}
 
@@ -358,7 +357,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 	}
 
 	for _, planner := range lista_planners.List {
-		rowsGuest, err := database.Query("SELECT C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+		rowsGuest, err := database.Query("SELECT C.client_name, C.client_id, C.client_email FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching guests")
 		}
@@ -368,7 +367,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 		for rowsGuest.Next() {
 			client := entity.Client{}
 
-			if err := rowsGuest.Scan(&client.Name); err != nil {
+			if err := rowsGuest.Scan(&client.Name, &client.ID, &client.Email); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan guests")
 			} else {
 				guest = append(guest, client)
