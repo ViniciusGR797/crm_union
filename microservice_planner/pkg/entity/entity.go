@@ -43,7 +43,7 @@ type PlannerUpdate struct {
 	Subject    uint64   `json:"subject,omitempty"`
 	Client     uint64   `json:"client,omitempty"`
 	Release    uint64   `json:"release,omitempty"`
-	Remark     uint64   `json:"remark,omitempty"`
+	Remark     *uint64  `json:"remark,omitempty"`
 	User       uint64   `json:"user,omitempty"`
 	Status     uint64   `json:"status"`
 	Created_At string   `json:"created_at,omitempty"`
