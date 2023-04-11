@@ -115,15 +115,14 @@ func CreateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 		return
 	}
 
-	err = service.CreateRemark(remark, &logID)
+	remarkCreated, err := service.CreateRemark(remark, &logID)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
 	}
 
-	c.JSON(http.StatusNoContent, gin.H{
-		"result": "remark created successfully",
-	})
+	c.JSON(201, remarkCreated)
+
 }
 
 // GetBarChartRemark é responsável por retornar um gráfico de barras dos dados dos remarks de um usuário específico.

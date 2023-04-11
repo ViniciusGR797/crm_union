@@ -16,7 +16,7 @@ type RemarkServiceInterface interface {
 	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
 	GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error)
 	GetRemarkByID(ID *uint64) (*entity.Remark, error)
-	CreateRemark(remark *entity.RemarkUpdate, logID *int) error
+	CreateRemark(remark *entity.RemarkUpdate, logID *int) (*entity.Remark, error)
 	GetBarChartRemark(ID *uint64) *entity.Remark
 	GetPieChartRemark(ID *uint64) *entity.Remark
 	UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int) error
@@ -128,28 +128,63 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 }
 
 // CreateRemark que usa uma estrutura RemarkUpdate como argumento e retorna um erro. Função que cria um Remark
-func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) error {
+func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
 	if err != nil {
-		return errors.New("session variable error")
+		return nil, errors.New("session variable error")
 	}
 
 	stmt, err := database.Prepare("INSERT INTO tblRemark (remark_subject, remark_text, remark_date, remark_return, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, 21)
+	result, err := stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, 21)
 	if err != nil {
-		return errors.New("error insert remark")
+		return nil, errors.New("error insert remark")
 	}
 
-	return nil
+	idresult, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := database.Query("call pcGetRemarkByID (?)", idresult)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	remarkID := &entity.Remark{}
+
+	for rows.Next() {
+		if err := rows.Scan(&remarkID.ID,
+			&remarkID.Client_ID,
+			&remarkID.Client_Name,
+			&remarkID.Client_Email,
+			&remarkID.Subject_Name,
+			&remarkID.Subject_ID,
+			&remarkID.Subject_Title,
+			&remarkID.Business_ID,
+			&remarkID.Business_Name,
+			&remarkID.Release_ID,
+			&remarkID.Release_Name,
+			&remarkID.Date,
+			&remarkID.Date_Return,
+			&remarkID.Text,
+			&remarkID.Status_Description,
+		); err != nil {
+			return nil, err
+		}
+	}
+
+	return remarkID, nil
 }
 
 // GetBarChartRemark retorna um gráfico de barras mostrando a contagem de avaliações em relação ao tempo (atrasado, próximo, no prazo) para o usuário com o ID especificado na URL, disparando o método controller.GetBarChartRemark.
