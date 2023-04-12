@@ -56,6 +56,7 @@ type CreatePlanner struct {
 	Date       string   `json:"date,omitempty"`
 	Duration   string   `json:"duration,omitempty"`
 	Subject    uint64   `json:"subject,omitempty"`
+	Remark     *uint64  `json:"remark,omitempty"`
 	Client     uint64   `json:"client,omitempty"`
 	Release    uint64   `json:"release,omitempty"`
 	User       uint64   `json:"user,omitempty"`

@@ -97,7 +97,7 @@ func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *i
 		return err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, remark_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -109,6 +109,7 @@ func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *i
 		planner.Date,
 		planner.Duration,
 		planner.Subject,
+		planner.Remark,
 		planner.Client,
 		planner.Release,
 		planner.User,
