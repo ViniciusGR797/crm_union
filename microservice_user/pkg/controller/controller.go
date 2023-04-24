@@ -340,7 +340,7 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 	// Verifica se o user é inativo
-	if user.Status != "ATIVO" {
+	if user.Status != "ACTIVE" {
 		sendError(c, http.StatusUnauthorized, errors.New("inactive user"))
 		return
 	}
