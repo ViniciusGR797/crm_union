@@ -51,10 +51,15 @@ func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, e
 		if err := rows.Scan(
 			&subject.Subject_id,
 			&subject.Subject_title,
+			&subject.Subject_text,
 			&subject.User,
+			&subject.Release_id,
 			&subject.Release,
+			&subject.Business_id,
 			&subject.Business,
+			&subject.Client_id,
 			&subject.Client,
+			&subject.Client_email,
 			&subject.Status.Status_id,
 			&subject.Status.Status_description,
 			&subject.Created_at,
@@ -96,12 +101,17 @@ func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 		hasResult = true
 
 		if err := rows.Scan(
+			&subject.User_id,
+			&subject.User_name,
 			&subject.Subject_id,
 			&subject.Subject_title,
+			&subject.Subject_text,
 			&subject.Client.Client_id,
 			&subject.Client.Client_email,
 			&subject.Client.Client_name,
+			&subject.Business_id,
 			&subject.Business_name,
+			&subject.Release_id,
 			&subject.Release_name,
 			&subject.Subject_text,
 			&subject.Created_at,
@@ -254,7 +264,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 		return nil, err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?,?)")
+	stmt, err := database.Prepare("INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
@@ -281,12 +291,16 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 	for rows.Next() {
 
 		if err := rows.Scan(
+			&subjectID.User_id,
+			&subjectID.User_name,
 			&subjectID.Subject_id,
 			&subjectID.Subject_title,
 			&subjectID.Client.Client_id,
 			&subjectID.Client.Client_email,
 			&subjectID.Client.Client_name,
+			&subjectID.Business_id,
 			&subjectID.Business_name,
+			&subjectID.Release_id,
 			&subjectID.Release_name,
 			&subjectID.Subject_text,
 			&subjectID.Created_at,

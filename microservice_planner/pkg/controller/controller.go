@@ -60,7 +60,7 @@ func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 	}
 
 	// Cria variável do tipo Planner (inicialmente vazia)
-	var planner *entity.PlannerUpdate
+	var planner *entity.CreatePlanner
 
 	// Converte json em Planner
 	err = c.ShouldBind(&planner)
@@ -171,7 +171,8 @@ func GetSubmissivePlanners(c *gin.Context, service service.PlannerServiceInterfa
 	// Verifica se teve erro ao buscar planners no banco
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not fetch planners",
+			"error":  "could not fetch planners",
+			"erro 2": err,
 		})
 		return
 	}
