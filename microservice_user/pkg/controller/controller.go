@@ -82,6 +82,25 @@ func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 	send(c, http.StatusOK, list)
 }
 
+// Função que chama método GetUsersNotInGroup do service e retorna json com user
+func GetUsersNotInGroup(c *gin.Context, service service.UserServiceInterface) {
+	// Chama método GetUsersNotInGroup
+	list, err := service.GetUsersNotInGroup()
+	// Verifica se teve ao buscar users no banco
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+	// Verifica se a lista de users tem tamanho zero (caso for, não tem user sem grupo)
+	if len(list.List) == 0 {
+		sendError(c, http.StatusNotFound, errors.New("no user found"))
+		return
+	}
+
+	// Retorno json com user
+	send(c, http.StatusOK, list)
+}
+
 // Função que chama método GetSubmissiveUsers do service e retorna json com user
 func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 	// pegar informamções do usuário

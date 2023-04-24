@@ -29,6 +29,10 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 			user.GET("/users/name/:user_name", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.GetUserByName(c, service)
 			})
+			// Rota que retorna users pelo nome (GET que dispara método GetUserByName controller)
+			user.GET("/users/notin/group", middlewares.AuthAdmin(), func(c *gin.Context) {
+				controller.GetUsersNotInGroup(c, service)
+			})
 			// Rota que retorna lista de users submissos do seus grupos (GET que dispara método GetSubmissiveUsers controller)
 			user.GET("/users/submissives", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetSubmissiveUsers(c, service)
