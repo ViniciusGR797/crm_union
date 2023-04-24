@@ -18,6 +18,8 @@ type UserServiceInterface interface {
 	GetUserByID(ID *int) (*entity.User, error)
 	// Pega users em específico passando o name dele como parâmetro
 	GetUserByName(name *string) (*entity.UserList, error)
+	// Pega users em específico que estão sem grupo
+	GetUsersNotInGroup() (*entity.UserList, error)
 	// Pega users submissos passando o id de um user como parâmetro
 	GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error)
 	// Cadastra users passando suas informações
@@ -147,6 +149,43 @@ func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 
 	// retorna lista de users
 	return lista_users, nil
+}
+
+// Função que retorna lista de users
+func (ps *User_service) GetUsersNotInGroup() (*entity.UserList, error) {
+	// pega database
+	database := ps.dbp.GetDB()
+
+	// manda uma query para ser executada no database
+	rows, err := database.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id NOT IN (SELECT DISTINCT user_id FROM tblUserGroup ORDER BY user_id) ORDER BY U.user_name")
+	// verifica se teve erro
+	if err != nil {
+		log.Println(err.Error())
+		return &entity.UserList{}, errors.New("error fetching users")
+	}
+
+	// fecha linha da query, quando sair da função
+	defer rows.Close()
+
+	// variável do tipo UserList (vazia)
+	lista_users_notin_group := &entity.UserList{}
+
+	// Pega todo resultado da query linha por linha
+	for rows.Next() {
+		// variável do tipo User (vazia)
+		user := entity.User{}
+
+		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+			log.Println(err.Error())
+		} else {
+			// caso não tenha erro, adiciona a variável log na lista de logs
+			lista_users_notin_group.List = append(lista_users_notin_group.List, &user)
+		}
+	}
+
+	// retorna lista de users
+	return lista_users_notin_group, nil
 }
 
 // Função que retorna lista de users

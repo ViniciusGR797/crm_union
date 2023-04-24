@@ -100,26 +100,6 @@ func Test_remark_service_GetRemarkByID(t *testing.T) {
 	}
 }
 
-func Test_remark_service_CreateRemark(t *testing.T) {
-	type args struct {
-		remark *entity.RemarkUpdate
-		logID  *int
-	}
-	tests := []struct {
-		name    string
-		ps      *remark_service
-		args    args
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.ps.CreateRemark(tt.args.remark, tt.args.logID); (err != nil) != tt.wantErr {
-				t.Errorf("remark_service.CreateRemark() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func Test_remark_service_GetBarChartRemark(t *testing.T) {
 	type args struct {
 		ID *uint64
