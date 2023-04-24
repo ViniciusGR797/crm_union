@@ -202,6 +202,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// Retorno json com o user
 	send(c, http.StatusCreated, gin.H{
+		"id":       user.ID,
 		"email":    user.Email,
 		"password": user.Password,
 	})
