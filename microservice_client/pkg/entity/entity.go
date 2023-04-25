@@ -22,6 +22,7 @@ type Client struct {
 	Release            `json:"release,omitempty"`
 	Business_Name      string    `json:"business_name,omitempty"`
 	Business_ID        string    `json:"business_id,omitempty"`
+	User_ID            uint64    `json:"user_id,omitempty"`
 	User_Name          string    `json:"user_name,omitempty"`
 	Created_At         time.Time `json:"created_at,omitempty"`
 	Status_Description string    `json:"status_description,omitempty"`

@@ -109,7 +109,7 @@ func IsActive(token string) error {
 	status := fmt.Sprint(permissions["status"])
 
 	// Verifica se o user é está ativo
-	if status == "ATIVO" {
+	if status == "ACTIVE" {
 		return nil
 	} else {
 		return errors.New("inactive user")
