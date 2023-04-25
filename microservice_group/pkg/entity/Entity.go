@@ -9,7 +9,7 @@ type Group struct {
 	Group_id   uint64   `json:"group_id,omitempty"`
 	Group_name string   `json:"group_name,omitempty"`
 	Created_at string   `json:"created_at,omitempty"`
-	Status     Status   `json:"-,omitempty"`
+	Status     Status   `json:"status,omitempty"`
 	Customer   Custumer `json:"customers,omitempty"`
 }
 
