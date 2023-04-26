@@ -11,6 +11,7 @@ type Group struct {
 	Created_at string   `json:"created_at,omitempty"`
 	Status     Status   `json:"status,omitempty"`
 	Customer   Custumer `json:"customers,omitempty"`
+	Users      []User   `json:"users,omitempty"`
 }
 
 func (p *Group) String() string {
