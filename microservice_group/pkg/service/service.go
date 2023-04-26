@@ -66,6 +66,26 @@ func (ps *Group_service) GetGroups(id uint64) (*entity.GroupList, error) {
 		); err != nil {
 			fmt.Println(err.Error())
 		} else {
+			rows2, err := database.Query("call pcGetAllUserGroup (?)", group.Group_id)
+			if err != nil {
+				return nil, err
+			}
+			var user_list []entity.User
+
+			for rows2.Next() {
+				user := entity.User{}
+
+				if err := rows2.Scan(
+					&user.User_id,
+					&user.User_name); err != nil {
+					fmt.Println(err.Error())
+				} else {
+					user_list = append(user_list, user)
+				}
+
+			}
+
+			group.Users = user_list
 
 			list_groups.List = append(list_groups.List, &group)
 
