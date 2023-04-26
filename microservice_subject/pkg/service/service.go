@@ -52,6 +52,7 @@ func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, e
 			&subject.Subject_id,
 			&subject.Subject_title,
 			&subject.Subject_text,
+			&subject.User_ID,
 			&subject.User,
 			&subject.Release_id,
 			&subject.Release,
