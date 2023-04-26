@@ -8,7 +8,8 @@ import (
 type Subject struct {
 	Subject_id    uint64 `json:"subject_id,omitempty"`
 	Subject_title string `json:"subject_title,omitempty"`
-	Subject_text  string `son:"subject_text,omitempty"`
+	Subject_text  string `json:"subject_text,omitempty"`
+	User_ID       uint64 `json:"user_id,omitempty"`
 	User          string `json:"user_name,omitempty"`
 	Release_id    uint64 `json:"release_id,omitempty"`
 	Release       string `json:"release_name,omitempty"`
