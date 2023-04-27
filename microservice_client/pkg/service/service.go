@@ -38,6 +38,7 @@ func NewClientService(dabase_pool database.DatabaseInterface) *Client_service {
 // GetClientsMyGroups: Retorna lista de client pelo group
 func (ps *Client_service) GetClientsMyGroups(ID *int) (*entity.ClientList, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rows, err := database.Query("call pcGetAllClientsGroup(?)", ID)
 	if err != nil {
@@ -84,6 +85,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *int) (*entity.ClientList, error
 // GetClientByID: Retorna um client pelo ID
 func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("call pcGetClientByID(?)")
 	if err != nil {
@@ -126,6 +128,7 @@ func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
 // GetClientByReleaseID: Retorna uma lista de clients pelo ID da release
 func (ps *Client_service) GetClientByReleaseID(ID *uint64) (*entity.ClientList, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rows, err := database.Query("SELECT tC.client_id, tC.client_name, tC.client_email FROM tblClient tC WHERE tC.release_id = ?", ID)
 	if err != nil {
@@ -152,6 +155,7 @@ func (ps *Client_service) GetClientByReleaseID(ID *uint64) (*entity.ClientList, 
 // GetTagsClient: Retorna uma lista de tag pelo ID do client
 func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("select DISTINCT T.tag_id, T.tag_name from tblTags T inner join tblClientTag TCT on T.tag_id = TCT.tag_id WHERE client_id = ? ORDER BY T.tag_name")
 	if err != nil {
@@ -166,6 +170,7 @@ func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rowsTags.Close()
 
 	hasResult := false
 
@@ -192,11 +197,13 @@ func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
 // CreateClient: Cria um novo client
 func (ps *Client_service) CreateClient(client *entity.ClientUpdate, logID *int) error {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return err
 	}
+	defer status.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err = database.Exec("SET @user = ?", logID)
@@ -243,6 +250,7 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate, logID *int) 
 // UpdateClient: Atualiza as informações do client
 func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate, logID *int) error {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("UPDATE tblClient SET client_name = ?, client_email = ?, client_role = ?, customer_id = ?, business_id = ?, user_id = ? WHERE client_id = ?")
 	if err != nil {
@@ -281,6 +289,7 @@ func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate, 
 // UpdateStatusClient: Atualizar o status do client
 func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int) error {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblClient WHERE client_id = ?")
 	if err != nil {
@@ -306,6 +315,7 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int) error {
 	if err != nil {
 		return err
 	}
+	defer status.Close()
 
 	var statusID uint64
 
@@ -324,6 +334,7 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int) error {
 	if err != nil {
 		return err
 	}
+	defer updt.Close()
 
 	result, err := updt.Exec(statusClient, ID)
 	if err != nil {
@@ -342,6 +353,7 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int) error {
 // InsertTagClient: Função auxiliar para adicionar tag ao client
 func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag, logID *int) error {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("DELETE FROM tblClientTag WHERE client_id = ?")
 	if err != nil {
@@ -366,8 +378,6 @@ func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag, logID 
 		return errors.New("error insert a new row on tag_id and client")
 	}
 
-	defer stmt.Close()
-
 	for _, tag := range *tags {
 		_, err := stmt.Exec(tag.Tag_ID, ID)
 		if err != nil {
@@ -382,6 +392,7 @@ func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag, logID 
 func (ps *Client_service) GetRoles() *entity.RoleList {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rows, err := database.Query("SELECT domain_id, domain_value FROM tblDomain where domain_name = 'ROLE'")
 	// verifica se teve erro

@@ -48,6 +48,7 @@ func NewUserService(dabase_pool database.DatabaseInterface) *User_service {
 func (ps *User_service) GetUsers() (*entity.UserList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id ORDER BY U.user_name")
@@ -86,6 +87,7 @@ func (ps *User_service) GetUsers() (*entity.UserList, error) {
 func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// prepara query para ser executada no database
 	stmt, err := database.Prepare("SELECT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id = ?")
@@ -117,6 +119,7 @@ func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query(query, nameString)
@@ -155,6 +158,7 @@ func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 func (ps *User_service) GetUsersNotInGroup() (*entity.UserList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id NOT IN (SELECT DISTINCT user_id FROM tblUserGroup ORDER BY user_id) ORDER BY U.user_name")
@@ -194,6 +198,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query(query, ID)
@@ -259,6 +264,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 func (ps *User_service) CreateUser(user *entity.User, logID *int) (uint64, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -300,6 +306,7 @@ func (ps *User_service) CreateUser(user *entity.User, logID *int) (uint64, error
 
 func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int) (int64, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -354,6 +361,7 @@ func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int) (int64, error) 
 func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int) (int, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -394,6 +402,7 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int) (int,
 func (ps *User_service) Login(user *entity.User) (string, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// prepara query para ser executada no database
 	stmt, err := database.Prepare("SELECT U.user_id, U.user_pwd, U.user_level, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE user_email = ?")

@@ -36,6 +36,7 @@ func NewPlannerService(dabase_pool database.DatabaseInterface) *Planner_service 
 // Função que retorna lista de planners
 func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT DISTINCT * FROM vwGetAllPlanners WHERE planner_id = ?")
 	if err != nil {
@@ -56,6 +57,7 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	if err != nil {
 		return &entity.Planner{}, errors.New("error fetching tags from planner by id")
 	}
+	defer rowsGuest.Close()
 
 	var guest []entity.Client
 
@@ -78,12 +80,14 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *int) error {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rowStatus, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
+	defer rowStatus.Close()
 	// Definir a variável de sessão "@user"
 	_, err = database.Exec("SET @user = ?", logID)
 	if err != nil {
@@ -147,6 +151,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query(query, ID)
@@ -269,6 +274,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 
 	// pega database
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query(query, ID)
@@ -391,6 +397,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 
 	// Atribui o banco de dados
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rows, err := database.Query(query, nameString)
 	if err != nil {
@@ -446,6 +453,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 // GetTagsBusiness busca as tags de business
 func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("call pcGetClientGuest(?)")
 	if err != nil {
@@ -477,6 +485,7 @@ func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client,
 func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int) (uint64, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
