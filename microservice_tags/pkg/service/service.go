@@ -31,7 +31,6 @@ func NewTagsService(dabase_pool database.DatabaseInterface) *Tags_service {
 func (ps *Tags_service) GetTags() *entity.TagsList {
 
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	rows, err := database.Query("SELECT tag_id, tag_name FROM tblTags")
 	// verifica se teve erro
@@ -62,7 +61,6 @@ func (ps *Tags_service) GetTags() *entity.TagsList {
 func (ps *Tags_service) GetTagsById(ID uint64) (*entity.Tags, error) {
 
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT tag_id, tag_name FROM tblTags WHERE tag_id = ?")
 	if err != nil {

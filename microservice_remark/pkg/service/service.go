@@ -39,7 +39,6 @@ func NewRemarkService(dabase_pool database.DatabaseInterface) *remark_service {
 func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query("call pcGetAllRemarkUserGroup (?)", ID)
@@ -83,7 +82,6 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, err
 // GetAllRemarkUser Função que retorna os Remarks de um ID
 func (ps *remark_service) GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	rows, err := database.Query("call pcGetAllRemarkUser (?)", ID)
 	if err != nil {
@@ -111,7 +109,6 @@ func (ps *remark_service) GetAllRemarkUser(ID *uint64) (*entity.RemarkList, erro
 // GetRemarkByID Função que retorna um Remark pelo ID
 func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
 	if err != nil {
@@ -133,7 +130,6 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 // CreateRemark que usa uma estrutura RemarkUpdate como argumento e retorna um erro. Função que cria um Remark
 func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -194,7 +190,6 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) 
 // GetBarChartRemark retorna um gráfico de barras mostrando a contagem de avaliações em relação ao tempo (atrasado, próximo, no prazo) para o usuário com o ID especificado na URL, disparando o método controller.GetBarChartRemark.
 func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
 	if err != nil {
@@ -217,7 +212,6 @@ func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
 // GetPieChartRemark retorna um gráfico de pizza mostrando a contagem de avaliações em relação ao status (pendente, aprovado, rejeitado) para o usuário com o ID especificado na URL, disparando o método controller.GetPieChartRemark
 func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
 	if err != nil {
@@ -240,7 +234,6 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 // UpdateStatusRemark Função que atualiza o Status do Remark
 func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int) error {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -295,7 +288,6 @@ func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, 
 // UpdateRemark Função que atualiza um Remark
 func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int) error {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)

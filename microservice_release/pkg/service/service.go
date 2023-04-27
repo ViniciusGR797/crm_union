@@ -35,7 +35,6 @@ func NewReleaseService(dabase_pool database.DatabaseInterface) *Release_service 
 // Função que retorna lista de release train
 func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	rows, err := database.Query("select DISTINCT * from vwGetAllReleaseTrains ORDER BY release_name")
 	if err != nil {
@@ -87,7 +86,6 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, error) {
 
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("select * from vwGetAllReleaseTrains where release_id = ?")
 	if err != nil {
@@ -128,7 +126,6 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 // UpdateReleaseTrain atualiza a release train
 func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int) (uint64, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -162,7 +159,6 @@ func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release
 // GetTagsReleaseTrain busca as tags da release train
 func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblReleaseTrainTag tRTT on T.tag_id = tRTT.tag_id WHERE release_id = ? ORDER BY T.tag_name")
 	if err != nil {
@@ -195,7 +191,6 @@ func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error
 // InsertTagsReleaseTrain deleta relese train tag e dps insere novamente as alterações
 func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int) (uint64, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -235,7 +230,6 @@ func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, 
 // UpdateStatusReleaseTrain atualiza o status da release train "softdelete"
 func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64, logID *int) (int64, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -287,7 +281,6 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 
 	// pega database
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query(query, businessID)
@@ -358,7 +351,6 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 // CreateReleaseTrain cria release train
 func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update, logID *int) error {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)

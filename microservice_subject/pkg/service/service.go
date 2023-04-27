@@ -30,7 +30,6 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Subject_service {
 func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, error) {
 
 	database := s.dbp.GetDB()
-	defer database.Close()
 
 	rows, err := database.Query("call pcGetAllUserSubjects (?)", id)
 	if err != nil {
@@ -86,7 +85,6 @@ func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, e
 func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 
 	database := s.dbp.GetDB()
-	defer database.Close()
 
 	rows, err := database.Query("call pcGetSubjectByID (?)", id)
 	if err != nil {
@@ -140,7 +138,6 @@ func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 func (s *Subject_service) UpdateStatusSubjectFinished(id uint64, logID *int) (int64, error) {
 
 	database := s.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -197,7 +194,6 @@ func (s *Subject_service) UpdateStatusSubjectFinished(id uint64, logID *int) (in
 func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64, logID *int) (int64, error) {
 
 	database := s.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -255,7 +251,6 @@ func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64, logID *int) (in
 func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64, logID *int) (*entity.SubjectID, error) {
 
 	database := s.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
@@ -335,7 +330,6 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 func (s *Subject_service) UpdateSubject(id uint64, subject *entity.UpdateSubject, logID *int) (int64, error) {
 
 	database := s.dbp.GetDB()
-	defer database.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err := database.Exec("SET @user = ?", logID)
