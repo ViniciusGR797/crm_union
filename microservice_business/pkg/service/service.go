@@ -37,7 +37,6 @@ func NewBusinessService(dabase_pool database.DatabaseInterface) *Business_servic
 func (ps *Business_service) GetBusiness() *entity.BusinessList {
 
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	rows, err := database.Query("SELECT DISTINCT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b INNER JOIN tblDomain d on b.segment_id = d.domain_id INNER JOIN  tblStatus s on b.status_id = s.status_id ORDER BY b.business_name")
 	// verifica se teve erro
@@ -86,7 +85,6 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error) {
 
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b INNER JOIN tblDomain d on b.segment_id = d.domain_id INNER JOIN  tblStatus s on b.status_id = s.status_id WHERE b.business_id = ?")
 	if err != nil {
@@ -129,7 +127,6 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 func (ps *Business_service) CreateBusiness(business *entity.Business_Update, logID *int) error {
 
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("INSERT INTO tblBusiness (business_code, business_name, segment_id, status_id) VALUES (?, ?, ?, ?)")
 	if err != nil {
@@ -176,7 +173,6 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update, log
 // UpdateBusiness atualiza os dados de um Bussines no banco pelo ID do mesmo
 func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int) (uint64, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ? WHERE business_id = ?")
 	if err != nil {
@@ -216,7 +212,6 @@ func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_
 // UpdateStatusBusiness altera o status de um usuario no banco
 func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int) int64 {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblBusiness WHERE business_id = ?")
 	if err != nil {
@@ -283,7 +278,6 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 
 	// pega database
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query(query, nameString)
@@ -335,7 +329,6 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 // InsertTagsBusiness insere tags na Business
 func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) error {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("DELETE FROM tblBusinessTag WHERE business_id = ?")
 	if err != nil {
@@ -370,7 +363,6 @@ func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) err
 // GetTagsBusiness busca as tags de Business
 func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblBusinessTag B on T.tag_id = B.tag_id WHERE business_id = ? ORDER BY T.tag_name")
 	if err != nil {

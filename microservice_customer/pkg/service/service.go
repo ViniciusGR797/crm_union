@@ -34,7 +34,6 @@ func NewCostumerService(dabase_pool database.DatabaseInterface) *customer_servic
 func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query("SELECT DISTINCT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id ORDER BY C.customer_name")
@@ -97,7 +96,6 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 // GetCustomerByID é responsável por buscar um cliente no banco de dados pelo seu ID.
 func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error) {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id WHERE C.customer_id = ?")
 	if err != nil {
@@ -140,7 +138,6 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 // CreatCustomer Esta é uma função que cria um novo registro de cliente no banco de dados.
 func (ps *customer_service) CreateCustomer(customer *entity.Customer, logID *int) error {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
@@ -196,7 +193,6 @@ func (ps *customer_service) CreateCustomer(customer *entity.Customer, logID *int
 // UpdateCustomer é responsável por atualizar um registro de cliente em um banco de dados.
 func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int) error {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("UPDATE tblCustomer SET customer_name = ? WHERE customer_id = ?")
 	if err != nil {
@@ -222,7 +218,6 @@ func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer
 // UpdateStatusCustomer atualiza o status do cliente no banco de dados.
 func (ps *customer_service) UpdateStatusCustomer(ID *uint64, logID *int) error {
 	database := ps.dbp.GetDB()
-	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblCustomer WHERE customer_id = ?")
 	if err != nil {
