@@ -36,6 +36,7 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Group_service {
 func (ps *Group_service) GetGroups(id uint64) (*entity.GroupList, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rows, err := database.Query("call pcGetAllGroupUserNoId (?)", id)
 	// verifica se teve erro
@@ -105,6 +106,7 @@ func (ps *Group_service) GetGroups(id uint64) (*entity.GroupList, error) {
 func (ps *Group_service) GetGroupByID(id uint64) (*entity.GroupID, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("call pcGetGroupDataById (?)")
 	if err != nil {
@@ -157,11 +159,13 @@ func (ps *Group_service) GetGroupByID(id uint64) (*entity.GroupID, error) {
 // UpdateStatusGroup atualiza o status do grupo  ATIVO/INATIVO
 func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error) {
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("SELECT status_id FROM tblGroup WHERE group_id = ?")
 	if err != nil {
 		return 0, err
 	}
+	defer stmt.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err = database.Exec("SET @user = ?", logID)
@@ -180,6 +184,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 	if err != nil {
 		return 0, err
 	}
+	defer status.Close()
 
 	var statusID uint64
 
@@ -198,8 +203,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 	if err != nil {
 		return 0, err
 	}
-
-	defer stmt.Close()
+	defer updt.Close()
 
 	result, err := updt.Exec(statusGroup, id)
 	if err != nil {
@@ -219,6 +223,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 	if err != nil {
 		return 0, err
 	}
+	defer currentStatus.Close()
 
 	if currentStatus.QueryRow("GROUP", "ATIVO").Scan(&statusID) == nil {
 		if statusID == statusGroup {
@@ -240,6 +245,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rows, err := database.Query("call pcGetAllUserGroup (?)", id)
 	if err != nil {
@@ -283,11 +289,13 @@ func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
 func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int) (int64, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return 0, err
 	}
+	defer status.Close()
 
 	// Definir a variável de sessão "@user"
 	_, err = database.Exec("SET @user = ?", logID)
@@ -339,6 +347,7 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int) (int
 func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, logID *int) (int64, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)")
 	if err != nil {
@@ -369,6 +378,7 @@ func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, l
 func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64, logID *int) (int64, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	stmt, err := database.Prepare("DELETE FROM tblUserGroup WHERE group_id = ? AND user_id = ?")
 	if err != nil {
@@ -399,6 +409,7 @@ func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64, l
 func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, error) {
 
 	database := ps.dbp.GetDB()
+	defer database.Close()
 
 	rows, err := database.Query("call pcCountUserGroup (?)", id)
 	if err != nil {
