@@ -16,6 +16,7 @@ type GroupServiceInterface interface {
 	AttachUserGroup(user *entity.GroupIDList, id uint64, logID *int) (int64, error)
 	DetachUserGroup(user *entity.GroupIDList, id uint64, logID *int) (int64, error)
 	CountUsersGroup(id uint64) (*entity.CountUsersList, error)
+	EditGroup(group *entity.EditGroup, id uint64, logID *int) (int64, error)
 }
 
 type Group_service struct {
@@ -437,4 +438,43 @@ func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, err
 
 	return CountUserList, nil
 
+}
+
+func (ps *Group_service) EditGroup(group *entity.EditGroup, id uint64, logID *int) (int64, error) {
+
+	database := ps.dbp.GetDB()
+
+	stmt, err := database.Prepare("UPDATE tblGroup SET group_name = ?, customer_id = ? WHERE group_id = ?")
+	if err != nil {
+		return 0, err
+	}
+
+	// Definir a variável de sessão "@user"
+	_, err = database.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
+
+	stmt.Exec(group.Group_name, group.Customer, id)
+	if err != nil {
+		return 0, err
+	}
+
+	_, err = database.Exec("DELETE FROM tblUserGroup WHERE group_id = ?", id)
+	if err != nil {
+		return 0, err
+	}
+
+	if group.Ids != nil {
+		for _, user := range group.Ids {
+			_, err := database.Exec("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)", id, user.ID)
+			if err != nil {
+				return 0, err
+			}
+		}
+	}
+
+	defer stmt.Close()
+
+	return int64(id), nil
 }
