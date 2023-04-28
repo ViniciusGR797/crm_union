@@ -87,7 +87,9 @@ func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	result, err := service.UpdateStatusGroup(newid, &logID)
+	ctx := c.Request.Context()
+
+	result, err := service.UpdateStatusGroup(newid, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
@@ -168,7 +170,9 @@ func CreateGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	service.CreateGroup(&group, &logID)
+	ctx := c.Request.Context()
+
+	service.CreateGroup(&group, &logID, ctx)
 
 	c.JSON(201, gin.H{
 		"message": "group created",
@@ -211,7 +215,9 @@ func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	idReturn, err := service.AttachUserGroup(&users, group_id, &logID)
+	ctx := c.Request.Context()
+
+	idReturn, err := service.AttachUserGroup(&users, group_id, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
@@ -260,7 +266,9 @@ func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	idReturn, err := service.DetachUserGroup(&users, group_id, &logID)
+	ctx := c.Request.Context()
+
+	idReturn, err := service.DetachUserGroup(&users, group_id, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
@@ -329,7 +337,9 @@ func EditGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	idReturn, err := service.EditGroup(&group, newid, &logID)
+	ctx := c.Request.Context()
+
+	idReturn, err := service.EditGroup(&group, newid, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
