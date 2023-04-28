@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -23,11 +24,11 @@ type UserServiceInterface interface {
 	// Pega users submissos passando o id de um user como parâmetro
 	GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error)
 	// Cadastra users passando suas informações
-	CreateUser(user *entity.User, logID *int) (uint64, error)
+	CreateUser(user *entity.User, logID *int, ctx context.Context) (uint64, error)
 	// Altera status do user
-	UpdateStatusUser(ID *uint64, logID *int) (int64, error)
+	UpdateStatusUser(ID *uint64, logID *int, ctx context.Context) (int64, error)
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
-	UpdateUser(ID *int, user *entity.User, logID *int) (int, error)
+	UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) (int, error)
 	// Busca o hash do usuário por email
 	Login(user *entity.User) (string, error)
 }
@@ -256,28 +257,25 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 }
 
 // Função que retorna user
-func (ps *User_service) CreateUser(user *entity.User, logID *int) (uint64, error) {
+func (ps *User_service) CreateUser(user *entity.User, logID *int, ctx context.Context) (uint64, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("INSERT INTO tblUser (tcs_id, user_name, user_email, user_pwd, user_level, status_id) VALUES (?, ?, ?, ?, ?, ?)")
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblUser (tcs_id, user_name, user_email, user_pwd, user_level, status_id) VALUES (?, ?, ?, ?, ?, ?)", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, 9)
 	// verifica se teve erro
-	if err != nil {
-		log.Println(err.Error())
-		return 0, errors.New("error preparing statement")
-	}
-	// fecha linha da query, quando sair da função
-	defer stmt.Close()
-
-	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, 9) // TODO implement status
 	if err != nil {
 		log.Println(err.Error())
 		return 0, err
@@ -294,20 +292,31 @@ func (ps *User_service) CreateUser(user *entity.User, logID *int) (uint64, error
 	// coloca o id do usuário de volta no modelo
 	user.ID = uint64(lastId)
 
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
 	// retorna user
 	return uint64(lastId), nil
 }
 
-func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int) (int64, error) {
+func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int, ctx context.Context) (int64, error) {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblUser WHERE user_id = ?")
+	stmt, err := tx.Prepare("SELECT status_id FROM tblUser WHERE user_id = ?")
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error preparing statement")
@@ -327,18 +336,10 @@ func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int) (int64, error) 
 		statusID = 9
 	}
 
-	updt, err := database.Prepare("UPDATE tblUser SET status_id = ? WHERE user_id = ?")
+	result, err := tx.ExecContext(ctx, "UPDATE tblUser SET status_id = ? WHERE user_id = ?", statusID, ID)
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error preparing statement")
-	}
-
-	defer stmt.Close()
-
-	result, err := updt.Exec(statusID, ID)
-	if err != nil {
-		log.Println(err.Error())
-		return 0, nil
 	}
 
 	rowsaff, err := result.RowsAffected()
@@ -347,36 +348,37 @@ func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int) (int64, error) 
 		return 0, errors.New("error fetching rows affected")
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
 	return rowsaff, nil
 }
 
 // Função que altera o usuário
-func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int) (int, error) {
+func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) (int, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("UPDATE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ? ")
+	result, err := tx.ExecContext(ctx, "UPDATE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, ID)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error preparing statement")
-	}
-	// fecha linha da query, quando sair da função
-	defer stmt.Close()
-
-	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	result, err := stmt.Exec(user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, ID)
-	// verifica se teve erro
-	if err != nil {
-		log.Println(err.Error())
-		return 0, nil
 	}
 
 	// RowsAffected retorna número de linhas afetadas com update
@@ -385,6 +387,11 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int) (int,
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error fetching rows affected")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	// retorna rowsaff (converte int64 para int)
