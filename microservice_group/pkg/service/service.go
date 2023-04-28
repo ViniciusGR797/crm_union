@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"microservice_group/pkg/database"
@@ -10,13 +11,13 @@ import (
 type GroupServiceInterface interface {
 	GetGroups(id uint64) (*entity.GroupList, error)
 	GetGroupByID(id uint64) (*entity.GroupID, error)
-	UpdateStatusGroup(id uint64, logID *int) (int64, error)
+	UpdateStatusGroup(id uint64, logID *int, ctx context.Context) (int64, error)
 	GetUsersGroup(id uint64) (*entity.UserList, error)
-	CreateGroup(group *entity.CreateGroup, logID *int) (int64, error)
-	AttachUserGroup(user *entity.GroupIDList, id uint64, logID *int) (int64, error)
-	DetachUserGroup(user *entity.GroupIDList, id uint64, logID *int) (int64, error)
+	CreateGroup(group *entity.CreateGroup, logID *int, ctx context.Context) (int64, error)
+	AttachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error)
+	DetachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error)
 	CountUsersGroup(id uint64) (*entity.CountUsersList, error)
-	EditGroup(group *entity.EditGroup, id uint64, logID *int) (int64, error)
+	EditGroup(group *entity.EditGroup, id uint64, logID *int, ctx context.Context) (int64, error)
 }
 
 type Group_service struct {
@@ -156,17 +157,23 @@ func (ps *Group_service) GetGroupByID(id uint64) (*entity.GroupID, error) {
 }
 
 // UpdateStatusGroup atualiza o status do grupo  ATIVO/INATIVO
-func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error) {
+func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int, ctx context.Context) (int64, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblGroup WHERE group_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT status_id FROM tblGroup WHERE group_id = ?")
 	if err != nil {
 		return 0, err
 	}
 	defer stmt.Close()
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
@@ -178,7 +185,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 		return 0, err
 	}
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return 0, err
 	}
@@ -197,13 +204,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 		statusGroup--
 	}
 
-	updt, err := database.Prepare("UPDATE tblGroup SET status_id = ? WHERE group_id = ?")
-	if err != nil {
-		return 0, err
-	}
-	defer updt.Close()
-
-	result, err := updt.Exec(statusGroup, id)
+	result, err := tx.ExecContext(ctx, "UPDATE tblGroup SET status_id = ? WHERE group_id = ?", statusGroup, id)
 	if err != nil {
 		return 0, err
 	}
@@ -217,7 +218,7 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 		return 0, nil
 	}
 
-	currentStatus, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	currentStatus, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return 0, err
 	}
@@ -234,6 +235,11 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int) (int64, error)
 			return 2, nil
 		}
 
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return 0, nil
@@ -283,18 +289,24 @@ func (ps *Group_service) GetUsersGroup(id uint64) (*entity.UserList, error) {
 }
 
 // CreateGroup cria um novo grupo
-func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int) (int64, error) {
+func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int, ctx context.Context) (int64, error) {
 
 	database := ps.dbp.GetDB()
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return 0, err
 	}
 	defer status.Close()
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
@@ -306,14 +318,7 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int) (int
 		return 0, err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblGroup (group_name, customer_id, status_id) VALUES (?, ?, ?)")
-	if err != nil {
-		return 0, err
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.Exec(group.Group_name, group.Customer_id, statusID)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblGroup (group_name, customer_id, status_id) VALUES (?, ?, ?)", group.Group_name, group.Customer_id, statusID)
 	if err != nil {
 		return 0, err
 	}
@@ -331,7 +336,7 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int) (int
 
 	if group.GroupIDList.List != nil {
 
-		ps.AttachUserGroup(&group.GroupIDList, uint64(newid), logID)
+		ps.AttachUserGroup(&group.GroupIDList, uint64(newid), logID, ctx)
 
 	}
 
@@ -340,17 +345,23 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int) (int
 }
 
 // AttachUserGroup adiciona usuarios ao grupo
-func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, logID *int) (int64, error) {
+func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error) {
 
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)")
 	if err != nil {
 		return 0, err
 	}
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
@@ -358,11 +369,15 @@ func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, l
 	defer stmt.Close()
 
 	for _, user := range users.List {
-		_, err := stmt.Exec(id, user.ID)
+		_, err := tx.ExecContext(ctx, "INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)", id, user.ID)
 		if err != nil {
 			return 0, err
 		}
+	}
 
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return int64(id), nil
@@ -370,29 +385,32 @@ func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, l
 }
 
 // DetachUserGroup remove usuarios do grupo
-func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64, logID *int) (int64, error) {
+func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error) {
 
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("DELETE FROM tblUserGroup WHERE group_id = ? AND user_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
+	defer tx.Rollback()
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	defer stmt.Close()
-
 	for _, user := range users.List {
-		_, err := stmt.Exec(id, user.ID)
+		_, err := tx.ExecContext(ctx, "DELETE FROM tblUserGroup WHERE group_id = ? AND user_id = ?", id, user.ID)
 		if err != nil {
 			return 0, err
 		}
+	}
 
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return int64(id), nil
@@ -440,41 +458,45 @@ func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, err
 
 }
 
-func (ps *Group_service) EditGroup(group *entity.EditGroup, id uint64, logID *int) (int64, error) {
+func (ps *Group_service) EditGroup(group *entity.EditGroup, id uint64, logID *int, ctx context.Context) (int64, error) {
 
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("UPDATE tblGroup SET group_name = ?, customer_id = ? WHERE group_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	_, err = database.ExecContext(ctx, "UPDATE tblGroup SET group_name = ?, customer_id = ? WHERE group_id = ?", group.Group_name, group.Customer, id)
 	if err != nil {
 		return 0, err
 	}
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt.Exec(group.Group_name, group.Customer, id)
-	if err != nil {
-		return 0, err
-	}
-
-	_, err = database.Exec("DELETE FROM tblUserGroup WHERE group_id = ?", id)
+	_, err = tx.ExecContext(ctx, "DELETE FROM tblUserGroup WHERE group_id = ?", id)
 	if err != nil {
 		return 0, err
 	}
 
 	if group.Ids != nil {
 		for _, user := range group.Ids {
-			_, err := database.Exec("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)", id, user.ID)
+			_, err := tx.ExecContext(ctx, "INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)", id, user.ID)
 			if err != nil {
 				return 0, err
 			}
 		}
 	}
 
-	defer stmt.Close()
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
 
 	return int64(id), nil
 }
