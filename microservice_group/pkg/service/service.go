@@ -335,13 +335,20 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int, ctx 
 	}
 
 	if group.GroupIDList.List != nil {
+		for _, user := range group.GroupIDList.List {
+			_, err := tx.ExecContext(ctx, "INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)", newid, user.ID)
+			if err != nil {
+				return 0, err
+			}
+		}
+	}
 
-		ps.AttachUserGroup(&group.GroupIDList, uint64(newid), logID, ctx)
-
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return rowsaff, nil
-
 }
 
 // AttachUserGroup adiciona usuarios ao grupo
@@ -355,18 +362,11 @@ func (ps *Group_service) AttachUserGroup(users *entity.GroupIDList, id uint64, l
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.Prepare("INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)")
-	if err != nil {
-		return 0, err
-	}
-
 	// Definir a variável de sessão "@user"
 	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
-
-	defer stmt.Close()
 
 	for _, user := range users.List {
 		_, err := tx.ExecContext(ctx, "INSERT INTO tblUserGroup (group_id, user_id) VALUES (?, ?)", id, user.ID)
