@@ -295,6 +295,56 @@ func CountUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 }
 
+func EditGroup(c *gin.Context, service service.GroupServiceInterface) {
+	id := c.Param("id")
+
+	newid, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
+	}
+
+	var group entity.EditGroup
+
+	if err := c.ShouldBindJSON(&group); err != nil {
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
+	}
+
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	idReturn, err := service.EditGroup(&group, newid, &logID)
+	if err != nil {
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
+	}
+
+	groupReturn, err := service.GetGroupByID(uint64(idReturn))
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(200, groupReturn)
+}
+
 func JSONMessenger(c *gin.Context, status int, path string, err error) {
 	errorMessage := ""
 	if err != nil {

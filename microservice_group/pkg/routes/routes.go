@@ -43,6 +43,9 @@ func ConfigRoutes(router *gin.Engine, service service.GroupServiceInterface) *gi
 				controller.DetachUserGroup(c, service)
 
 			})
+			Group.PUT("/groups/update/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
+				controller.EditGroup(c, service)
+			})
 			Group.GET("/groups/count/user/:id", middlewares.AuthAdmin(), func(c *gin.Context) {
 				controller.CountUsersGroup(c, service)
 			})

@@ -14,6 +14,12 @@ type Group struct {
 	Users      []User   `json:"users,omitempty"`
 }
 
+type EditGroup struct {
+	Group_name string `json:"group_name,omitempty"`
+	Customer   int64  `json:"customer,omitempty"`
+	Ids        []ID
+}
+
 func (p *Group) String() string {
 	data, err := json.Marshal(p)
 
