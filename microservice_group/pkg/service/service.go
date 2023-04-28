@@ -468,7 +468,7 @@ func (ps *Group_service) EditGroup(group *entity.EditGroup, id uint64, logID *in
 	}
 	defer tx.Rollback()
 
-	_, err = database.ExecContext(ctx, "UPDATE tblGroup SET group_name = ?, customer_id = ? WHERE group_id = ?", group.Group_name, group.Customer, id)
+	_, err = tx.ExecContext(ctx, "UPDATE tblGroup SET group_name = ?, customer_id = ? WHERE group_id = ?", group.Group_name, group.Customer, id)
 	if err != nil {
 		return 0, err
 	}
