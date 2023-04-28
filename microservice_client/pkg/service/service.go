@@ -20,7 +20,6 @@ type ClientServiceInterface interface {
 	CreateClient(client *entity.ClientUpdate, logID *int, ctx context.Context) error
 	UpdateClient(ID *uint64, client *entity.ClientUpdate, logID *int, ctx context.Context) error
 	UpdateStatusClient(ID *uint64, logID *int, ctx context.Context) error
-	InsertTagClient(ID *uint64, tags *[]entity.Tag, logID *int) error
 	GetRoles() *entity.RoleList
 }
 
@@ -230,12 +229,17 @@ func (ps *Client_service) CreateClient(client *entity.ClientUpdate, logID *int, 
 		return err
 	}
 
-	newID := uint64(ID)
-
 	if client.Tags != nil {
-		err := ps.InsertTagClient(&newID, &client.Tags, logID)
+		_, err = tx.ExecContext(ctx, "DELETE FROM tblClientTag WHERE client_id = ?", ID)
 		if err != nil {
-			return err
+			return errors.New("error prepare delete tags on client train")
+		}
+
+		for _, tag := range client.Tags {
+			_, err := tx.ExecContext(ctx, "INSERT IGNORE tblClientTag SET tag_id = ?, client_id = ?", tag.Tag_ID, ID)
+			if err != nil {
+				return errors.New("error insert data tag_ID and ID on database")
+			}
 		}
 	}
 
@@ -275,9 +279,16 @@ func (ps *Client_service) UpdateClient(ID *uint64, client *entity.ClientUpdate, 
 	}
 
 	if client.Tags != nil {
-		err := ps.InsertTagClient(ID, &client.Tags, logID)
+		_, err = tx.ExecContext(ctx, "DELETE FROM tblClientTag WHERE client_id = ?", ID)
 		if err != nil {
-			return err
+			return errors.New("error prepare delete tags on client train")
+		}
+
+		for _, tag := range client.Tags {
+			_, err := tx.ExecContext(ctx, "INSERT IGNORE tblClientTag SET tag_id = ?, client_id = ?", tag.Tag_ID, ID)
+			if err != nil {
+				return errors.New("error insert data tag_ID and ID on database")
+			}
 		}
 	}
 
@@ -353,54 +364,6 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int, ctx context
 	if err != nil {
 		log.Println(err.Error())
 	}
-
-	return nil
-}
-
-// InsertTagClient: Função auxiliar para adicionar tag ao client
-func (ps *Client_service) InsertTagClient(ID *uint64, tags *[]entity.Tag, logID *int) error {
-	database := ps.dbp.GetDB()
-
-	/*tx, err := database.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()*/
-
-	stmt, err := database.Prepare("DELETE FROM tblClientTag WHERE client_id = ?")
-	if err != nil {
-		return errors.New("error prepare delete tags on client train")
-	}
-
-	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
-	if err != nil {
-		return errors.New("session variable error")
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(ID)
-	if err != nil {
-		return errors.New("error exec statement exec on client train")
-	}
-
-	stmt, err = database.Prepare("INSERT IGNORE tblClientTag SET tag_id = ?, client_id = ?")
-	if err != nil {
-		return errors.New("error insert a new row on tag_id and client")
-	}
-
-	for _, tag := range *tags {
-		_, err := stmt.Exec(tag.Tag_ID, ID)
-		if err != nil {
-			return errors.New("error insert data tag_ID and ID on database")
-		}
-	}
-
-	/*err = tx.Commit()
-	if err != nil {
-		return err
-	}*/
 
 	return nil
 }
