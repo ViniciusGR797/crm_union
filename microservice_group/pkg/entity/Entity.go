@@ -17,7 +17,7 @@ type Group struct {
 type EditGroup struct {
 	Group_name string `json:"group_name,omitempty"`
 	Customer   int64  `json:"customer,omitempty"`
-	Ids        []ID
+	Ids        []ID   `json:"user,omitempty"`
 }
 
 func (p *Group) String() string {

@@ -102,14 +102,7 @@ func UpdateStatusGroup(c *gin.Context, service service.GroupServiceInterface) {
 
 	if result == 1 {
 		c.JSON(200, gin.H{
-			"message": "group Active",
-		})
-		return
-	}
-
-	if result == 2 {
-		c.JSON(200, gin.H{
-			"message": "group Inactive",
+			"message": "successfully changed status",
 		})
 		return
 	}

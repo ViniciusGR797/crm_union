@@ -218,31 +218,12 @@ func (ps *Group_service) UpdateStatusGroup(id uint64, logID *int, ctx context.Co
 		return 0, nil
 	}
 
-	currentStatus, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
-	if err != nil {
-		return 0, err
-	}
-	defer currentStatus.Close()
-
-	if currentStatus.QueryRow("GROUP", "ATIVO").Scan(&statusID) == nil {
-		if statusID == statusGroup {
-			return 1, nil
-		}
-	}
-
-	if currentStatus.QueryRow("GROUP", "INATIVO").Scan(&statusID) == nil {
-		if statusID == statusGroup {
-			return 2, nil
-		}
-
-	}
-
 	err = tx.Commit()
 	if err != nil {
 		return 0, err
 	}
 
-	return 0, nil
+	return 1, nil
 }
 
 // GetUsersGroup retorna todos os usuarios do grupo
@@ -468,15 +449,15 @@ func (ps *Group_service) EditGroup(group *entity.EditGroup, id uint64, logID *in
 	}
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, "UPDATE tblGroup SET group_name = ?, customer_id = ? WHERE group_id = ?", group.Group_name, group.Customer, id)
-	if err != nil {
-		return 0, err
-	}
-
 	// Definir a variável de sessão "@user"
 	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE tblGroup SET group_name = ?, customer_id = ? WHERE group_id = ?", group.Group_name, group.Customer, id)
+	if err != nil {
+		return 0, err
 	}
 
 	_, err = tx.ExecContext(ctx, "DELETE FROM tblUserGroup WHERE group_id = ?", id)
