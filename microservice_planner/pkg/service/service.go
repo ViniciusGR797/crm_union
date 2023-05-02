@@ -488,7 +488,7 @@ func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdat
 
 	result, err := tx.ExecContext(ctx, "UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, remark_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?", planner.Name, planner.Date, planner.Duration, planner.Subject, planner.Client, planner.Release, planner.Remark, planner.User, planner.Status, ID)
 	if err != nil {
-		fmt.Println(err.Error())
+		return 0, err
 	}
 
 	plannerID, err := result.RowsAffected()

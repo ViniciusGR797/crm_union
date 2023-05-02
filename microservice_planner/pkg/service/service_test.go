@@ -50,26 +50,6 @@ func TestPlanner_service_GetPlannerByID(t *testing.T) {
 	}
 }
 
-func TestPlanner_service_CreatePlanner(t *testing.T) {
-	type args struct {
-		planner *entity.CreatePlanner
-		logID   *int
-	}
-	tests := []struct {
-		name    string
-		ps      *Planner_service
-		args    args
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.ps.CreatePlanner(tt.args.planner, tt.args.logID); (err != nil) != tt.wantErr {
-				t.Errorf("Planner_service.CreatePlanner() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestPlanner_service_GetPlannerByName(t *testing.T) {
 	type args struct {
 		ID    *int
@@ -168,33 +148,6 @@ func TestPlanner_service_GetGuestClientPlanners(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Planner_service.GetGuestClientPlanners() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestPlanner_service_UpdatePlanner(t *testing.T) {
-	type args struct {
-		ID      uint64
-		planner *entity.PlannerUpdate
-		logID   *int
-	}
-	tests := []struct {
-		name    string
-		ps      *Planner_service
-		args    args
-		want    uint64
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.ps.UpdatePlanner(tt.args.ID, tt.args.planner, tt.args.logID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Planner_service.UpdatePlanner() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("Planner_service.UpdatePlanner() = %v, want %v", got, tt.want)
 			}
 		})
 	}
