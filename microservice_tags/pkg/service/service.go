@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -11,8 +12,8 @@ import (
 // TagsServiceInterface estrutura de dados para TagsServiceInterface
 type TagsServiceInterface interface {
 	// Pega todos os Tagss, logo lista todos os Tagss
-	GetTags() *entity.TagsList
-	GetTagsById(ID uint64) (*entity.Tags, error)
+	GetTags(ctx context.Context) *entity.TagsList
+	GetTagsById(ID uint64, ctx context.Context) (*entity.Tags, error)
 }
 
 // Tags_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -28,11 +29,16 @@ func NewTagsService(dabase_pool database.DatabaseInterface) *Tags_service {
 }
 
 // GetTags traz todos os Tags do banco de dados
-func (ps *Tags_service) GetTags() *entity.TagsList {
-
+func (ps *Tags_service) GetTags(ctx context.Context) *entity.TagsList {
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("SELECT tag_id, tag_name FROM tblTags")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("SELECT tag_id, tag_name FROM tblTags")
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
@@ -54,15 +60,26 @@ func (ps *Tags_service) GetTags() *entity.TagsList {
 		}
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil
+	}
+
 	return list_Tags
 }
 
 // GetTagsById traz um usuario no banco de dados pelo ID do mesmo
-func (ps *Tags_service) GetTagsById(ID uint64) (*entity.Tags, error) {
+func (ps *Tags_service) GetTagsById(ID uint64, ctx context.Context) (*entity.Tags, error) {
 
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT tag_id, tag_name FROM tblTags WHERE tag_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT tag_id, tag_name FROM tblTags WHERE tag_id = ?")
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -74,6 +91,11 @@ func (ps *Tags_service) GetTagsById(ID uint64) (*entity.Tags, error) {
 	err = stmt.QueryRow(ID).Scan(&Tags.Tag_ID, &Tags.Tag_Name)
 	if err != nil {
 		return &entity.Tags{}, errors.New("error scanning rows")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return Tags, nil
