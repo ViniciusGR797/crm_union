@@ -71,33 +71,6 @@ func TestRelease_service_GetReleaseTrainByID(t *testing.T) {
 	}
 }
 
-func TestRelease_service_UpdateReleaseTrain(t *testing.T) {
-	type args struct {
-		ID      uint64
-		release *entity.Release_Update
-		logID   *int
-	}
-	tests := []struct {
-		name    string
-		ps      *Release_service
-		args    args
-		want    uint64
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.ps.UpdateReleaseTrain(tt.args.ID, tt.args.release, tt.args.logID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Release_service.UpdateReleaseTrain() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("Release_service.UpdateReleaseTrain() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestRelease_service_GetTagsReleaseTrain(t *testing.T) {
 	type args struct {
 		ID *uint64
@@ -123,59 +96,6 @@ func TestRelease_service_GetTagsReleaseTrain(t *testing.T) {
 	}
 }
 
-func TestRelease_service_InsertTagsReleaseTrain(t *testing.T) {
-	type args struct {
-		ID    uint64
-		tags  []entity.Tag
-		logID *int
-	}
-	tests := []struct {
-		name    string
-		ps      *Release_service
-		args    args
-		want    uint64
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.ps.InsertTagsReleaseTrain(tt.args.ID, tt.args.tags, tt.args.logID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Release_service.InsertTagsReleaseTrain() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("Release_service.InsertTagsReleaseTrain() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestRelease_service_UpdateStatusReleaseTrain(t *testing.T) {
-	type args struct {
-		ID    *uint64
-		logID *int
-	}
-	tests := []struct {
-		name    string
-		ps      *Release_service
-		args    args
-		want    int64
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.ps.UpdateStatusReleaseTrain(tt.args.ID, tt.args.logID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Release_service.UpdateStatusReleaseTrain() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("Release_service.UpdateStatusReleaseTrain() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestRelease_service_GetReleaseTrainByBusiness(t *testing.T) {
 	type args struct {
 		businessID *uint64
@@ -196,26 +116,6 @@ func TestRelease_service_GetReleaseTrainByBusiness(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Release_service.GetReleaseTrainByBusiness() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestRelease_service_CreateReleaseTrain(t *testing.T) {
-	type args struct {
-		release *entity.Release_Update
-		logID   *int
-	}
-	tests := []struct {
-		name    string
-		ps      *Release_service
-		args    args
-		wantErr bool
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.ps.CreateReleaseTrain(tt.args.release, tt.args.logID); (err != nil) != tt.wantErr {
-				t.Errorf("Release_service.CreateReleaseTrain() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
