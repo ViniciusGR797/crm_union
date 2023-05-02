@@ -30,13 +30,6 @@ func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface
 		return
 	}
 
-	/*ID := c.Param("user_ID")
-	NewID, err := strconv.ParseUint(ID, 10, 64)
-	if err != nil {
-		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
-		return
-	}*/
-
 	remarks, err := service.GetSubmissiveRemarks(&id)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
@@ -115,7 +108,9 @@ func CreateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 		return
 	}
 
-	remarkCreated, err := service.CreateRemark(remark, &logID)
+	ctx := c.Request.Context()
+
+	remarkCreated, err := service.CreateRemark(remark, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -194,7 +189,9 @@ func UpdateStatusRemark(c *gin.Context, service service.RemarkServiceInterface) 
 		return
 	}
 
-	err = service.UpdateStatusRemark(&newID, remark, &logID)
+	ctx := c.Request.Context()
+
+	err = service.UpdateStatusRemark(&newID, remark, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -241,7 +238,9 @@ func UpdateRemark(c *gin.Context, service service.RemarkServiceInterface) {
 		return
 	}
 
-	err = service.UpdateRemark(&newid, remark, &logID)
+	ctx := c.Request.Context()
+
+	err = service.UpdateRemark(&newid, remark, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
