@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	"microservice_customer/config"
 
@@ -28,6 +29,10 @@ func Mysql(conf *config.Config) *dabase_pool {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		db.SetMaxOpenConns(8)
+		db.SetConnMaxIdleTime(6)
+		db.SetConnMaxLifetime(5 * time.Minute)
 
 		// Atribui a conexão a variável pool de conexão
 		dbpool = &dabase_pool{
