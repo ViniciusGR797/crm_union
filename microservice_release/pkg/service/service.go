@@ -3,6 +3,7 @@ package service
 import (
 
 	// Import interno de packages do próprio sistema
+	"context"
 	"errors"
 	"microservice_release/pkg/database"
 	"microservice_release/pkg/entity"
@@ -12,12 +13,12 @@ import (
 type ReleaseServiceInterface interface {
 	GetReleasesTrain() (*entity.ReleaseList, error)
 	GetReleaseTrainByID(ID uint64) (*entity.Release, error)
-	UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int) (uint64, error)
+	UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int, ctx context.Context) (uint64, error)
+	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int, ctx context.Context) (uint64, error)
 	GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error)
-	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int) (uint64, error)
-	UpdateStatusReleaseTrain(ID *uint64, logID *int) (int64, error)
+	UpdateStatusReleaseTrain(ID *uint64, logID *int, ctx context.Context) (int64, error)
 	GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error)
-	CreateReleaseTrain(release *entity.Release_Update, logID *int) error
+	CreateReleaseTrain(release *entity.Release_Update, logID *int, ctx context.Context) error
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -68,6 +69,7 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 					tags = append(tags, tag)
 				}
 			}
+			defer rowsTags.Close()
 
 			release.Tags = tags
 
@@ -115,6 +117,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 			tags = append(tags, tag)
 		}
 	}
+	defer rowsTags.Close()
 
 	release.Tags = tags
 
@@ -122,32 +125,36 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 }
 
 // UpdateReleaseTrain atualiza a release train
-func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int) (uint64, error) {
+func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int, ctx context.Context) (uint64, error) {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("UPDATE tblReleaseTrain SET release_code = ?, release_name = ?, business_id = ? WHERE release_id = ?")
+	result, err := tx.ExecContext(ctx, "UPDATE tblReleaseTrain SET release_code = ?, release_name = ?, business_id = ? WHERE release_id = ?", release.Code, release.Name, release.Business_ID, ID)
 	if err != nil {
 		return 0, errors.New("error prepare update release train")
 	}
 
-	defer stmt.Close()
-
 	var releaseID int64
-
-	result, err := stmt.Exec(release.Code, release.Name, release.Business_ID, ID)
-	if err != nil {
-		return 0, errors.New("error exec update release train")
-	}
 
 	releaseID, err = result.RowsAffected()
 	if err != nil {
 		return 0, errors.New("error RowsAffected update release train")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return uint64(releaseID), nil
@@ -181,63 +188,68 @@ func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error
 
 		tags = append(tags, &tag)
 	}
+	defer rowsTags.Close()
 
 	return tags, nil
 }
 
 // InsertTagsReleaseTrain deleta relese train tag e dps insere novamente as alterações
-func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int) (uint64, error) {
+func (ps *Release_service) InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int, ctx context.Context) (uint64, error) {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("DELETE FROM tblReleaseTrainTag WHERE release_id = ?")
+	_, err = tx.ExecContext(ctx, "DELETE FROM tblReleaseTrainTag WHERE release_id = ?", ID)
 	if err != nil {
 		return 0, errors.New("error prepare delete tags on release train")
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(ID)
-	if err != nil {
-		return 0, errors.New("error exec statement exec on release train")
-	}
-
-	stmt, err = database.Prepare("INSERT IGNORE tblReleaseTrainTag SET tag_id = ?, release_id = ?")
-	if err != nil {
-		return 0, errors.New("error insert a new row on tag_id and release_id")
-	}
-
-	defer stmt.Close()
-
 	for _, tag := range tags {
-		_, err := stmt.Exec(tag.Tag_ID, ID)
+		_, err := tx.ExecContext(ctx, "INSERT IGNORE tblReleaseTrainTag SET tag_id = ?, release_id = ?", tag.Tag_ID, ID)
 		if err != nil {
-			return 0, errors.New("error insert data tag_ID and ID on database")
+			return 0, errors.New("error insert a new row on tag_id and release_id")
 		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return ID, nil
 }
 
 // UpdateStatusReleaseTrain atualiza o status da release train "softdelete"
-func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64, logID *int) (int64, error) {
+func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64, logID *int, ctx context.Context) (int64, error) {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblReleaseTrain WHERE release_id = ?")
+	stmt, err := tx.Prepare("SELECT status_id FROM tblReleaseTrain WHERE release_id = ?")
 	if err != nil {
 		return 0, errors.New("error preparing statement")
 	}
+	defer stmt.Close()
 
 	var statusID uint64
 
@@ -252,21 +264,19 @@ func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64, logID *int) (int
 		statusID = 7
 	}
 
-	updt, err := database.Prepare("UPDATE tblReleaseTrain SET status_id = ? WHERE release_id = ?")
+	result, err := tx.ExecContext(ctx, "UPDATE tblReleaseTrain SET status_id = ? WHERE release_id = ?", statusID, ID)
 	if err != nil {
 		return 0, errors.New("error preparing update status_id in release_id on database")
-	}
-
-	defer stmt.Close()
-
-	result, err := updt.Exec(statusID, ID)
-	if err != nil {
-		return 0, errors.New("error preparing update on statusID and ID")
 	}
 
 	rowsaff, err := result.RowsAffected()
 	if err != nil {
 		return 0, errors.New("error fetching rows affected")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return rowsaff, nil
@@ -285,6 +295,7 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 	if err != nil {
 		return &entity.ReleaseList{}, errors.New("error fetching release's business")
 	}
+	defer rows.Close()
 
 	// variável do tipo ReleaseList (vazia)
 	releaseList := &entity.ReleaseList{}
@@ -345,24 +356,24 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 }
 
 // CreateReleaseTrain cria release train
-func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update, logID *int) error {
+func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update, logID *int, ctx context.Context) error {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblReleaseTrain (release_code, release_name, business_id, status_id) VALUES (?, ?, ?, ?)")
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblReleaseTrain (release_code, release_name, business_id, status_id) VALUES (?, ?, ?, ?)", release.Code, release.Name, release.Business_ID, 7)
 	if err != nil {
-		return errors.New("error in prepare release statement")
-	}
-	defer stmt.Close()
-
-	result, err := stmt.Exec(release.Code, release.Name, release.Business_ID, 7)
-	if err != nil {
-		return errors.New("release exec error")
+		return err
 	}
 
 	_, err = result.RowsAffected()
@@ -373,16 +384,16 @@ func (ps *Release_service) CreateReleaseTrain(release *entity.Release_Update, lo
 	ID, _ := result.LastInsertId()
 	release.ID = uint64(ID)
 
-	stmt, err = database.Prepare("INSERT INTO tblReleaseTrainTag (tag_id, release_id) VALUES (?, ?)")
-	if err != nil {
-		return errors.New("error in prepare release tags statement")
+	for _, tag := range release.Tags {
+		_, err := tx.ExecContext(ctx, "INSERT INTO tblReleaseTrainTag (tag_id, release_id) VALUES (?, ?)", tag.Tag_ID, release.ID)
+		if err != nil {
+			return errors.New("error insert data tag_ID and ID on database")
+		}
 	}
 
-	for _, tag := range release.Tags {
-		_, err := stmt.Exec(tag.Tag_ID, release.ID)
-		if err != nil {
-			return errors.New("release tags exec error")
-		}
+	err = tx.Commit()
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -14,11 +15,10 @@ type BusinessServiceInterface interface {
 	GetBusiness() *entity.BusinessList
 	GetBusinessById(ID uint64) (*entity.Business, error)
 	GetTagsBusiness(ID *uint64) ([]*entity.Tag, error)
-	CreateBusiness(business *entity.Business_Update, LogID *int) error
-	UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int) (uint64, error)
-	UpdateStatusBusiness(ID *uint64, logID *int) int64
+	CreateBusiness(business *entity.Business_Update, logID *int, ctx context.Context) error
+	UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int, ctx context.Context) (uint64, error)
+	UpdateStatusBusiness(ID *uint64, logID *int, ctx context.Context) int64
 	GetBusinessByName(name *string) (*entity.BusinessList, error)
-	InsertTagsBusiness(ID uint64, tags []entity.Tag) error
 }
 
 // Business_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -104,6 +104,7 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 	if err != nil {
 		return &entity.Business{}, errors.New("error fetching tags from business by id")
 	}
+	defer rowsTags.Close()
 
 	var tags []entity.Tag
 
@@ -123,24 +124,23 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 }
 
 // CreateBusiness cria um Business no banco de dados
-func (ps *Business_service) CreateBusiness(business *entity.Business_Update, logID *int) error {
+func (ps *Business_service) CreateBusiness(business *entity.Business_Update, logID *int, ctx context.Context) error {
 
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("INSERT INTO tblBusiness (business_code, business_name, segment_id, status_id) VALUES (?, ?, ?, ?)")
+	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
-
-	defer stmt.Close()
+	defer tx.Rollback()
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
 
-	result, err := stmt.Exec(business.Code, business.Name, business.Segment_Id, 1)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblBusiness (business_code, business_name, segment_id, status_id) VALUES (?, ?, ?, ?)", business.Code, business.Name, business.Segment_Id, 1)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -153,16 +153,19 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update, log
 	ID, _ := result.LastInsertId()
 	business.ID = uint64(ID)
 
-	stmt, err = database.Prepare("INSERT tblBusinessTag SET tag_id = ?, business_id = ?")
-	if err != nil {
-		return errors.New("error in prepare rusiness tags statement")
+	if business.Tags != nil {
+
+		for _, tag := range business.Tags {
+			_, err := tx.ExecContext(ctx, "INSERT tblBusinessTag SET tag_id = ?, business_id = ?", tag.Tag_ID, business.ID)
+			if err != nil {
+				return errors.New("error insert data tag_ID and ID on database")
+			}
+		}
 	}
 
-	for _, tag := range business.Tags {
-		_, err := stmt.Exec(tag.Tag_ID, business.ID)
-		if err != nil {
-			return errors.New("business tags exec error")
-		}
+	err = tx.Commit()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -170,49 +173,64 @@ func (ps *Business_service) CreateBusiness(business *entity.Business_Update, log
 }
 
 // UpdateBusiness atualiza os dados de um Bussines no banco pelo ID do mesmo
-func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int) (uint64, error) {
+func (ps *Business_service) UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int, ctx context.Context) (uint64, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ? WHERE business_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	// Definir a variável de sessão "@user"
+	_, err = tx.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := tx.ExecContext(ctx, "UPDATE tblBusiness SET business_name = ?, business_code = ?, segment_id = ? WHERE business_id = ?", business.Name, business.Code, business.Segment_Id, ID)
 	if err != nil {
 		return 0, errors.New("error prepare update business")
 	}
 
-	defer stmt.Close()
-
-	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
-	if err != nil {
-		return 0, errors.New("session variable error")
-	}
-
-	var businessID int64
-
-	result, err := stmt.Exec(business.Name, business.Code, business.Segment_Id, ID)
-	if err != nil {
-		return 0, errors.New("error exec update business")
-	}
-
-	businessID, err = result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		return 0, errors.New("error RowsAffected update business")
 	}
 
 	if business.Tags != nil {
-		err = ps.InsertTagsBusiness(ID, business.Tags)
+		_, err = tx.ExecContext(ctx, "DELETE FROM tblBusinessTag WHERE business_id = ?", ID)
 		if err != nil {
-			return 0, errors.New("error in update business tags statement")
+			return 0, errors.New("error prepare delete tags on client train")
+		}
+
+		for _, tag := range business.Tags {
+			_, err := tx.ExecContext(ctx, "INSERT IGNORE tblBusinessTag SET tag_id = ?, business_id = ?", tag.Tag_ID, ID)
+			if err != nil {
+				return 0, errors.New("error insert data tag_ID and ID on database")
+			}
 		}
 	}
 
-	return uint64(businessID), nil
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return 0, nil
 }
 
 // UpdateStatusBusiness altera o status de um usuario no banco
-func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int) int64 {
+func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int, ctx context.Context) int64 {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblBusiness WHERE business_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT status_id FROM tblBusiness WHERE business_id = ?")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -220,7 +238,7 @@ func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int) int64 {
 	defer stmt.Close()
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0
 	}
@@ -232,10 +250,11 @@ func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int) int64 {
 		log.Println(err.Error())
 	}
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	defer status.Close()
 
 	var statusID uint64
 
@@ -250,19 +269,19 @@ func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int) int64 {
 		statusBusiness--
 	}
 
-	updt, err := database.Prepare("UPDATE tblBusiness SET status_id = ? WHERE business_id = ?")
+	updt, err := tx.ExecContext(ctx, "UPDATE tblBusiness SET status_id = ? WHERE business_id = ?", statusBusiness, ID)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	result, err := updt.Exec(statusBusiness, ID)
+	rowsaff, err := updt.RowsAffected()
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	rowsaff, err := result.RowsAffected()
+	err = tx.Commit()
 	if err != nil {
-		log.Println(err.Error())
+		return 0
 	}
 
 	return rowsaff
@@ -323,40 +342,6 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 	return list_Business, nil
 }
 
-// InsertTagsBusiness insere tags na Business
-func (ps *Business_service) InsertTagsBusiness(ID uint64, tags []entity.Tag) error {
-	database := ps.dbp.GetDB()
-
-	stmt, err := database.Prepare("DELETE FROM tblBusinessTag WHERE business_id = ?")
-	if err != nil {
-		return errors.New("error prepare delete tags on business")
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(ID)
-	if err != nil {
-
-		return errors.New("error exec statement exec on business")
-	}
-
-	stmt, err = database.Prepare("INSERT IGNORE tblBusinessTag SET tag_id = ?, business_id = ?")
-	if err != nil {
-		return errors.New("error insert a new row on tag_id and business_id")
-	}
-
-	defer stmt.Close()
-
-	for _, tag := range tags {
-		_, err := stmt.Exec(tag.Tag_ID, ID)
-		if err != nil {
-			return errors.New("error insert data tag_ID and ID on database")
-		}
-	}
-
-	return nil
-}
-
 // GetTagsBusiness busca as tags de Business
 func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
@@ -374,6 +359,7 @@ func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {
 	if err != nil {
 		return []*entity.Tag{}, errors.New("error fetching on row tags query release train")
 	}
+	defer rowsTags.Close()
 
 	for rowsTags.Next() {
 		tag := entity.Tag{}

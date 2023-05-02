@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"microservice_subject/pkg/database"
@@ -10,10 +11,10 @@ import (
 type SubjectServiceInterface interface {
 	GetSubmissiveSubjects(id int) (*entity.Subject_list, error)
 	GetSubjectByID(id uint64) (*entity.SubjectID, error)
-	UpdateStatusSubjectFinished(id uint64, logID *int) (int64, error)
-	UpdateStatusSubjectCanceled(id uint64, logID *int) (int64, error)
-	CreateSubject(subject *entity.CreateSubject, id uint64, logID *int) (*entity.SubjectID, error)
-	UpdateSubject(id uint64, subject *entity.UpdateSubject, logID *int) (int64, error)
+	UpdateStatusSubjectFinished(id uint64, logID *int, ctx context.Context) (int64, error)
+	UpdateStatusSubjectCanceled(id uint64, logID *int, ctx context.Context) (int64, error)
+	CreateSubject(subject *entity.CreateSubject, id uint64, logID *int, ctx context.Context) (*entity.SubjectID, error)
+	UpdateSubject(id uint64, subject *entity.UpdateSubject, logID *int, ctx context.Context) (int64, error)
 }
 
 type Subject_service struct {
@@ -52,6 +53,7 @@ func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, e
 			&subject.Subject_id,
 			&subject.Subject_title,
 			&subject.Subject_text,
+			&subject.User_ID,
 			&subject.User,
 			&subject.Release_id,
 			&subject.Release,
@@ -134,20 +136,27 @@ func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 }
 
 // pdateStatusSubjectFinished atualiza o status de um Subject para FINISHED
-func (s *Subject_service) UpdateStatusSubjectFinished(id uint64, logID *int) (int64, error) {
+func (s *Subject_service) UpdateStatusSubjectFinished(id uint64, logID *int, ctx context.Context) (int64, error) {
 
 	database := s.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblSubject WHERE subject_id = ?")
+	stmt, err := tx.Prepare("SELECT status_id FROM tblSubject WHERE subject_id = ?")
 	if err != nil {
 		return 0, err
 	}
+	defer stmt.Close()
 
 	var statusSubject uint64
 
@@ -156,7 +165,7 @@ func (s *Subject_service) UpdateStatusSubjectFinished(id uint64, logID *int) (in
 		return 0, err
 	}
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return 0, err
 	}
@@ -168,17 +177,17 @@ func (s *Subject_service) UpdateStatusSubjectFinished(id uint64, logID *int) (in
 		return 0, err
 	}
 
-	updt, err := database.Prepare("UPDATE tblSubject SET status_id = ? WHERE subject_id = ?")
+	updt, err := tx.ExecContext(ctx, "UPDATE tblSubject SET status_id = ? WHERE subject_id = ?", statusID, id)
 	if err != nil {
 		return 0, err
 	}
 
-	result, err := updt.Exec(statusID, id)
+	roww, err := updt.RowsAffected()
 	if err != nil {
 		return 0, err
 	}
 
-	roww, err := result.RowsAffected()
+	err = tx.Commit()
 	if err != nil {
 		return 0, err
 	}
@@ -188,20 +197,27 @@ func (s *Subject_service) UpdateStatusSubjectFinished(id uint64, logID *int) (in
 }
 
 // UpdateStatusSubjectCanceled atualiza o status de um Subject para CANCELED
-func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64, logID *int) (int64, error) {
+func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64, logID *int, ctx context.Context) (int64, error) {
 
 	database := s.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblSubject WHERE subject_id = ?")
+	stmt, err := tx.Prepare("SELECT status_id FROM tblSubject WHERE subject_id = ?")
 	if err != nil {
 		return 0, err
 	}
+	defer stmt.Close()
 
 	var statusSubject uint64
 
@@ -210,10 +226,11 @@ func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64, logID *int) (in
 		return 0, err
 	}
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return 0, err
 	}
+	defer status.Close()
 
 	var statusID uint64
 
@@ -222,17 +239,17 @@ func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64, logID *int) (in
 		return 0, err
 	}
 
-	updt, err := database.Prepare("UPDATE tblSubject SET status_id = ? WHERE subject_id = ?")
+	updt, err := tx.ExecContext(ctx, "UPDATE tblSubject SET status_id = ? WHERE subject_id = ?", statusID, id)
 	if err != nil {
 		return 0, err
 	}
 
-	result, err := updt.Exec(statusID, id)
+	roww, err := updt.RowsAffected()
 	if err != nil {
 		return 0, err
 	}
 
-	roww, err := result.RowsAffected()
+	err = tx.Commit()
 	if err != nil {
 		return 0, err
 	}
@@ -242,20 +259,27 @@ func (s *Subject_service) UpdateStatusSubjectCanceled(id uint64, logID *int) (in
 }
 
 // CreateSubject cria um novo Subject
-func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64, logID *int) (*entity.SubjectID, error) {
+func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64, logID *int, ctx context.Context) (*entity.SubjectID, error) {
 
 	database := s.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return nil, errors.New("session variable error")
 	}
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return nil, err
 	}
+	defer status.Close()
 
 	var statusID uint64
 
@@ -264,12 +288,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 		return nil, err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?)")
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := stmt.Exec(subject.Subject_title, subject.Subject_text, subject.Subject_type, subject.Client_id, subject.Release_id, id, statusID)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?)", subject.Subject_title, subject.Subject_text, subject.Subject_type, subject.Client_id, subject.Release_id, id, statusID)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +298,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 		return nil, err
 	}
 
-	rows, err := database.Query("call pcGetSubjectByID (?)", idresult)
+	rows, err := tx.Query("call pcGetSubjectByID (?)", idresult)
 	if err != nil {
 		return nil, err
 	}
@@ -295,6 +314,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 			&subjectID.User_name,
 			&subjectID.Subject_id,
 			&subjectID.Subject_title,
+			&subjectID.Subject_text,
 			&subjectID.Client.Client_id,
 			&subjectID.Client.Client_email,
 			&subjectID.Client.Client_name,
@@ -302,7 +322,6 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 			&subjectID.Business_name,
 			&subjectID.Release_id,
 			&subjectID.Release_name,
-			&subjectID.Subject_text,
 			&subjectID.Created_at,
 			&subjectID.Domain.Domain_id,
 			&subjectID.Domain.Domain_value,
@@ -314,28 +333,34 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return subjectID, nil
 
 }
 
 // UpdateSubject atualiza um Subject
-func (s *Subject_service) UpdateSubject(id uint64, subject *entity.UpdateSubject, logID *int) (int64, error) {
+func (s *Subject_service) UpdateSubject(id uint64, subject *entity.UpdateSubject, logID *int, ctx context.Context) (int64, error) {
 
 	database := s.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("UPDATE tblSubject SET subject_title = ?, subject_text = ? WHERE subject_id = ?")
+	result, err := tx.ExecContext(ctx, "UPDATE tblSubject SET subject_title = ?, subject_text = ? WHERE subject_id = ?", subject.Subject_title, subject.Subject_text, id)
 
-	if err != nil {
-		return 0, err
-	}
-
-	result, err := stmt.Exec(subject.Subject_title, subject.Subject_text, id)
 	if err != nil {
 		return 0, err
 	}
@@ -346,6 +371,11 @@ func (s *Subject_service) UpdateSubject(id uint64, subject *entity.UpdateSubject
 	}
 	if roww == 0 {
 		return 0, fmt.Errorf("no subject found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return roww, nil

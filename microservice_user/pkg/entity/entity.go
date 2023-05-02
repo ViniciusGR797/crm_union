@@ -117,7 +117,7 @@ func (user *User) validate() error {
 	}
 
 	// Verifica se o status é válido
-	if user.Status != "ATIVO" && user.Status != "INATIVO" && user.Status != "" {
+	if user.Status != "ACTIVE" && user.Status != "INACTIVE" && user.Status != "" {
 		return errors.New("invalid status")
 	}
 

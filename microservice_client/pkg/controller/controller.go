@@ -149,7 +149,9 @@ func CreateClient(c *gin.Context, service service.ClientServiceInterface) {
 		return
 	}
 
-	err = service.CreateClient(&client, &logID)
+	ctx := c.Request.Context()
+
+	err = service.CreateClient(&client, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -192,7 +194,9 @@ func UpdateClient(c *gin.Context, service service.ClientServiceInterface) {
 		return
 	}
 
-	err = service.UpdateClient(&newID, &client, &logID)
+	ctx := c.Request.Context()
+
+	err = service.UpdateClient(&newID, &client, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -228,7 +232,9 @@ func UpdateStatusClient(c *gin.Context, service service.ClientServiceInterface) 
 		return
 	}
 
-	err = service.UpdateStatusClient(&newID, &logID)
+	ctx := c.Request.Context()
+
+	err = service.UpdateStatusClient(&newID, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return

@@ -192,8 +192,10 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método Create passando user como parâmetro, cadastra no banco user
-	_, err = service.CreateUser(user, &logID)
+	_, err = service.CreateUser(user, &logID, ctx)
 	// Verifica se teve erro na criação de user
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -202,6 +204,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 
 	// Retorno json com o user
 	send(c, http.StatusCreated, gin.H{
+		"id":       user.ID,
 		"email":    user.Email,
 		"password": user.Password,
 	})
@@ -237,8 +240,10 @@ func UpdateStatusUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método UpdateStatusUser passando id como parâmetro
-	result, err := service.UpdateStatusUser(&newID, &logID)
+	result, err := service.UpdateStatusUser(&newID, &logID, ctx)
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
 		return
@@ -305,8 +310,10 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método UpdateUser passando user e id como parâmetro
-	idResult, err := service.UpdateUser(&newId, user, &logID)
+	idResult, err := service.UpdateUser(&newId, user, &logID, ctx)
 	// Verifica se teve erro na edição de user
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -359,7 +366,7 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 	// Verifica se o user é inativo
-	if user.Status != "ATIVO" {
+	if user.Status != "ACTIVE" {
 		sendError(c, http.StatusUnauthorized, errors.New("inactive user"))
 		return
 	}

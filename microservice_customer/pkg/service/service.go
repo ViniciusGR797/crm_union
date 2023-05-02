@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 
 	// Import interno de packages do próprio sistema
@@ -13,9 +14,9 @@ type CustomerServiceInterface interface {
 	// Pega todos os users, logo lista todos os customer
 	GetCustomers() (*entity.CustomerList, error)
 	GetCustomerByID(ID *uint64) (*entity.Customer, error)
-	CreateCustomer(customer *entity.Customer, logID *int) error
-	UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int) error
-	UpdateStatusCustomer(ID *uint64, logID *int) error
+	CreateCustomer(customer *entity.Customer, logID *int, ctx context.Context) error
+	UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int, ctx context.Context) error
+	UpdateStatusCustomer(ID *uint64, logID *int, ctx context.Context) error
 }
 
 // ustomer_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -136,16 +137,23 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 }
 
 // CreatCustomer Esta é uma função que cria um novo registro de cliente no banco de dados.
-func (ps *customer_service) CreateCustomer(customer *entity.Customer, logID *int) error {
+func (ps *customer_service) CreateCustomer(customer *entity.Customer, logID *int, ctx context.Context) error {
 	database := ps.dbp.GetDB()
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
+
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		return err
+	}
+	defer status.Close()
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
@@ -157,16 +165,9 @@ func (ps *customer_service) CreateCustomer(customer *entity.Customer, logID *int
 		return err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblCustomer(customer_name,  status_id) VALUES (?, ?)")
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblCustomer(customer_name,  status_id) VALUES (?, ?)", customer.Name, statusID)
 	if err != nil {
 		return err
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.Exec(customer.Name, statusID)
-	if err != nil {
-		return errors.New("error create customer")
 	}
 
 	lastId, err := result.LastInsertId()
@@ -174,57 +175,86 @@ func (ps *customer_service) CreateCustomer(customer *entity.Customer, logID *int
 		return err
 	}
 
-	stmt, err = database.Prepare("INSERT INTO tblCustomerTag (customer_id, tag_id) VALUES (?, ?)")
+	for _, tag := range customer.Tags {
+		_, err := tx.ExecContext(ctx, "INSERT INTO tblCustomerTag (customer_id, tag_id) VALUES (?, ?)", lastId, tag.Tag_ID)
+		if err != nil {
+			return errors.New("error insert data tag_ID and ID on database")
+		}
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		return err
 	}
 
-	for _, tag := range customer.Tags {
-		_, err := stmt.Exec(lastId, tag.Tag_ID)
-		if err != nil {
-			return errors.New("error insert tag")
-		}
-
-	}
 	return nil
 }
 
 // UpdateCustomer é responsável por atualizar um registro de cliente em um banco de dados.
-func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int) error {
+func (ps *customer_service) UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int, ctx context.Context) error {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("UPDATE tblCustomer SET customer_name = ? WHERE customer_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
-		return nil
+		return err
 	}
+	defer tx.Rollback()
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(customer.Name, ID)
+	result, err := tx.ExecContext(ctx, "UPDATE tblCustomer SET customer_name = ? WHERE customer_id = ?", customer.Name, ID)
 	if err != nil {
-		return errors.New("error update customer")
+		return err
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		return errors.New("error RowsAffected update customer")
+	}
+
+	if customer.Tags != nil {
+		_, err = tx.ExecContext(ctx, "DELETE FROM tblCustomerTag WHERE customer_id = ?", ID)
+		if err != nil {
+			return errors.New("error prepare delete tags on client train")
+		}
+
+		for _, tag := range customer.Tags {
+			_, err := tx.ExecContext(ctx, "INSERT IGNORE tblCustomerTag SET tag_id = ?, customer_id = ?", tag.Tag_ID, ID)
+			if err != nil {
+				return errors.New("error insert data tag_ID and ID on database")
+			}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 // UpdateStatusCustomer atualiza o status do cliente no banco de dados.
-func (ps *customer_service) UpdateStatusCustomer(ID *uint64, logID *int) error {
+func (ps *customer_service) UpdateStatusCustomer(ID *uint64, logID *int, ctx context.Context) error {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblCustomer WHERE customer_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT status_id FROM tblCustomer WHERE customer_id = ?")
 	if err != nil {
 		return err
 	}
 
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
@@ -238,10 +268,11 @@ func (ps *customer_service) UpdateStatusCustomer(ID *uint64, logID *int) error {
 		return err
 	}
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return err
 	}
+	defer status.Close()
 
 	var statusID uint64
 
@@ -256,14 +287,14 @@ func (ps *customer_service) UpdateStatusCustomer(ID *uint64, logID *int) error {
 		statusCustomer--
 	}
 
-	updt, err := database.Prepare("UPDATE tblCustomer SET status_id = ? WHERE customer_id = ?")
+	_, err = tx.ExecContext(ctx, "UPDATE tblCustomer SET status_id = ? WHERE customer_id = ?", statusCustomer, ID)
 	if err != nil {
 		return err
 	}
 
-	_, err = updt.Exec(statusCustomer, ID)
+	err = tx.Commit()
 	if err != nil {
-		return errors.New("error update status")
+		return nil
 	}
 
 	return nil

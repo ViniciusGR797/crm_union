@@ -68,7 +68,9 @@ func CreateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 		return
 	}
 
-	err = service.CreateCustomer(customer, &logID)
+	ctx := c.Request.Context()
+
+	err = service.CreateCustomer(customer, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
@@ -111,7 +113,9 @@ func UpdateCustomer(c *gin.Context, service service.CustomerServiceInterface) {
 		return
 	}
 
-	err = service.UpdateCustomer(&newID, customer, &logID)
+	ctx := c.Request.Context()
+
+	err = service.UpdateCustomer(&newID, customer, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -147,7 +151,9 @@ func UpdateStatusCustomer(c *gin.Context, service service.CustomerServiceInterfa
 		return
 	}
 
-	err = service.UpdateStatusCustomer(&newID, &logID)
+	ctx := c.Request.Context()
+
+	err = service.UpdateStatusCustomer(&newID, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return

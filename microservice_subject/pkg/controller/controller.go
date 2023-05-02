@@ -93,7 +93,9 @@ func UpdateStatusSubjectFinished(c *gin.Context, service service.SubjectServiceI
 		return
 	}
 
-	_, err = service.UpdateStatusSubjectFinished(newid, &logID)
+	ctx := c.Request.Context()
+
+	_, err = service.UpdateStatusSubjectFinished(newid, &logID, ctx)
 
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
@@ -137,7 +139,9 @@ func UpdateStatusSubjectCanceled(c *gin.Context, service service.SubjectServiceI
 		return
 	}
 
-	_, err = service.UpdateStatusSubjectCanceled(newid, &logID)
+	ctx := c.Request.Context()
+
+	_, err = service.UpdateStatusSubjectCanceled(newid, &logID, ctx)
 
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
@@ -187,7 +191,9 @@ func CreateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 		return
 	}
 
-	subjectCreated, err := service.CreateSubject(&subject, newid, &logID)
+	ctx := c.Request.Context()
+
+	subjectCreated, err := service.CreateSubject(&subject, newid, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return
@@ -233,7 +239,9 @@ func UpdateSubject(c *gin.Context, service service.SubjectServiceInterface) {
 		return
 	}
 
-	_, err = service.UpdateSubject(newid, &subject, &logID)
+	ctx := c.Request.Context()
+
+	_, err = service.UpdateSubject(newid, &subject, &logID, ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 		return

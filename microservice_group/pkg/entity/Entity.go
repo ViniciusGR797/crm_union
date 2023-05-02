@@ -9,8 +9,15 @@ type Group struct {
 	Group_id   uint64   `json:"group_id,omitempty"`
 	Group_name string   `json:"group_name,omitempty"`
 	Created_at string   `json:"created_at,omitempty"`
-	Status     Status   `json:"-,omitempty"`
+	Status     Status   `json:"status,omitempty"`
 	Customer   Custumer `json:"customers,omitempty"`
+	Users      []User   `json:"users,omitempty"`
+}
+
+type EditGroup struct {
+	Group_name string `json:"group_name,omitempty"`
+	Customer   int64  `json:"customer,omitempty"`
+	Ids        []ID   `json:"user,omitempty"`
 }
 
 func (p *Group) String() string {
@@ -63,8 +70,8 @@ func (p *Custumer) String() string {
 }
 
 type User struct {
-	User_id   int    `json:"user_id,omitempty"`
-	User_name string `json:"user_name,omitempty"`
+	User_id   *int    `json:"user_id,omitempty"`
+	User_name *string `json:"user_name,omitempty"`
 }
 
 func (p *User) String() string {

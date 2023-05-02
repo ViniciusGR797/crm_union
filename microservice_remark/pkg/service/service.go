@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"log"
 
@@ -16,11 +17,11 @@ type RemarkServiceInterface interface {
 	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
 	GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error)
 	GetRemarkByID(ID *uint64) (*entity.Remark, error)
-	CreateRemark(remark *entity.RemarkUpdate, logID *int) (*entity.Remark, error)
+	CreateRemark(remark *entity.RemarkUpdate, logID *int, ctx context.Context) (*entity.Remark, error)
 	GetBarChartRemark(ID *uint64) *entity.Remark
 	GetPieChartRemark(ID *uint64) *entity.Remark
-	UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int) error
-	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int) error
+	UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int, ctx context.Context) error
+	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int, ctx context.Context) error
 }
 
 // remark_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -128,25 +129,24 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 }
 
 // CreateRemark que usa uma estrutura RemarkUpdate como argumento e retorna um erro. Função que cria um Remark
-func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) (*entity.Remark, error) {
+func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int, ctx context.Context) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return nil, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblRemark (remark_subject, remark_text, remark_date, remark_return, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblRemark (remark_subject, remark_text, remark_date, remark_return, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, 21)
 	if err != nil {
 		return nil, err
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, 21)
-	if err != nil {
-		return nil, errors.New("error insert remark")
 	}
 
 	idresult, err := result.LastInsertId()
@@ -154,7 +154,7 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) 
 		return nil, err
 	}
 
-	rows, err := database.Query("call pcGetRemarkByID (?)", idresult)
+	rows, err := tx.Query("call pcGetRemarkByID (?)", idresult)
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +182,11 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int) 
 		); err != nil {
 			return nil, err
 		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return remarkID, nil
@@ -232,16 +237,22 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
 }
 
 // UpdateStatusRemark Função que atualiza o Status do Remark
-func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int) error {
+func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int, ctx context.Context) error {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("SELECT status_id FROM tblRemark WHERE remark_id = ?")
+	stmt, err := tx.Prepare("SELECT status_id FROM tblRemark WHERE remark_id = ?")
 	if err != nil {
 		return err
 	}
@@ -255,7 +266,7 @@ func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, 
 		return errors.New("error select status_remark")
 	}
 
-	status, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	status, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		return err
 	}
@@ -271,41 +282,44 @@ func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, 
 		return errors.New("unable to update with the same id, 400")
 	}
 
-	updt, err := database.Prepare("UPDATE tblRemark SET status_id = ? WHERE remark_id = ?")
+	_, err = tx.ExecContext(ctx, "UPDATE tblRemark SET status_id = ? WHERE remark_id = ?", statusID, ID)
 	if err != nil {
 		return err
 	}
 
-	_, err = updt.Exec(statusID, ID)
+	err = tx.Commit()
 	if err != nil {
-		return errors.New("error update status")
+		return err
 	}
 
 	return nil
 }
 
 // UpdateRemark Função que atualiza um Remark
-func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int) error {
+func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int, ctx context.Context) error {
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("UPDATE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ?  WHERE remark_id = ?")
+	_, err = tx.ExecContext(ctx, "UPDATE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ?  WHERE remark_id = ?", remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, remark.Status_ID, ID)
 	if err != nil {
 		return err
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, remark.Status_ID, ID)
+	err = tx.Commit()
 	if err != nil {
-		return errors.New("error update remark")
+		return err
 	}
 
 	return nil
-
 }

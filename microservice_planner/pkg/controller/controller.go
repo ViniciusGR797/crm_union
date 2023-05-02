@@ -74,7 +74,9 @@ func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
-	err = service.CreatePlanner(planner, &logID)
+	ctx := c.Request.Context()
+
+	err = service.CreatePlanner(planner, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -239,6 +241,7 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		})
 		return
 	}
+
 	// Pega id e nivel passada como token na rota
 	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
 	if err != nil {
@@ -275,7 +278,9 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
-	_, err = service.UpdatePlanner(newID, planner, &logID)
+	ctx := c.Request.Context()
+
+	_, err = service.UpdatePlanner(newID, planner, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -284,6 +289,8 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		})
 		return
 	}
+
+	fmt.Println("ok")
 
 	plannerUpdated, err := service.GetPlannerByID(&newID)
 	if err != nil {
@@ -294,8 +301,6 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, plannerUpdated)
 
-	//// Retorno json com o Planner
-	//c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, plannerUpdated)
 }

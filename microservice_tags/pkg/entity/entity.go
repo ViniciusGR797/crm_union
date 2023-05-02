@@ -14,6 +14,7 @@ type TagsInterface interface {
 type Tags struct {
 	Tag_ID   uint64 `json:"tag_id,omitempty"`
 	Tag_Name string `json:"tag_name,omitempty"`
+	Tag_Type uint64 `json:"tag_type,omitempty"`
 }
 
 // String converte em Json a estrutra passada
@@ -29,9 +30,20 @@ func (p *Tags) String() string {
 	return string(data)
 }
 
+type Domain struct {
+	Domain_ID    uint64 `json:"domain_id,omitempty"`
+	Domain_Name  string `json:"domain_name,omitempty"`
+	Domain_Code  uint64 `json:"domain_code,omitempty"`
+	Domain_Value string `json:"domain_value,omitempty"`
+}
+
 // TagList  lista para Tag
 type TagsList struct {
 	List []*Tags `json:"tag_list"`
+}
+
+type DomainList struct {
+	List []*Domain `json:"domain_list"`
 }
 
 func (pl *TagsList) String() string {

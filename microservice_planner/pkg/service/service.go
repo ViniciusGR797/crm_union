@@ -2,6 +2,7 @@ package service
 
 import (
 	// Import interno de packages do próprio sistema
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -13,12 +14,12 @@ import (
 type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
 	GetPlannerByID(ID *uint64) (*entity.Planner, error)
-	CreatePlanner(planner *entity.CreatePlanner, logID *int) error
+	CreatePlanner(planner *entity.CreatePlanner, logID *int, ctx context.Context) error
 	GetPlannerByName(ID *int, level int, name *string) (*entity.PlannerList, error)
 	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
 	GetPlannerByBusiness(name *string) (*entity.PlannerList, error)
 	GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error)
-	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int) (uint64, error)
+	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int, ctx context.Context) (uint64, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -56,6 +57,7 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 	if err != nil {
 		return &entity.Planner{}, errors.New("error fetching tags from planner by id")
 	}
+	defer rowsGuest.Close()
 
 	var guest []entity.Client
 
@@ -75,17 +77,24 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 }
 
 // CreateBlanner cria um blanner no banco
-func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *int) error {
+func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *int, ctx context.Context) error {
 
 	database := ps.dbp.GetDB()
 
-	rowStatus, err := database.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	rowStatus, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
+	defer rowStatus.Close()
 	// Definir a variável de sessão "@user"
-	_, err = database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return errors.New("session variable error")
 	}
@@ -97,23 +106,7 @@ func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *i
 		return err
 	}
 
-	stmt, err := database.Prepare("INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, remark_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.Exec(
-		planner.Name,
-		planner.Date,
-		planner.Duration,
-		planner.Subject,
-		planner.Remark,
-		planner.Client,
-		planner.Release,
-		planner.User,
-		statusID)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, remark_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", planner.Name, planner.Date, planner.Duration, planner.Subject, planner.Remark, planner.Client, planner.Release, planner.User, statusID)
 	if err != nil {
 		return err
 	}
@@ -125,16 +118,19 @@ func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *i
 
 	planner.ID = uint64(ID)
 
-	stmt, err = database.Prepare("INSERT INTO tblEngagementPlannerGuestInvite (client_id, planner_id)  VALUES (?, ?)")
-	if err != nil {
-		return errors.New("error in prepare planner statement")
+	if planner.Guest != nil {
+
+		for _, guest := range planner.Guest {
+			_, err := tx.ExecContext(ctx, "INSERT INTO tblEngagementPlannerGuestInvite (client_id, planner_id)  VALUES (?, ?)", guest.ID, planner.ID)
+			if err != nil {
+				return errors.New("error insert data tag_ID and ID on database")
+			}
+		}
 	}
 
-	for _, guest := range planner.Guest {
-		_, err := stmt.Exec(guest.ID, planner.ID)
-		if err != nil {
-			return errors.New("planner guest error")
-		}
+	err = tx.Commit()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -474,71 +470,51 @@ func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client,
 	return guests, nil
 }
 
-func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int) (uint64, error) {
+func (ps *Planner_service) UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int, ctx context.Context) (uint64, error) {
 
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	// Definir a variável de sessão "@user"
-	_, err := database.Exec("SET @user = ?", logID)
+	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
 		return 0, errors.New("session variable error")
 	}
 
-	stmt, err := database.Prepare("UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, remark_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?")
+	result, err := tx.ExecContext(ctx, "UPDATE tblPlanner SET planner_subject = ?, planner_date = ?, planner_duration = ?, subject_id = ?, client_id = ?, release_id = ?, remark_id = ?, user_id = ?, status_id = ? WHERE planner_id = ?", planner.Name, planner.Date, planner.Duration, planner.Subject, planner.Client, planner.Release, planner.Remark, planner.User, planner.Status, ID)
 	if err != nil {
-		fmt.Println(err.Error())
+		return 0, err
 	}
 
-	defer stmt.Close()
-
-	var plannerID int64
-
-	result, err := stmt.Exec(
-		planner.Name,
-		planner.Date,
-		planner.Duration,
-		planner.Subject,
-		planner.Client,
-		planner.Release,
-		planner.Remark,
-		planner.User,
-		planner.Status,
-		ID)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	plannerID, err = result.RowsAffected()
+	plannerID, err := result.RowsAffected()
 	if err != nil {
 		return 0, errors.New("error rowAffected update into database")
 	}
 
 	planner.ID = uint64(ID)
 
-	stmt, err = database.Prepare("DELETE FROM tblEngagementPlannerGuestInvite WHERE planner_id = ?")
-	if err != nil {
-		return 0, errors.New("error prepare delete guest on planner")
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(ID)
-	if err != nil {
-		return 0, errors.New("error exec statement exec on client train")
-	}
-
-	stmt, err = database.Prepare("INSERT IGNORE tblEngagementPlannerGuestInvite SET client_id = ?, planner_id = ?")
-	if err != nil {
-		return 0, errors.New("error insert a new row on guest and planner")
-	}
-
-	defer stmt.Close()
-
-	for _, guest := range planner.Guest {
-		_, err := stmt.Exec(guest.ID, planner.ID)
+	if planner.Guest != nil {
+		_, err = tx.ExecContext(ctx, "DELETE FROM tblEngagementPlannerGuestInvite WHERE planner_id = ?", ID)
 		if err != nil {
-			return 0, errors.New("planner guest error")
+			return 0, errors.New("error prepare delete guests on planner")
 		}
+
+		for _, guest := range planner.Guest {
+			_, err := tx.ExecContext(ctx, "INSERT IGNORE tblEngagementPlannerGuestInvite SET client_id = ?, planner_id = ?", guest.ID, planner.ID)
+			if err != nil {
+				return 0, errors.New("error insert data tag_ID and ID on database")
+			}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
 	}
 
 	return uint64(plannerID), nil
