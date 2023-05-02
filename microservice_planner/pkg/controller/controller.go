@@ -74,7 +74,9 @@ func CreatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
-	err = service.CreatePlanner(planner, &logID)
+	ctx := c.Request.Context()
+
+	err = service.CreatePlanner(planner, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -275,7 +277,9 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
-	_, err = service.UpdatePlanner(newID, planner, &logID)
+	ctx := c.Request.Context()
+
+	_, err = service.UpdatePlanner(newID, planner, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -284,6 +288,8 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		})
 		return
 	}
+
+	fmt.Println("ok")
 
 	plannerUpdated, err := service.GetPlannerByID(&newID)
 	if err != nil {
