@@ -290,6 +290,8 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
+	fmt.Println("ok")
+
 	plannerUpdated, err := service.GetPlannerByID(&newID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

@@ -22,6 +22,12 @@ func ConfigRoutes(router *gin.Engine, service service.TagsServiceInterface) *gin
 			Tags.GET("/tags/id/:id", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetTagsById(c, service)
 			})
+			Tags.GET("/domains", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetDomains(c, service)
+			})
+			Tags.GET("/domain/id/:id", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetDomainById(c, service)
+			})
 		}
 	}
 
