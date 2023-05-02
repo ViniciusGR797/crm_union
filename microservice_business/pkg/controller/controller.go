@@ -90,7 +90,9 @@ func CreateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	err = service.CreateBusiness(business, &logID)
+	ctx := c.Request.Context()
+
+	err = service.CreateBusiness(business, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -147,7 +149,9 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	_, err = service.UpdateBusiness(newID, business, &logID)
+	ctx := c.Request.Context()
+
+	_, err = service.UpdateBusiness(newID, business, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -199,7 +203,9 @@ func UpdateStatusBusiness(c *gin.Context, service service.BusinessServiceInterfa
 		return
 	}
 
-	result := service.UpdateStatusBusiness(&newID, &logID)
+	ctx := c.Request.Context()
+
+	result := service.UpdateStatusBusiness(&newID, &logID, ctx)
 	if result == 0 {
 		c.JSON(400, gin.H{
 			"error": "cannot update JSON, 400" + err.Error(),
