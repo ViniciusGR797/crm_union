@@ -99,7 +99,9 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	idResult, err := service.UpdateReleaseTrain(newID, release, &logID)
+	ctx := c.Request.Context()
+
+	idResult, err := service.UpdateReleaseTrain(newID, release, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -109,7 +111,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	_, err = service.InsertTagsReleaseTrain(newID, release.Tags, &logID)
+	_, err = service.InsertTagsReleaseTrain(newID, release.Tags, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -192,8 +194,10 @@ func UpdateStatusReleaseTrain(c *gin.Context, service service.ReleaseServiceInte
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método UpdateStatusUser passando id como parâmetro
-	_, err = service.UpdateStatusReleaseTrain(&newID, &logID)
+	_, err = service.UpdateStatusReleaseTrain(&newID, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -270,7 +274,9 @@ func CreateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	err = service.CreateReleaseTrain(release, &logID)
+	ctx := c.Request.Context()
+
+	err = service.CreateReleaseTrain(release, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
