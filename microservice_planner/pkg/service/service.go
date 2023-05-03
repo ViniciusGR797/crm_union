@@ -13,12 +13,12 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD User (tudo que tiver os métodos abaixo do CRUD são serviços de user)
 type PlannerServiceInterface interface {
 	// Pega todos os planners, logo lista todos os planners
-	GetPlannerByID(ID *uint64) (*entity.Planner, error)
+	GetPlannerByID(ID *uint64, ctx context.Context) (*entity.Planner, error)
 	CreatePlanner(planner *entity.CreatePlanner, logID *int, ctx context.Context) error
-	GetPlannerByName(ID *int, level int, name *string) (*entity.PlannerList, error)
-	GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error)
-	GetPlannerByBusiness(name *string) (*entity.PlannerList, error)
-	GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error)
+	GetPlannerByName(ID *int, level int, name *string, ctx context.Context) (*entity.PlannerList, error)
+	GetSubmissivePlanners(ID *int, level int, ctx context.Context) (*entity.PlannerList, error)
+	GetPlannerByBusiness(name *string, ctx context.Context) (*entity.PlannerList, error)
+	GetGuestClientPlanners(ID *uint64, ctx context.Context) ([]*entity.Client, error)
 	UpdatePlanner(ID uint64, planner *entity.PlannerUpdate, logID *int, ctx context.Context) (uint64, error)
 }
 
@@ -35,10 +35,16 @@ func NewPlannerService(dabase_pool database.DatabaseInterface) *Planner_service 
 }
 
 // Função que retorna lista de planners
-func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
+func (ps *Planner_service) GetPlannerByID(ID *uint64, ctx context.Context) (*entity.Planner, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT DISTINCT * FROM vwGetAllPlanners WHERE planner_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT DISTINCT * FROM vwGetAllPlanners WHERE planner_id = ?")
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -53,7 +59,7 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 		return &entity.Planner{}, errors.New("error scanning rows")
 	}
 
-	rowsGuest, err := database.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+	rowsGuest, err := tx.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
 	if err != nil {
 		return &entity.Planner{}, errors.New("error fetching tags from planner by id")
 	}
@@ -72,6 +78,11 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64) (*entity.Planner, error) {
 
 	}
 	planner.Guest = guest
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
 
 	return planner, nil
 }
@@ -137,12 +148,18 @@ func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *i
 
 }
 
-func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*entity.PlannerList, error) {
+func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string, ctx context.Context) (*entity.PlannerList, error) {
 
 	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
 
 	// pega database
 	database := ps.dbp.GetDB()
+
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
 
 	// manda uma query para ser executada no database
 	rows, err := database.Query(query, ID)
@@ -212,7 +229,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 		query = "SELECT DISTINCT vP.* FROM vwGetAllPlanners vP INNER JOIN tblPlanner P ON vP.planner_id = P.planner_id INNER JOIN tblRemark R ON P.remark_id = R.remark_id WHERE P.user_id = ? AND P.planner_subject LIKE ? ORDER BY P.planner_subject"
 		nameString := fmt.Sprint("%", *name, "%")
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, userID.ID, nameString)
+		rows, err := tx.Query(query, userID.ID, nameString)
 		// verifica se teve erro
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching planners")
@@ -234,7 +251,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 	}
 
 	for _, planner := range lista_planners.List {
-		rowsGuest, err := database.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+		rowsGuest, err := tx.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching guests")
 		}
@@ -254,20 +271,31 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string) (*
 		planner.Guest = guest
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	// retorna lista de users
 	return lista_planners, nil
 
 }
 
 // Função que retorna lista de users
-func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.PlannerList, error) {
+func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int, ctx context.Context) (*entity.PlannerList, error) {
 	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
 
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query, ID)
+	rows, err := tx.Query(query, ID)
 	// verifica se teve erro
 	if err != nil {
 		return &entity.PlannerList{}, errors.New("error fetching user's groups")
@@ -297,7 +325,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 		query := "SELECT DISTINCT U.user_id FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id WHERE UG.group_id = ? AND U.user_level < ?"
 
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, groupID.ID, level)
+		rows, err := tx.Query(query, groupID.ID, level)
 		// verifica se teve erro
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching users")
@@ -331,7 +359,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 		// query := "SELECT DISTINCT P.planner_id, P.planner_subject, P.planner_date, P.planner_duration, SU.subject_title, C.client_name, B.business_name, R.release_name, P.remark_subject, P.remark_text, U.user_name, P.created_at, S.status_description FROM tblPlanner P INNER JOIN tblSubject SU ON P.subject_id = SU.subject_id INNER JOIN tblClient C ON P.client_id = C.client_id INNER JOIN tblReleaseTrain R ON P.release_id = R.release_id INNER JOIN tblBusiness B ON R.business_id = B.business_id INNER JOIN tblUser U ON P.user_id = U.user_id INNER JOIN tblStatus S ON P.status_id = S.status_id WHERE P.user_id = ? ORDER BY P.planner_subject"
 		query := "SELECT DISTINCT vP.* FROM vwGetAllPlanners vP INNER JOIN tblPlanner P ON vP.planner_id = P.planner_id LEFT JOIN tblRemark R ON P.remark_id = R.remark_id WHERE P.user_id = ? ORDER BY P.planner_subject"
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, userID.ID)
+		rows, err := tx.Query(query, userID.ID)
 		// verifica se teve erro
 		if err != nil {
 			return &entity.PlannerList{}, err
@@ -354,7 +382,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 	}
 
 	for _, planner := range lista_planners.List {
-		rowsGuest, err := database.Query("SELECT C.client_name, C.client_id, C.client_email FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+		rowsGuest, err := tx.Query("SELECT C.client_name, C.client_id, C.client_email FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching guests")
 		}
@@ -374,11 +402,16 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int) (*entity.Pl
 		planner.Guest = guest
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	// retorna lista de users
 	return lista_planners, nil
 }
 
-func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerList, error) {
+func (ps *Planner_service) GetPlannerByBusiness(name *string, ctx context.Context) (*entity.PlannerList, error) {
 
 	nameString := fmt.Sprint("%", *name, "%")
 
@@ -388,7 +421,13 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 	// Atribui o banco de dados
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query(query, nameString)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query(query, nameString)
 	if err != nil {
 		log.Println(err.Error())
 		return &entity.PlannerList{}, errors.New("error fetching Planner")
@@ -416,7 +455,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 	}
 
 	for _, planner := range planner_list.List {
-		rowsGuest, err := database.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
+		rowsGuest, err := tx.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching guests")
 		}
@@ -436,14 +475,25 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string) (*entity.PlannerLi
 		planner.Guest = guest
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return planner_list, nil
 }
 
 // GetTagsBusiness busca as tags de business
-func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client, error) {
+func (ps *Planner_service) GetGuestClientPlanners(ID *uint64, ctx context.Context) ([]*entity.Client, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("call pcGetClientGuest(?)")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("call pcGetClientGuest(?)")
 	if err != nil {
 		return []*entity.Client{}, errors.New("error fetching on tag business")
 	}
@@ -465,6 +515,11 @@ func (ps *Planner_service) GetGuestClientPlanners(ID *uint64) ([]*entity.Client,
 		}
 
 		guests = append(guests, &client)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return guests, nil
