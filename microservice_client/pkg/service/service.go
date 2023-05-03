@@ -60,7 +60,7 @@ func (ps *Client_service) GetClientsMyGroups(ID *int, ctx context.Context) (*ent
 		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role_ID, &client.Role, &client.Customer_ID, &client.Customer_Name, &client.Business_Name, &client.Business_ID, &client.Release_Name, &client.Release_ID, &client.User_ID, &client.User_Name, &client.Status_Description); err != nil {
 			return nil, errors.New("error scan client")
 		} else {
-			rowsTags, err := database.Query("SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", client.ID)
+			rowsTags, err := database.QueryContext(ctx, "SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", client.ID)
 			if err != nil {
 				return nil, errors.New("error get tag")
 			}
