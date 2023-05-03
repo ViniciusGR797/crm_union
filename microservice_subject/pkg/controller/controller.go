@@ -30,7 +30,9 @@ func GetSubmissiveSubjects(c *gin.Context, service service.SubjectServiceInterfa
 		return
 	}
 
-	list, err := service.GetSubmissiveSubjects(id)
+	ctx := c.Request.Context()
+
+	list, err := service.GetSubmissiveSubjects(id, ctx)
 
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
@@ -53,7 +55,9 @@ func GetSubjectByID(c *gin.Context, service service.SubjectServiceInterface) {
 		return
 	}
 
-	subject, err := service.GetSubjectByID(newid)
+	ctx := c.Request.Context()
+
+	subject, err := service.GetSubjectByID(newid, ctx)
 
 	if err != nil {
 		JSONMessenger(c, 404, c.Request.URL.Path, err)
