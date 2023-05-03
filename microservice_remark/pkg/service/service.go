@@ -273,14 +273,10 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64, ctx context.Context) (*e
 	}
 	defer tx.Rollback()
 
-	println("ok - 2")
-
 	stmt, err := tx.Prepare("call pcGetRemarkByID (?)")
 	if err != nil {
 		return &entity.Remark{}, err
 	}
-
-	println("ok - 3")
 
 	defer stmt.Close()
 
@@ -295,14 +291,10 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64, ctx context.Context) (*e
 		}
 	}
 
-	println("ok - 4")
-
 	err = tx.Commit()
 	if err != nil {
 		return &entity.Remark{}, err
 	}
-
-	println("ok - 5")
 
 	return &remark, nil
 }
