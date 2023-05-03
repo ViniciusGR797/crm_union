@@ -13,8 +13,9 @@ import (
 
 // GetReleasesTrain Função que chama método GetReleasesTrain do service e retorna json com lista de release
 func GetReleasesTrain(c *gin.Context, service service.ReleaseServiceInterface) {
+	ctx := c.Request.Context()
 
-	list, err := service.GetReleasesTrain()
+	list, err := service.GetReleasesTrain(ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -41,8 +42,10 @@ func GetReleaseTrainByID(c *gin.Context, service service.ReleaseServiceInterface
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método GetUsers e retorna release
-	release, err := service.GetReleaseTrainByID(newId)
+	release, err := service.GetReleaseTrainByID(newId, ctx)
 	// Verifica se a release está vazia
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -121,7 +124,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	_, err = service.GetReleaseTrainByID(idResult)
+	_, err = service.GetReleaseTrainByID(idResult, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -147,7 +150,9 @@ func GetTagsReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface
 		return
 	}
 
-	tags, err := service.GetTagsReleaseTrain(&newID)
+	ctx := c.Request.Context()
+
+	tags, err := service.GetTagsReleaseTrain(&newID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -225,8 +230,10 @@ func GetReleaseTrainByBusiness(c *gin.Context, service service.ReleaseServiceInt
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método GetReleaseTrainByBusiness e retorna release
-	list, err := service.GetReleaseTrainByBusiness(&newId)
+	list, err := service.GetReleaseTrainByBusiness(&newId, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
