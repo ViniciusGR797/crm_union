@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"log"
 
 	// Import interno de packages do próprio sistema
 
@@ -14,12 +14,12 @@ import (
 // RemarkServiceInterface Estrutura interface para padronizar comportamento de CRUD Remark (tudo que tiver os métodos abaixo do CRUD são serviços de Remark)
 type RemarkServiceInterface interface {
 	// Pega todos os Remarks, logo lista todos os Remarks
-	GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error)
-	GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error)
-	GetRemarkByID(ID *uint64) (*entity.Remark, error)
+	GetSubmissiveRemarks(ID *int, ctx context.Context) (*entity.RemarkList, error)
+	GetAllRemarkUser(ID *uint64, ctx context.Context) (*entity.RemarkList, error)
+	GetRemarkByID(ID *uint64, ctx context.Context) (*entity.Remark, error)
 	CreateRemark(remark *entity.RemarkUpdate, logID *int, ctx context.Context) (*entity.Remark, error)
-	GetBarChartRemark(ID *uint64) *entity.Remark
-	GetPieChartRemark(ID *uint64) *entity.Remark
+	GetBarChartRemark(ID *uint64, ctx context.Context) (*entity.Remark, error)
+	GetPieChartRemark(ID *uint64, ctx context.Context) (*entity.Remark, error)
 	UpdateStatusRemark(ID *uint64, remark *entity.Remark, logID *int, ctx context.Context) error
 	UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, logID *int, ctx context.Context) error
 }
@@ -37,12 +37,18 @@ func NewRemarkService(dabase_pool database.DatabaseInterface) *remark_service {
 }
 
 // GetSubmissiveRemarks Função que retorna lista de Remarks
-func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, error) {
+func (ps *remark_service) GetSubmissiveRemarks(ID *int, ctx context.Context) (*entity.RemarkList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query("call pcGetAllRemarkUserGroup (?)", ID)
+	rows, err := tx.Query("call pcGetAllRemarkUserGroup (?)", ID)
 	// verifica se teve erro
 	if err != nil {
 		return nil, err
@@ -76,15 +82,26 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int) (*entity.RemarkList, err
 		return nil, errors.New("remarks not found")
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	// lista_Remarks retorna lista de produtos
 	return lista_Remarks, nil
 }
 
 // GetAllRemarkUser Função que retorna os Remarks de um ID
-func (ps *remark_service) GetAllRemarkUser(ID *uint64) (*entity.RemarkList, error) {
+func (ps *remark_service) GetAllRemarkUser(ID *uint64, ctx context.Context) (*entity.RemarkList, error) {
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("call pcGetAllRemarkUser (?)", ID)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("call pcGetAllRemarkUser (?)", ID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,14 +121,25 @@ func (ps *remark_service) GetAllRemarkUser(ID *uint64) (*entity.RemarkList, erro
 
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return &listRemark, nil
 }
 
 // GetRemarkByID Função que retorna um Remark pelo ID
-func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
+func (ps *remark_service) GetRemarkByID(ID *uint64, ctx context.Context) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("call pcGetRemarkByID (?)")
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +151,11 @@ func (ps *remark_service) GetRemarkByID(ID *uint64) (*entity.Remark, error) {
 	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Subject_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
 	if err != nil {
 		return nil, errors.New("remark not found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return &remark, nil
@@ -193,47 +226,85 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int, 
 }
 
 // GetBarChartRemark retorna um gráfico de barras mostrando a contagem de avaliações em relação ao tempo (atrasado, próximo, no prazo) para o usuário com o ID especificado na URL, disparando o método controller.GetBarChartRemark.
-func (ps *remark_service) GetBarChartRemark(ID *uint64) *entity.Remark {
+func (ps *remark_service) GetBarChartRemark(ID *uint64, ctx context.Context) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
+	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
-		log.Println(err.Error())
+		return &entity.Remark{}, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("call pcGetRemarkByID (?)")
+	if err != nil {
+		return &entity.Remark{}, err
 	}
 
 	defer stmt.Close()
 
 	remark := entity.Remark{}
 
-	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Business_Name, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
 	if err != nil {
-		log.Println("error: cannot find remarkByID", err.Error())
+		if err == sql.ErrNoRows {
+			return &entity.Remark{}, nil
+		} else {
+			return &entity.Remark{}, err
+		}
 	}
 
-	return &remark
+	err = tx.Commit()
+	if err != nil {
+		return &entity.Remark{}, err
+	}
 
+	return &remark, nil
 }
 
 // GetPieChartRemark retorna um gráfico de pizza mostrando a contagem de avaliações em relação ao status (pendente, aprovado, rejeitado) para o usuário com o ID especificado na URL, disparando o método controller.GetPieChartRemark
-func (ps *remark_service) GetPieChartRemark(ID *uint64) *entity.Remark {
+func (ps *remark_service) GetPieChartRemark(ID *uint64, ctx context.Context) (*entity.Remark, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("call pcGetRemarkByID (?)")
+	println("ok - 1")
+
+	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
-		log.Println(err.Error())
+		return &entity.Remark{}, err
 	}
+	defer tx.Rollback()
+
+	println("ok - 2")
+
+	stmt, err := tx.Prepare("call pcGetRemarkByID (?)")
+	if err != nil {
+		return &entity.Remark{}, err
+	}
+
+	println("ok - 3")
 
 	defer stmt.Close()
 
 	remark := entity.Remark{}
 
-	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Business_Name, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
 	if err != nil {
-		log.Println("error: cannot find remarkPieID", err.Error())
+		if err == sql.ErrNoRows {
+			return &entity.Remark{}, nil
+		} else {
+			return &entity.Remark{}, err
+		}
 	}
 
-	return &remark
+	println("ok - 4")
 
+	err = tx.Commit()
+	if err != nil {
+		return &entity.Remark{}, err
+	}
+
+	println("ok - 5")
+
+	return &remark, nil
 }
 
 // UpdateStatusRemark Função que atualiza o Status do Remark

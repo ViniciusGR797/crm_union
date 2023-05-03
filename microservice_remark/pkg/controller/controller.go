@@ -30,7 +30,9 @@ func GetSubmissiveRemarks(c *gin.Context, service service.RemarkServiceInterface
 		return
 	}
 
-	remarks, err := service.GetSubmissiveRemarks(&id)
+	ctx := c.Request.Context()
+
+	remarks, err := service.GetSubmissiveRemarks(&id, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -50,7 +52,9 @@ func GetAllRemarkUser(c *gin.Context, service service.RemarkServiceInterface) {
 		return
 	}
 
-	remarks, err := service.GetAllRemarkUser(&newID)
+	ctx := c.Request.Context()
+
+	remarks, err := service.GetAllRemarkUser(&newID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -70,7 +74,9 @@ func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 		return
 	}
 
-	remark, err := service.GetRemarkByID(&newID)
+	ctx := c.Request.Context()
+
+	remark, err := service.GetRemarkByID(&newID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -82,7 +88,6 @@ func GetRemarkByID(c *gin.Context, service service.RemarkServiceInterface) {
 
 // CreateRemark Função que cria um Remark
 func CreateRemark(c *gin.Context, service service.RemarkServiceInterface) {
-
 	// pegar informamções do usuário
 	permissions, err := security.GetPermissions(c)
 	if err != nil {
@@ -129,7 +134,15 @@ func GetBarChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 	}
 
-	remark := service.GetBarChartRemark(&newID)
+	ctx := c.Request.Context()
+
+	remark, err := service.GetBarChartRemark(&newID, ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 	if remark == nil {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
@@ -146,7 +159,16 @@ func GetPieChartRemark(c *gin.Context, service service.RemarkServiceInterface) {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 	}
 
-	remark := service.GetPieChartRemark(&newID)
+	ctx := c.Request.Context()
+
+	remark, err := service.GetPieChartRemark(&newID, ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	if remark == nil {
 		JSONMessenger(c, http.StatusBadRequest, c.Request.URL.Path, err)
 		return
