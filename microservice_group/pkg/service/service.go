@@ -68,7 +68,7 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 		); err != nil {
 			return &entity.GroupList{}, err
 		} else {
-			rows2, err := database.Query("call pcGetAllUserGroup (?)", group.Group_id)
+			rows2, err := database.QueryContext(ctx, "call pcGetAllUserGroup (?)", group.Group_id)
 			if err != nil {
 				return &entity.GroupList{}, err
 			}

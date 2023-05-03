@@ -59,7 +59,7 @@ func (ps *Release_service) GetReleasesTrain(ctx context.Context) (*entity.Releas
 		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Business_Id, &release.Name, &release.Status_Description); err != nil {
 			return &entity.ReleaseList{}, errors.New("error scanning release train")
 		} else {
-			rowsTags, err := tx.Query("select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
+			rowsTags, err := database.QueryContext(ctx, "select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
 			if err != nil {
 				return &entity.ReleaseList{}, errors.New("error fetching tags")
 			}
