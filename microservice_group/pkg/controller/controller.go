@@ -22,6 +22,7 @@ func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 	}
 
 	ctx := c.Request.Context()
+
 	list, err := service.GetGroups(newid, ctx)
 	if err != nil {
 		JSONMessenger(c, 404, c.Request.URL.Path, err)

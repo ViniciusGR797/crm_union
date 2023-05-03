@@ -24,10 +24,6 @@ type Group_service struct {
 	dbp database.DatabaseInterface
 }
 
-// InsertUserList implements GroupServiceInterface
-
-// GetGroup implements GroupServiceInterface
-
 func NewGroupService(dabase_pool database.DatabaseInterface) *Group_service {
 	return &Group_service{
 		dabase_pool,
@@ -36,18 +32,18 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Group_service {
 
 // GetGroups retorna todos os grupos do usuario
 func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.GroupList, error) {
-
 	database := ps.dbp.GetDB()
+
 	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return &entity.GroupList{}, err
 	}
 	defer tx.Rollback()
 
 	rows, err := tx.Query("call pcGetAllGroupUserNoId (?)", id)
 	// verifica se teve erro
 	if err != nil {
-		return nil, err
+		return &entity.GroupList{}, err
 	}
 
 	hasResult := false
@@ -57,7 +53,6 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 	list_groups := &entity.GroupList{}
 
 	for rows.Next() {
-
 		hasResult = true
 
 		group := entity.Group{}
@@ -71,11 +66,11 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 			&group.Customer.Customer_id,
 			&group.Customer.Customer_name,
 		); err != nil {
-			fmt.Println(err.Error())
+			return &entity.GroupList{}, err
 		} else {
-			rows2, err := tx.Query("call pcGetAllUserGroup (?)", group.Group_id)
+			rows2, err := database.Query("call pcGetAllUserGroup (?)", group.Group_id)
 			if err != nil {
-				return nil, err
+				return &entity.GroupList{}, err
 			}
 			var user_list []entity.User
 
@@ -85,23 +80,20 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 				if err := rows2.Scan(
 					&user.User_id,
 					&user.User_name); err != nil {
-					fmt.Println(err.Error())
+					return &entity.GroupList{}, err
 				} else {
 					user_list = append(user_list, user)
 				}
-
 			}
 
 			group.Users = user_list
 
 			list_groups.List = append(list_groups.List, &group)
-
 		}
-
 	}
 
 	if !hasResult {
-		return nil, fmt.Errorf("no groups found")
+		return &entity.GroupList{}, errors.New("no groups found")
 	}
 
 	err = tx.Commit()
@@ -110,7 +102,6 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 	}
 
 	return list_groups, nil
-
 }
 
 // GetGroupByID retorna um grupo pelo id
