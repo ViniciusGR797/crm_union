@@ -162,7 +162,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string, ct
 	defer tx.Rollback()
 
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query, ID)
+	rows, err := tx.QueryContext(ctx, query, ID)
 	// verifica se teve erro
 	if err != nil {
 		return &entity.PlannerList{}, errors.New("error fetching user's groups")
@@ -192,7 +192,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string, ct
 		query := "SELECT DISTINCT U.user_id FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id WHERE UG.group_id = ? AND U.user_level < ?"
 
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, groupID.ID, level)
+		rows, err := tx.QueryContext(ctx, query, groupID.ID, level)
 		// verifica se teve erro
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching users")
