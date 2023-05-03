@@ -11,13 +11,13 @@ import (
 
 // Estrutura interface para padronizar comportamento de CRUD Release (tudo que tiver os métodos abaixo do CRUD são serviços de release)
 type ReleaseServiceInterface interface {
-	GetReleasesTrain() (*entity.ReleaseList, error)
-	GetReleaseTrainByID(ID uint64) (*entity.Release, error)
+	GetReleasesTrain(ctx context.Context) (*entity.ReleaseList, error)
+	GetReleaseTrainByID(ID uint64, ctx context.Context) (*entity.Release, error)
 	UpdateReleaseTrain(ID uint64, release *entity.Release_Update, logID *int, ctx context.Context) (uint64, error)
 	InsertTagsReleaseTrain(ID uint64, tags []entity.Tag, logID *int, ctx context.Context) (uint64, error)
-	GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error)
+	GetTagsReleaseTrain(ID *uint64, ctx context.Context) ([]*entity.Tag, error)
 	UpdateStatusReleaseTrain(ID *uint64, logID *int, ctx context.Context) (int64, error)
-	GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error)
+	GetReleaseTrainByBusiness(businessID *uint64, ctx context.Context) (*entity.ReleaseList, error)
 	CreateReleaseTrain(release *entity.Release_Update, logID *int, ctx context.Context) error
 }
 
@@ -34,10 +34,16 @@ func NewReleaseService(dabase_pool database.DatabaseInterface) *Release_service 
 }
 
 // Função que retorna lista de release train
-func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
+func (ps *Release_service) GetReleasesTrain(ctx context.Context) (*entity.ReleaseList, error) {
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("select DISTINCT * from vwGetAllReleaseTrains ORDER BY release_name")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.ReleaseList{}, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("select DISTINCT * from vwGetAllReleaseTrains ORDER BY release_name")
 	if err != nil {
 		return &entity.ReleaseList{}, errors.New("error fetching release train")
 	}
@@ -53,7 +59,7 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 		if err := rows.Scan(&release.ID, &release.Code, &release.Business_Name, &release.Business_Id, &release.Name, &release.Status_Description); err != nil {
 			return &entity.ReleaseList{}, errors.New("error scanning release train")
 		} else {
-			rowsTags, err := database.Query("select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
+			rowsTags, err := database.QueryContext(ctx, "select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name ", release.ID)
 			if err != nil {
 				return &entity.ReleaseList{}, errors.New("error fetching tags")
 			}
@@ -76,19 +82,30 @@ func (ps *Release_service) GetReleasesTrain() (*entity.ReleaseList, error) {
 			list_release.List = append(list_release.List, &release)
 		}
 	}
+
 	if !hasResult {
-		return nil, errors.New("release not found")
+		return &entity.ReleaseList{}, errors.New("release not found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return &entity.ReleaseList{}, err
 	}
 
 	return list_release, nil
 }
 
 // GetReleaseTrainByID busca release train por ID
-func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, error) {
-
+func (ps *Release_service) GetReleaseTrainByID(ID uint64, ctx context.Context) (*entity.Release, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("select * from vwGetAllReleaseTrains where release_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.Release{}, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("select * from vwGetAllReleaseTrains where release_id = ?")
 	if err != nil {
 		return &entity.Release{}, errors.New("error prepare fetching release train by id")
 	}
@@ -101,7 +118,7 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 		return &entity.Release{}, errors.New("error scanning rows")
 	}
 
-	rowsTags, err := database.Query("select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name", ID)
+	rowsTags, err := tx.Query("select DISTINCT tblTags.tag_id, tag_name from tblTags inner join tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name", ID)
 	if err != nil {
 		return &entity.Release{}, errors.New("error fetching tags from release train by id")
 	}
@@ -120,6 +137,11 @@ func (ps *Release_service) GetReleaseTrainByID(ID uint64) (*entity.Release, erro
 	defer rowsTags.Close()
 
 	release.Tags = tags
+
+	err = tx.Commit()
+	if err != nil {
+		return &entity.Release{}, err
+	}
 
 	return release, nil
 }
@@ -158,14 +180,19 @@ func (ps *Release_service) UpdateReleaseTrain(ID uint64, release *entity.Release
 	}
 
 	return uint64(releaseID), nil
-
 }
 
 // GetTagsReleaseTrain busca as tags da release train
-func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error) {
+func (ps *Release_service) GetTagsReleaseTrain(ID *uint64, ctx context.Context) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblReleaseTrainTag tRTT on T.tag_id = tRTT.tag_id WHERE release_id = ? ORDER BY T.tag_name")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return []*entity.Tag{}, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblReleaseTrainTag tRTT on T.tag_id = tRTT.tag_id WHERE release_id = ? ORDER BY T.tag_name")
 	if err != nil {
 		return []*entity.Tag{}, errors.New("error fetching on tag release train")
 	}
@@ -189,6 +216,11 @@ func (ps *Release_service) GetTagsReleaseTrain(ID *uint64) ([]*entity.Tag, error
 		tags = append(tags, &tag)
 	}
 	defer rowsTags.Close()
+
+	err = tx.Commit()
+	if err != nil {
+		return []*entity.Tag{}, err
+	}
 
 	return tags, nil
 }
@@ -283,14 +315,20 @@ func (ps *Release_service) UpdateStatusReleaseTrain(ID *uint64, logID *int, ctx 
 }
 
 // Função que retorna lista de releases, filtrando pelo ID business
-func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entity.ReleaseList, error) {
+func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64, ctx context.Context) (*entity.ReleaseList, error) {
 	query := "SELECT DISTINCT V.release_id, V.release_code, V.release_name, V.business_name, V.business_id, V.status_description FROM vwGetAllReleaseTrains V INNER JOIN tblReleaseTrain R ON V.release_id = R.release_id WHERE R.business_id = ? ORDER BY V.release_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.ReleaseList{}, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query, businessID)
+	rows, err := tx.Query(query, businessID)
 	// verifica se teve erro
 	if err != nil {
 		return &entity.ReleaseList{}, errors.New("error fetching release's business")
@@ -324,7 +362,7 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 		query := "SELECT DISTINCT tag_name FROM tblTags INNER JOIN tblReleaseTrainTag tRTT on tblTags.tag_id = tRTT.tag_id WHERE tRTT.release_id = ? ORDER BY tag_name"
 
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, release.ID)
+		rows, err := tx.Query(query, release.ID)
 		// verifica se teve erro
 		if err != nil {
 			return &entity.ReleaseList{}, errors.New("error fetching tags")
@@ -349,6 +387,11 @@ func (ps *Release_service) GetReleaseTrainByBusiness(businessID *uint64) (*entit
 
 		// Atribui slice de tag para um release
 		release.Tags = tags
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return &entity.ReleaseList{}, err
 	}
 
 	// Retornar lista de releases

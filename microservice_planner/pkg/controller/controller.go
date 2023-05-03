@@ -25,8 +25,9 @@ func GetPlannerByID(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	// Chama método GetUsers e retorna release
-	planner, err := service.GetPlannerByID(&newId)
+	planner, err := service.GetPlannerByID(&newId, ctx)
 	// Verifica se a release está vazia
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -120,8 +121,9 @@ func GetPlannerByName(c *gin.Context, service service.PlannerServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	// Chama método GetSubmissivePlanners passando id e level como parâmetro
-	list, err := service.GetPlannerByName(&id, level, &name)
+	list, err := service.GetPlannerByName(&id, level, &name, ctx)
 	// Verifica se teve erro ao buscar planners no banco
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -168,8 +170,9 @@ func GetSubmissivePlanners(c *gin.Context, service service.PlannerServiceInterfa
 		return
 	}
 
+	ctx := c.Request.Context()
 	// Chama método GetSubmissivePlanners passando id e level como parâmetro
-	list, err := service.GetSubmissivePlanners(&id, level)
+	list, err := service.GetSubmissivePlanners(&id, level, ctx)
 	// Verifica se teve erro ao buscar planners no banco
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -192,7 +195,9 @@ func GetPlannerByBusiness(c *gin.Context, service service.PlannerServiceInterfac
 
 	name := c.Param("business_name")
 
-	planner, err := service.GetPlannerByBusiness(&name)
+	ctx := c.Request.Context()
+
+	planner, err := service.GetPlannerByBusiness(&name, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -219,7 +224,8 @@ func GetGuestClientPlanners(c *gin.Context, service service.PlannerServiceInterf
 		return
 	}
 
-	tags, err := service.GetGuestClientPlanners(&newID)
+	ctx := c.Request.Context()
+	tags, err := service.GetGuestClientPlanners(&newID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -292,7 +298,7 @@ func UpdatePlanner(c *gin.Context, service service.PlannerServiceInterface) {
 
 	fmt.Println("ok")
 
-	plannerUpdated, err := service.GetPlannerByID(&newID)
+	plannerUpdated, err := service.GetPlannerByID(&newID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),

@@ -16,8 +16,10 @@ import (
 
 // Função que chama método GetUsers do service e retorna json com lista de users
 func GetUsers(c *gin.Context, service service.UserServiceInterface) {
+	ctx := c.Request.Context()
+
 	// Chama método GetUsers e retorna list de users
-	list, err := service.GetUsers()
+	list, err := service.GetUsers(ctx)
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -44,8 +46,11 @@ func GetUserByID(c *gin.Context, service service.UserServiceInterface) {
 		sendError(c, http.StatusBadRequest, errors.New("ID must be an integer"))
 		return
 	}
+
+	ctx := c.Request.Context()
+
 	// Chama método GetUserByID passando id como parâmetro
-	user, err := service.GetUserByID(&newId)
+	user, err := service.GetUserByID(&newId, ctx)
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -66,7 +71,10 @@ func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("user_name")
 	// Chama método GetUserByName passando name como parâmetro
-	list, err := service.GetUserByName(&name)
+
+	ctx := c.Request.Context()
+
+	list, err := service.GetUserByName(&name, ctx)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -84,8 +92,10 @@ func GetUserByName(c *gin.Context, service service.UserServiceInterface) {
 
 // Função que chama método GetUsersNotInGroup do service e retorna json com user
 func GetUsersNotInGroup(c *gin.Context, service service.UserServiceInterface) {
+	ctx := c.Request.Context()
+
 	// Chama método GetUsersNotInGroup
-	list, err := service.GetUsersNotInGroup()
+	list, err := service.GetUsersNotInGroup(ctx)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -127,8 +137,10 @@ func GetSubmissiveUsers(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método GetSubmissiveUsers passando id como parâmetro
-	list, err := service.GetSubmissiveUsers(&id, level)
+	list, err := service.GetSubmissiveUsers(&id, level, ctx)
 	// Verifica se teve ao buscar users no banco
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -353,8 +365,10 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método Login passando user como parâmetro
-	hash, err := service.Login(user)
+	hash, err := service.Login(user, ctx)
 	// Verifica se teve erro ao buscar user no banco
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
@@ -412,8 +426,10 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método GetUserByID passando id como parâmetro
-	user, err := service.GetUserByID(&newId)
+	user, err := service.GetUserByID(&newId, ctx)
 	// Verifica se teve ao buscar user no banco
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)

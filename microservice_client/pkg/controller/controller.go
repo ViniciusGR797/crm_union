@@ -31,8 +31,9 @@ func GetClientsMyGroups(c *gin.Context, service service.ClientServiceInterface) 
 		return
 	}
 
+	ctx := c.Request.Context()
 	// Chama método GetUsers e retorna list de users
-	list, err := service.GetClientsMyGroups(&id)
+	list, err := service.GetClientsMyGroups(&id, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -57,8 +58,9 @@ func GetClientByID(c *gin.Context, service service.ClientServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	// Chama método GetUsers e retorna list de users
-	client, err := service.GetClientByID(&newID)
+	client, err := service.GetClientByID(&newID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -83,8 +85,9 @@ func GetClientByReleaseID(c *gin.Context, service service.ClientServiceInterface
 		return
 	}
 
+	ctx := c.Request.Context()
 	// Chama método GetClientByReleaseID e retorna list de clients
-	clients, err := service.GetClientByReleaseID(&newID)
+	clients, err := service.GetClientByReleaseID(&newID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -109,7 +112,8 @@ func GetTagsClient(c *gin.Context, service service.ClientServiceInterface) {
 		return
 	}
 
-	tags, err := service.GetTagsClient(&newID)
+	ctx := c.Request.Context()
+	tags, err := service.GetTagsClient(&newID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -260,7 +264,8 @@ func JSONMessenger(c *gin.Context, status int, path string, err error) {
 // GetRoles função que chama o metodo GetRoles do service e traz todos os dados de Roles do banco em formato de lista
 func GetRoles(c *gin.Context, service service.ClientServiceInterface) {
 
-	list := service.GetRoles()
+	ctx := c.Request.Context()
+	list := service.GetRoles(ctx)
 
 	if len(list.List) == 0 {
 		c.JSON(404, gin.H{

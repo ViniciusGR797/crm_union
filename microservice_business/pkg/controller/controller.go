@@ -14,7 +14,8 @@ import (
 // GetBusiness função que chama o metodo GetBusiness do service e traz todos os dados de Business do banco em formato de lista
 func GetBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 
-	list := service.GetBusiness()
+	ctx := c.Request.Context()
+	list := service.GetBusiness(ctx)
 
 	if len(list.List) == 0 {
 		c.JSON(404, gin.H{
@@ -40,8 +41,10 @@ func GetBusinessById(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
+	ctx := c.Request.Context()
+
 	// Chama método GetUsers e retorna business
-	business, err := service.GetBusinessById(newId)
+	business, err := service.GetBusinessById(newId, ctx)
 	// Verifica se a business está vazia
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -161,7 +164,7 @@ func UpdateBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	businessUpdated, err := service.GetBusinessById(newID)
+	businessUpdated, err := service.GetBusinessById(newID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -222,8 +225,10 @@ func UpdateStatusBusiness(c *gin.Context, service service.BusinessServiceInterfa
 func GetBusinessByName(c *gin.Context, service service.BusinessServiceInterface) {
 	// Pega name passada como parâmetro na URL da rota
 	name := c.Param("Business_name")
+
+	ctx := c.Request.Context()
 	// Chama método GetBusinessByName passando name como parâmetro
-	list, err := service.GetBusinessByName(&name)
+	list, err := service.GetBusinessByName(&name, ctx)
 	// Verifica se teve ao buscar Businesss no banco
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -257,7 +262,8 @@ func GetTagsBusiness(c *gin.Context, service service.BusinessServiceInterface) {
 		return
 	}
 
-	tags, err := service.GetTagsBusiness(&newID)
+	ctx := c.Request.Context()
+	tags, err := service.GetTagsBusiness(&newID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),

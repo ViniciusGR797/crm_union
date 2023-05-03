@@ -9,8 +9,8 @@ import (
 )
 
 type SubjectServiceInterface interface {
-	GetSubmissiveSubjects(id int) (*entity.Subject_list, error)
-	GetSubjectByID(id uint64) (*entity.SubjectID, error)
+	GetSubmissiveSubjects(id int, ctx context.Context) (*entity.Subject_list, error)
+	GetSubjectByID(id uint64, ctx context.Context) (*entity.SubjectID, error)
 	UpdateStatusSubjectFinished(id uint64, logID *int, ctx context.Context) (int64, error)
 	UpdateStatusSubjectCanceled(id uint64, logID *int, ctx context.Context) (int64, error)
 	CreateSubject(subject *entity.CreateSubject, id uint64, logID *int, ctx context.Context) (*entity.SubjectID, error)
@@ -28,11 +28,16 @@ func NewGroupService(dabase_pool database.DatabaseInterface) *Subject_service {
 }
 
 // GetSubmissiveSubjects retorna uma lista de Subjects de um determinado usuario
-func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, error) {
-
+func (s *Subject_service) GetSubmissiveSubjects(id int, ctx context.Context) (*entity.Subject_list, error) {
 	database := s.dbp.GetDB()
 
-	rows, err := database.Query("call pcGetAllUserSubjects (?)", id)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("call pcGetAllUserSubjects (?)", id)
 	if err != nil {
 		return nil, err
 	}
@@ -78,16 +83,26 @@ func (s *Subject_service) GetSubmissiveSubjects(id int) (*entity.Subject_list, e
 		return nil, fmt.Errorf("no subjects found")
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return list_subjects, nil
 
 }
 
 // GetSubjectByID retorna um Subject pelo id
-func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
-
+func (s *Subject_service) GetSubjectByID(id uint64, ctx context.Context) (*entity.SubjectID, error) {
 	database := s.dbp.GetDB()
 
-	rows, err := database.Query("call pcGetSubjectByID (?)", id)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("call pcGetSubjectByID (?)", id)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +130,6 @@ func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 			&subject.Business_name,
 			&subject.Release_id,
 			&subject.Release_name,
-			&subject.Subject_text,
 			&subject.Created_at,
 			&subject.Domain.Domain_id,
 			&subject.Domain.Domain_value,
@@ -129,6 +143,11 @@ func (s *Subject_service) GetSubjectByID(id uint64) (*entity.SubjectID, error) {
 
 	if !hasResult {
 		return nil, fmt.Errorf("no subjects found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return subject, nil
