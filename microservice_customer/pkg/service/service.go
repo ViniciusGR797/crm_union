@@ -12,8 +12,8 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD Customer (tudo que tiver os métodos abaixo do CRUD são serviços de customer)
 type CustomerServiceInterface interface {
 	// Pega todos os users, logo lista todos os customer
-	GetCustomers() (*entity.CustomerList, error)
-	GetCustomerByID(ID *uint64) (*entity.Customer, error)
+	GetCustomers(ctx context.Context) (*entity.CustomerList, error)
+	GetCustomerByID(ID *uint64, ctx context.Context) (*entity.Customer, error)
 	CreateCustomer(customer *entity.Customer, logID *int, ctx context.Context) error
 	UpdateCustomer(ID *uint64, customer *entity.Customer, logID *int, ctx context.Context) error
 	UpdateStatusCustomer(ID *uint64, logID *int, ctx context.Context) error
@@ -32,12 +32,17 @@ func NewCostumerService(dabase_pool database.DatabaseInterface) *customer_servic
 }
 
 // GetCustomers Função que retorna lista de users
-func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
+func (ps *customer_service) GetCustomers(ctx context.Context) (*entity.CustomerList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
 
 	// manda uma query para ser executada no database
-	rows, err := database.Query("SELECT DISTINCT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id ORDER BY C.customer_name")
+	rows, err := tx.Query("SELECT DISTINCT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id ORDER BY C.customer_name")
 	// verifica se teve erro
 	if err != nil {
 		return nil, err
@@ -90,15 +95,25 @@ func (ps *customer_service) GetCustomers() (*entity.CustomerList, error) {
 		return nil, errors.New("customer not found")
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	// retorna lista de customer
 	return lista_customer, nil
 }
 
 // GetCustomerByID é responsável por buscar um cliente no banco de dados pelo seu ID.
-func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error) {
+func (ps *customer_service) GetCustomerByID(ID *uint64, ctx context.Context) (*entity.Customer, error) {
 	database := ps.dbp.GetDB()
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
 
-	stmt, err := database.Prepare("SELECT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id WHERE C.customer_id = ?")
+	stmt, err := tx.Prepare("SELECT C.customer_id, C.customer_name, S.status_description FROM tblCustomer C INNER JOIN tblStatus S ON C.status_id = S.status_id WHERE C.customer_id = ?")
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +127,7 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 		return nil, errors.New("error get id")
 	}
 
-	rowsTags, err := database.Query("SELECT DISTINCT tblTags.tag_id, tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", ID)
+	rowsTags, err := tx.Query("SELECT DISTINCT tblTags.tag_id, tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", ID)
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +147,11 @@ func (ps *customer_service) GetCustomerByID(ID *uint64) (*entity.Customer, error
 	}
 
 	customer.Tags = tags
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
 
 	return &customer, nil
 }

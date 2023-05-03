@@ -13,14 +13,14 @@ import (
 
 // Estrutura interface para padronizar comportamento de CRUD Client (tudo que tiver os métodos abaixo do CRUD são serviços de client)
 type ClientServiceInterface interface {
-	GetClientsMyGroups(ID *int) (*entity.ClientList, error)
-	GetClientByID(ID *uint64) (*entity.Client, error)
-	GetClientByReleaseID(ID *uint64) (*entity.ClientList, error)
-	GetTagsClient(ID *uint64) ([]*entity.Tag, error)
+	GetClientsMyGroups(ID *int, ctx context.Context) (*entity.ClientList, error)
+	GetClientByID(ID *uint64, ctx context.Context) (*entity.Client, error)
+	GetClientByReleaseID(ID *uint64, ctx context.Context) (*entity.ClientList, error)
+	GetTagsClient(ID *uint64, ctx context.Context) ([]*entity.Tag, error)
 	CreateClient(client *entity.ClientUpdate, logID *int, ctx context.Context) error
 	UpdateClient(ID *uint64, client *entity.ClientUpdate, logID *int, ctx context.Context) error
 	UpdateStatusClient(ID *uint64, logID *int, ctx context.Context) error
-	GetRoles() *entity.RoleList
+	GetRoles(ctx context.Context) *entity.RoleList
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -36,10 +36,16 @@ func NewClientService(dabase_pool database.DatabaseInterface) *Client_service {
 }
 
 // GetClientsMyGroups: Retorna lista de client pelo group
-func (ps *Client_service) GetClientsMyGroups(ID *int) (*entity.ClientList, error) {
+func (ps *Client_service) GetClientsMyGroups(ID *int, ctx context.Context) (*entity.ClientList, error) {
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("call pcGetAllClientsGroup(?)", ID)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("call pcGetAllClientsGroup(?)", ID)
 	if err != nil {
 		return nil, err
 	}
@@ -77,15 +83,26 @@ func (ps *Client_service) GetClientsMyGroups(ID *int) (*entity.ClientList, error
 		}
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return list_client, nil
 
 }
 
 // GetClientByID: Retorna um client pelo ID
-func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
+func (ps *Client_service) GetClientByID(ID *uint64, ctx context.Context) (*entity.Client, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("call pcGetClientByID(?)")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("call pcGetClientByID(?)")
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +116,7 @@ func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
 		return nil, errors.New("client not found")
 	}
 
-	rowsTags, err := database.Query("SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", ID)
+	rowsTags, err := tx.Query("SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", ID)
 	if err != nil {
 		return nil, errors.New("error get tags")
 	}
@@ -120,14 +137,25 @@ func (ps *Client_service) GetClientByID(ID *uint64) (*entity.Client, error) {
 
 	client.Tags = tags
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return &client, nil
 }
 
 // GetClientByReleaseID: Retorna uma lista de clients pelo ID da release
-func (ps *Client_service) GetClientByReleaseID(ID *uint64) (*entity.ClientList, error) {
+func (ps *Client_service) GetClientByReleaseID(ID *uint64, ctx context.Context) (*entity.ClientList, error) {
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("SELECT tC.client_id, tC.client_name, tC.client_email FROM tblClient tC WHERE tC.release_id = ?", ID)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("SELECT tC.client_id, tC.client_name, tC.client_email FROM tblClient tC WHERE tC.release_id = ?", ID)
 	if err != nil {
 		return nil, err
 	}
@@ -146,14 +174,25 @@ func (ps *Client_service) GetClientByReleaseID(ID *uint64) (*entity.ClientList, 
 		list_client.List = append(list_client.List, &client)
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return list_client, nil
 }
 
 // GetTagsClient: Retorna uma lista de tag pelo ID do client
-func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
+func (ps *Client_service) GetTagsClient(ID *uint64, ctx context.Context) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("select DISTINCT T.tag_id, T.tag_name from tblTags T inner join tblClientTag TCT on T.tag_id = TCT.tag_id WHERE client_id = ? ORDER BY T.tag_name")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("select DISTINCT T.tag_id, T.tag_name from tblTags T inner join tblClientTag TCT on T.tag_id = TCT.tag_id WHERE client_id = ? ORDER BY T.tag_name")
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +223,11 @@ func (ps *Client_service) GetTagsClient(ID *uint64) ([]*entity.Tag, error) {
 
 	if !hasResult {
 		return nil, errors.New("tags not found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return tags, nil
@@ -369,7 +413,7 @@ func (ps *Client_service) UpdateStatusClient(ID *uint64, logID *int, ctx context
 }
 
 // GetRoles traz todos os Roles do banco de dados
-func (ps *Client_service) GetRoles() *entity.RoleList {
+func (ps *Client_service) GetRoles(ctx context.Context) *entity.RoleList {
 
 	database := ps.dbp.GetDB()
 
