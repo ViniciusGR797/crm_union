@@ -14,6 +14,8 @@ import (
 	"os"
 )
 
+// TODO: add tag_type em tags; rota pra tabela domain
+
 func main() {
 	// Atribui o endereço da estrutura de uma configuração padrão do sistema
 	default_conf := &config.Config{}
