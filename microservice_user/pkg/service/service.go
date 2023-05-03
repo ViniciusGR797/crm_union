@@ -14,15 +14,15 @@ import (
 // Estrutura interface para padronizar comportamento de CRUD User (tudo que tiver os métodos abaixo do CRUD são serviços de user)
 type UserServiceInterface interface {
 	// Pega todos os users, logo lista todos os users
-	GetUsers() (*entity.UserList, error)
+	GetUsers(ctx context.Context) (*entity.UserList, error)
 	// Pega user em específico passando o id dele como parâmetro
-	GetUserByID(ID *int) (*entity.User, error)
+	GetUserByID(ID *int, ctx context.Context) (*entity.User, error)
 	// Pega users em específico passando o name dele como parâmetro
-	GetUserByName(name *string) (*entity.UserList, error)
+	GetUserByName(name *string, ctx context.Context) (*entity.UserList, error)
 	// Pega users em específico que estão sem grupo
-	GetUsersNotInGroup() (*entity.UserList, error)
+	GetUsersNotInGroup(ctx context.Context) (*entity.UserList, error)
 	// Pega users submissos passando o id de um user como parâmetro
-	GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error)
+	GetSubmissiveUsers(ID *int, level int, ctx context.Context) (*entity.UserList, error)
 	// Cadastra users passando suas informações
 	CreateUser(user *entity.User, logID *int, ctx context.Context) (uint64, error)
 	// Altera status do user
@@ -30,7 +30,7 @@ type UserServiceInterface interface {
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
 	UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) (int, error)
 	// Busca o hash do usuário por email
-	Login(user *entity.User) (string, error)
+	Login(user *entity.User, ctx context.Context) (string, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -46,16 +46,21 @@ func NewUserService(dabase_pool database.DatabaseInterface) *User_service {
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetUsers() (*entity.UserList, error) {
+func (ps *User_service) GetUsers(ctx context.Context) (*entity.UserList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.UserList{}, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id ORDER BY U.user_name")
+	rows, err := tx.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id ORDER BY U.user_name")
 	// verifica se teve erro
 	if err != nil {
-		log.Println(err.Error())
-		return &entity.UserList{}, errors.New("error fetching users")
+		return &entity.UserList{}, err
 	}
 
 	// fecha linha da query, quando sair da função
@@ -71,7 +76,7 @@ func (ps *User_service) GetUsers() (*entity.UserList, error) {
 
 		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
 		if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
-			log.Println(err.Error())
+			return &entity.UserList{}, err
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs
 			lista_users.List = append(lista_users.List, &user)
@@ -79,17 +84,28 @@ func (ps *User_service) GetUsers() (*entity.UserList, error) {
 
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return &entity.UserList{}, err
+	}
+
 	// retorna lista de users
 	return lista_users, nil
 }
 
 // Função que retorna user
-func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
+func (ps *User_service) GetUserByID(ID *int, ctx context.Context) (*entity.User, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.User{}, err
+	}
+	defer tx.Rollback()
+
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("SELECT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id = ?")
+	stmt, err := tx.Prepare("SELECT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id = ?")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -107,20 +123,31 @@ func (ps *User_service) GetUserByID(ID *int) (*entity.User, error) {
 		return &entity.User{}, nil
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return &entity.User{}, err
+	}
+
 	// retorna user
 	return &user, nil
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
+func (ps *User_service) GetUserByName(name *string, ctx context.Context) (*entity.UserList, error) {
 	nameString := fmt.Sprint("%", *name, "%")
 	query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_name LIKE ? ORDER BY U.user_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.UserList{}, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query, nameString)
+	rows, err := tx.Query(query, nameString)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -148,17 +175,28 @@ func (ps *User_service) GetUserByName(name *string) (*entity.UserList, error) {
 
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return &entity.UserList{}, err
+	}
+
 	// retorna lista de users
 	return lista_users, nil
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetUsersNotInGroup() (*entity.UserList, error) {
+func (ps *User_service) GetUsersNotInGroup(ctx context.Context) (*entity.UserList, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.UserList{}, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id NOT IN (SELECT DISTINCT user_id FROM tblUserGroup ORDER BY user_id) ORDER BY U.user_name")
+	rows, err := tx.Query("SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE U.user_id NOT IN (SELECT DISTINCT user_id FROM tblUserGroup ORDER BY user_id) ORDER BY U.user_name")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -185,19 +223,30 @@ func (ps *User_service) GetUsersNotInGroup() (*entity.UserList, error) {
 		}
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return &entity.UserList{}, err
+	}
+
 	// retorna lista de users
 	return lista_users_notin_group, nil
 }
 
 // Função que retorna lista de users
-func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList, error) {
+func (ps *User_service) GetSubmissiveUsers(ID *int, level int, ctx context.Context) (*entity.UserList, error) {
 	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
 
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.UserList{}, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query, ID)
+	rows, err := tx.Query(query, ID)
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
@@ -228,7 +277,7 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 		query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
 
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, groupID.ID, level)
+		rows, err := tx.Query(query, groupID.ID, level)
 		// verifica se teve erro
 		if err != nil {
 			fmt.Println(err.Error())
@@ -251,6 +300,11 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int) (*entity.UserList
 
 	// fecha linha da query, quando sair da função
 	defer rows.Close()
+
+	err = tx.Commit()
+	if err != nil {
+		return &entity.UserList{}, err
+	}
 
 	// retorna lista de users
 	return lista_users, nil
@@ -398,12 +452,18 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int, ctx c
 	return int(rowsaff), nil
 }
 
-func (ps *User_service) Login(user *entity.User) (string, error) {
+func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, error) {
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback()
+
 	// prepara query para ser executada no database
-	stmt, err := database.Prepare("SELECT U.user_id, U.user_pwd, U.user_level, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE user_email = ?")
+	stmt, err := tx.Prepare("SELECT U.user_id, U.user_pwd, U.user_level, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE user_email = ?")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -419,6 +479,11 @@ func (ps *User_service) Login(user *entity.User) (string, error) {
 	if err != nil {
 		log.Println(err.Error())
 		return "", nil
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return "", err
 	}
 
 	return hash, nil
