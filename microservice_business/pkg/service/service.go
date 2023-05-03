@@ -12,13 +12,13 @@ import (
 // BusinessServiceInterface estrutura de dados para BusinessServiceInterface
 type BusinessServiceInterface interface {
 	// Pega todos os Businesss, logo lista todos os Businesss
-	GetBusiness() *entity.BusinessList
-	GetBusinessById(ID uint64) (*entity.Business, error)
-	GetTagsBusiness(ID *uint64) ([]*entity.Tag, error)
+	GetBusiness(ctx context.Context) *entity.BusinessList
+	GetBusinessById(ID uint64, ctx context.Context) (*entity.Business, error)
+	GetTagsBusiness(ID *uint64, ctx context.Context) ([]*entity.Tag, error)
 	CreateBusiness(business *entity.Business_Update, logID *int, ctx context.Context) error
 	UpdateBusiness(ID uint64, business *entity.Business_Update, logID *int, ctx context.Context) (uint64, error)
 	UpdateStatusBusiness(ID *uint64, logID *int, ctx context.Context) int64
-	GetBusinessByName(name *string) (*entity.BusinessList, error)
+	GetBusinessByName(name *string, ctx context.Context) (*entity.BusinessList, error)
 }
 
 // Business_service Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -34,11 +34,16 @@ func NewBusinessService(dabase_pool database.DatabaseInterface) *Business_servic
 }
 
 // GetBusiness traz todos os Business do banco de dados
-func (ps *Business_service) GetBusiness() *entity.BusinessList {
+func (ps *Business_service) GetBusiness(ctx context.Context) *entity.BusinessList {
 
 	database := ps.dbp.GetDB()
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil
+	}
+	defer tx.Rollback()
 
-	rows, err := database.Query("SELECT DISTINCT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b INNER JOIN tblDomain d on b.segment_id = d.domain_id INNER JOIN  tblStatus s on b.status_id = s.status_id ORDER BY b.business_name")
+	rows, err := tx.Query("SELECT DISTINCT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b INNER JOIN tblDomain d on b.segment_id = d.domain_id INNER JOIN  tblStatus s on b.status_id = s.status_id ORDER BY b.business_name")
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())
@@ -77,16 +82,27 @@ func (ps *Business_service) GetBusiness() *entity.BusinessList {
 		}
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil
+	}
+
 	return list_Business
 
 }
 
 // GetBusinessById traz um usuario no banco de dados pelo ID do mesmo
-func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error) {
+func (ps *Business_service) GetBusinessById(ID uint64, ctx context.Context) (*entity.Business, error) {
 
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b INNER JOIN tblDomain d on b.segment_id = d.domain_id INNER JOIN  tblStatus s on b.status_id = s.status_id WHERE b.business_id = ?")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b INNER JOIN tblDomain d on b.segment_id = d.domain_id INNER JOIN  tblStatus s on b.status_id = s.status_id WHERE b.business_id = ?")
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -100,7 +116,7 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 		return &entity.Business{}, errors.New("error scanning rows")
 	}
 
-	rowsTags, err := database.Query("SELECT DISTINCT tag.tag_id, tag.tag_name from tblTags tag INNER JOIN tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", Business.Business_id)
+	rowsTags, err := tx.Query("SELECT DISTINCT tag.tag_id, tag.tag_name from tblTags tag INNER JOIN tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", Business.Business_id)
 	if err != nil {
 		return &entity.Business{}, errors.New("error fetching tags from business by id")
 	}
@@ -119,6 +135,11 @@ func (ps *Business_service) GetBusinessById(ID uint64) (*entity.Business, error)
 	}
 
 	Business.Tags = tags
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
 
 	return Business, nil
 }
@@ -288,15 +309,21 @@ func (ps *Business_service) UpdateStatusBusiness(ID *uint64, logID *int, ctx con
 }
 
 // GetBusinessByName busca Business no banco de dados pelo nome passado como parâmetro no query.
-func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessList, error) {
+func (ps *Business_service) GetBusinessByName(name *string, ctx context.Context) (*entity.BusinessList, error) {
 	nameString := fmt.Sprint("%", *name, "%")
 	query := "SELECT DISTINCT b.business_id, b.business_code, b.business_name, b.segment_id, d.domain_value, b.status_id, s.status_description FROM tblBusiness b inner join tblDomain d on b.segment_id = d.domain_id inner join  tblStatus s on b.status_id = s.status_id WHERE b.business_name LIKE ? ORDER BY b.business_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
 
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query, nameString)
+	rows, err := tx.Query(query, nameString)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -339,14 +366,25 @@ func (ps *Business_service) GetBusinessByName(name *string) (*entity.BusinessLis
 		}
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return list_Business, nil
 }
 
 // GetTagsBusiness busca as tags de Business
-func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {
+func (ps *Business_service) GetTagsBusiness(ID *uint64, ctx context.Context) ([]*entity.Tag, error) {
 	database := ps.dbp.GetDB()
 
-	stmt, err := database.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblBusinessTag B on T.tag_id = B.tag_id WHERE business_id = ? ORDER BY T.tag_name")
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("SELECT DISTINCT T.tag_id, T.tag_name from tblTags T INNER JOIN tblBusinessTag B on T.tag_id = B.tag_id WHERE business_id = ? ORDER BY T.tag_name")
 	if err != nil {
 		return []*entity.Tag{}, errors.New("error fetching on tag business")
 	}
@@ -369,6 +407,11 @@ func (ps *Business_service) GetTagsBusiness(ID *uint64) ([]*entity.Tag, error) {
 		}
 
 		tags = append(tags, &tag)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return tags, nil

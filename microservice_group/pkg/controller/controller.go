@@ -21,7 +21,8 @@ func GetGroups(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	list, err := service.GetGroups(newid)
+	ctx := c.Request.Context()
+	list, err := service.GetGroups(newid, ctx)
 	if err != nil {
 		JSONMessenger(c, 404, c.Request.URL.Path, err)
 		return
@@ -45,7 +46,8 @@ func GetGroupByID(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	group, err := service.GetGroupByID(newid)
+	ctx := c.Request.Context()
+	group, err := service.GetGroupByID(newid, ctx)
 
 	if group == nil {
 		JSONMessenger(c, 404, c.Request.URL.Path, err)
@@ -119,7 +121,9 @@ func GetUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	UserGroup, err := service.GetUsersGroup(newid)
+	ctx := c.Request.Context()
+
+	UserGroup, err := service.GetUsersGroup(newid, ctx)
 
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
@@ -216,7 +220,7 @@ func AttachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	group, err := service.GetGroupByID(uint64(idReturn))
+	group, err := service.GetGroupByID(uint64(idReturn), ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 	}
@@ -267,7 +271,7 @@ func DetachUserGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	group, err := service.GetGroupByID(uint64(idReturn))
+	group, err := service.GetGroupByID(uint64(idReturn), ctx)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
@@ -338,7 +342,7 @@ func EditGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	groupReturn, err := service.GetGroupByID(uint64(idReturn))
+	groupReturn, err := service.GetGroupByID(uint64(idReturn), ctx)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),

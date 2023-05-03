@@ -14,7 +14,8 @@ import (
 // GetCustomers Função que chama método GetCustomer do service e retorna json com lista
 func GetCustomers(c *gin.Context, service service.CustomerServiceInterface) {
 
-	lista, err := service.GetCustomers()
+	ctx := c.Request.Context()
+	lista, err := service.GetCustomers(ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusInternalServerError, c.Request.URL.Path, err)
 		return
@@ -32,7 +33,8 @@ func GetCustomerByID(c *gin.Context, service service.CustomerServiceInterface) {
 		return
 	}
 
-	customer, err := service.GetCustomerByID(&newID)
+	ctx := c.Request.Context()
+	customer, err := service.GetCustomerByID(&newID, ctx)
 	if err != nil {
 		JSONMessenger(c, http.StatusNotFound, c.Request.URL.Path, err)
 		return
