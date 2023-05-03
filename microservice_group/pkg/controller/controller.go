@@ -292,7 +292,8 @@ func CountUsersGroup(c *gin.Context, service service.GroupServiceInterface) {
 		return
 	}
 
-	CountUser, err := service.CountUsersGroup(newid)
+	ctx := c.Request.Context()
+	CountUser, err := service.CountUsersGroup(newid, ctx)
 	if err != nil {
 		JSONMessenger(c, 500, c.Request.URL.Path, err)
 	}

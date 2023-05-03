@@ -79,7 +79,7 @@ func (ps *Tags_service) GetDomains(ctx context.Context) *entity.DomainList {
 	}
 	defer tx.Rollback()
 
-	rows, err := tx.Query("SELECT domain_id, domain_name, domain_code, domain_value FROM tblDomain")
+	rows, err := tx.Query("SELECT domain_id, domain_name, domain_code, domain_value FROM tblDomain WHERE domain_id IN (22,23,24)")
 	// verifica se teve erro
 	if err != nil {
 		fmt.Println(err.Error())

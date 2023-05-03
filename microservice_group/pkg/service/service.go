@@ -16,7 +16,7 @@ type GroupServiceInterface interface {
 	CreateGroup(group *entity.CreateGroup, logID *int, ctx context.Context) (int64, error)
 	AttachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error)
 	DetachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error)
-	CountUsersGroup(id uint64) (*entity.CountUsersList, error)
+	CountUsersGroup(id uint64, ctx context.Context) (*entity.CountUsersList, error)
 	EditGroup(group *entity.EditGroup, id uint64, logID *int, ctx context.Context) (int64, error)
 }
 
@@ -421,11 +421,17 @@ func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64, l
 }
 
 // CountUsersGroup retorna a quantidade de usuarios do grupo
-func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, error) {
+func (ps *Group_service) CountUsersGroup(id uint64, ctx context.Context) (*entity.CountUsersList, error) {
 
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("call pcCountUserGroup (?)", id)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("call pcCountUserGroup (?)", id)
 	if err != nil {
 		return nil, err
 	}
@@ -455,6 +461,11 @@ func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, err
 
 	if !hasResult {
 		return nil, fmt.Errorf("no users found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return CountUserList, nil

@@ -59,7 +59,7 @@ func (ps *Business_service) GetBusiness(ctx context.Context) *entity.BusinessLis
 		if err := rows.Scan(&business.Business_id, &business.Business_code, &business.Business_name, &business.BusinessSegment.BusinessSegment_id, &business.BusinessSegment.BusinessSegment_description, &business.Status.Status_id, &business.Status.Status_description); err != nil {
 			return &entity.BusinessList{}
 		} else {
-			rowsTags, err := database.Query("SELECT DISTINCT tag.tag_id ,tag.tag_name  from tblTags tag  inner join tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", business.Business_id)
+			rowsTags, err := database.QueryContext(ctx, "SELECT DISTINCT tag.tag_id ,tag.tag_name  from tblTags tag  inner join tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", business.Business_id)
 			if err != nil {
 				return &entity.BusinessList{}
 			}
@@ -343,7 +343,7 @@ func (ps *Business_service) GetBusinessByName(name *string, ctx context.Context)
 			return &entity.BusinessList{}, nil
 		} else {
 
-			rowsTags, err := database.Query("SELECT DISTINCT tag.tag_id, tag.tag_name from tblTags tag inner join tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", business.Business_id)
+			rowsTags, err := database.QueryContext(ctx, "SELECT DISTINCT tag.tag_id, tag.tag_name from tblTags tag inner join tblBusinessTag tRTT on tag.tag_id = tRTT.tag_id WHERE tRTT.business_id = ? ORDER BY tag.tag_name", business.Business_id)
 			if err != nil {
 				return &entity.BusinessList{}, nil
 			}
