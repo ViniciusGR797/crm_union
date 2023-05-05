@@ -61,6 +61,8 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 			&group.Group_id,
 			&group.Group_name,
 			&group.Status.Status_id,
+			&group.Responsible,
+			&group.Responsible_name,
 			&group.Status.Status_description,
 			&group.Created_at,
 			&group.Customer.Customer_id,
@@ -127,6 +129,8 @@ func (ps *Group_service) GetGroupByID(id uint64, ctx context.Context) (*entity.G
 	stmt.QueryRow(id).Scan(
 		&group.Group_id,
 		&group.Group_name,
+		&group.Responsible,
+		&group.Responsible_name,
 		&group.Customer.Customer_id,
 		&group.Customer.Customer_name,
 	)
@@ -321,7 +325,7 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int, ctx 
 		return 0, err
 	}
 
-	result, err := tx.ExecContext(ctx, "INSERT INTO tblGroup (group_name, customer_id, status_id) VALUES (?, ?, ?)", group.Group_name, group.Customer_id, statusID)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblGroup (group_name, customer_id, status_id, responsible) VALUES (?, ?, ?, ?)", group.Group_name, group.Customer_id, statusID, logID)
 	if err != nil {
 		return 0, err
 	}
