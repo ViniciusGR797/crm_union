@@ -29,6 +29,8 @@ type Planner struct {
 	Release        string   `json:"release,omitempty"`
 	User_id        uint64   `json:"user_id,omitempty"`
 	User           string   `json:"user,omitempty"`
+	CreatedBy_id   uint64   `json:"createdBy_id,omitempty"`
+	CreatedBy_name string   `json:"createdBy_name,omitempty"`
 	Status         string   `json:"status"`
 	Created_At     string   `json:"created_at,omitempty"`
 	Guest          []Client `json:"guest,omitempty"`
@@ -61,6 +63,7 @@ type CreatePlanner struct {
 	Release    uint64   `json:"release,omitempty"`
 	User       uint64   `json:"user,omitempty"`
 	Status     uint64   `json:"status"`
+	Created_By uint64   `json:"created_by"`
 	Created_At string   `json:"created_at,omitempty"`
 	Guest      []Client `json:"guest,omitempty"`
 }
