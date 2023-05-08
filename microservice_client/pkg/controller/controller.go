@@ -12,6 +12,40 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetAllClients: Retorna json com lista de todos os clients
+func GetAllClients(c *gin.Context, service service.ClientServiceInterface) {
+	// Pega permissões do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id passada como token na rota
+	id, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	list, err := service.GetAllClients(&id, ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    http.StatusInternalServerError,
+			"path":    "/clients",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, list)
+}
+
 // GetClientsMyGroups: Retorna json com lista de clients
 func GetClientsMyGroups(c *gin.Context, service service.ClientServiceInterface) {
 	// Pega permissões do usuário
