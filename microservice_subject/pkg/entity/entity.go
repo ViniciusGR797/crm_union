@@ -6,21 +6,23 @@ import (
 )
 
 type Subject struct {
-	Subject_id    uint64 `json:"subject_id,omitempty"`
-	Subject_title string `json:"subject_title,omitempty"`
-	Subject_text  string `json:"subject_text,omitempty"`
-	User_ID       uint64 `json:"user_id,omitempty"`
-	User          string `json:"user_name,omitempty"`
-	Release_id    uint64 `json:"release_id,omitempty"`
-	Release       string `json:"release_name,omitempty"`
-	Business_id   uint64 `json:"business_id,omitempty"`
-	Business      string `json:"business_name,omitempty"`
-	Client_id     uint64 `json:"client_id,omitempty"`
-	Client        string `json:"client_name,omitempty"`
-	Client_email  string `json:"client_email,omitempty"`
-	Status        Status `json:"status,omitempty"`
-	Created_at    string `json:"created_at,omitempty"`
-	Domain        Domain `json:"domain,omitempty"`
+	Subject_id     uint64  `json:"subject_id,omitempty"`
+	Subject_title  string  `json:"subject_title,omitempty"`
+	Subject_text   string  `json:"subject_text,omitempty"`
+	CreatedBy_id   *uint64 `json:"createdBy_id,omitempty"`
+	CreatedBy_name *string `json:"createdBy_name,omitempty"`
+	User_ID        uint64  `json:"user_id,omitempty"`
+	User           string  `json:"user_name,omitempty"`
+	Release_id     uint64  `json:"release_id,omitempty"`
+	Release        string  `json:"release_name,omitempty"`
+	Business_id    uint64  `json:"business_id,omitempty"`
+	Business       string  `json:"business_name,omitempty"`
+	Client_id      uint64  `json:"client_id,omitempty"`
+	Client         string  `json:"client_name,omitempty"`
+	Client_email   string  `json:"client_email,omitempty"`
+	Status         Status  `json:"status,omitempty"`
+	Created_at     string  `json:"created_at,omitempty"`
+	Domain         Domain  `json:"domain,omitempty"`
 }
 
 func (p *Subject) String() string {
@@ -36,19 +38,21 @@ func (p *Subject) String() string {
 }
 
 type SubjectID struct {
-	User_id       uint64 `json:"user_id,omitempty"`
-	User_name     string `json:"user_name,omitempty"`
-	Subject_id    uint64 `json:"subject_id,omitempty"`
-	Subject_title string `json:"subject_title,omitempty"`
-	Client        Client `json:"client,omitempty"`
-	Business_id   uint64 `json:"business_id,omitempty"`
-	Business_name string `json:"business_name,omitempty"`
-	Release_id    uint64 `json:"release_id,omitempty"`
-	Release_name  string `json:"release_name,omitempty"`
-	Subject_text  string `json:"subject_text,omitempty"`
-	Created_at    string `json:"created_at,omitempty"`
-	Domain        Domain `json:"domain,omitempty"`
-	Status        Status `json:"status,omitempty"`
+	User_id        uint64  `json:"user_id,omitempty"`
+	User_name      string  `json:"user_name,omitempty"`
+	Subject_id     uint64  `json:"subject_id,omitempty"`
+	Subject_title  string  `json:"subject_title,omitempty"`
+	Client         Client  `json:"client,omitempty"`
+	Business_id    uint64  `json:"business_id,omitempty"`
+	Business_name  string  `json:"business_name,omitempty"`
+	Release_id     uint64  `json:"release_id,omitempty"`
+	Release_name   string  `json:"release_name,omitempty"`
+	Subject_text   string  `json:"subject_text,omitempty"`
+	CreatedBy_id   *uint64 `json:"createdBy_id,omitempty"`
+	CreatedBy_name *string `json:"createdBy_name,omitempty"`
+	Created_at     string  `json:"created_at,omitempty"`
+	Domain         Domain  `json:"domain,omitempty"`
+	Status         Status  `json:"status,omitempty"`
 }
 
 func (p *SubjectID) String() string {
