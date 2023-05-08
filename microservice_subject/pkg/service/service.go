@@ -58,6 +58,8 @@ func (s *Subject_service) GetSubmissiveSubjects(id int, ctx context.Context) (*e
 			&subject.Subject_id,
 			&subject.Subject_title,
 			&subject.Subject_text,
+			&subject.CreatedBy_id,
+			&subject.CreatedBy_name,
 			&subject.User_ID,
 			&subject.User,
 			&subject.Release_id,
@@ -123,6 +125,8 @@ func (s *Subject_service) GetSubjectByID(id uint64, ctx context.Context) (*entit
 			&subject.Subject_id,
 			&subject.Subject_title,
 			&subject.Subject_text,
+			&subject.CreatedBy_id,
+			&subject.CreatedBy_name,
 			&subject.Client.Client_id,
 			&subject.Client.Client_email,
 			&subject.Client.Client_name,
@@ -307,7 +311,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 		return nil, err
 	}
 
-	result, err := tx.ExecContext(ctx, "INSERT INTO tblSubject (subject_title, subject_text, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?)", subject.Subject_title, subject.Subject_text, subject.Subject_type, subject.Client_id, subject.Release_id, id, statusID)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblSubject (subject_title, subject_text, created_by, subject_type,  client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", subject.Subject_title, subject.Subject_text, logID, subject.Subject_type, subject.Client_id, subject.Release_id, id, statusID)
 	if err != nil {
 		return nil, err
 	}
@@ -334,6 +338,8 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 			&subjectID.Subject_id,
 			&subjectID.Subject_title,
 			&subjectID.Subject_text,
+			&subjectID.CreatedBy_id,
+			&subjectID.CreatedBy_name,
 			&subjectID.Client.Client_id,
 			&subjectID.Client.Client_email,
 			&subjectID.Client.Client_name,
