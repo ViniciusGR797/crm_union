@@ -17,11 +17,11 @@ type Client struct {
 	Email              string `json:"client_email,omitempty"`
 	Role               string `json:"role_name,omitempty"`
 	Role_ID            uint64 `json:"role_id,omitempty"`
-	Customer_ID        string `json:"customer_id,omitempty"`
+	Customer_ID        uint64 `json:"customer_id,omitempty"`
 	Customer_Name      string `json:"customer_name,omitempty"`
 	Release            `json:"release,omitempty"`
 	Business_Name      string    `json:"business_name,omitempty"`
-	Business_ID        string    `json:"business_id,omitempty"`
+	Business_ID        uint64    `json:"business_id,omitempty"`
 	User_ID            uint64    `json:"user_id,omitempty"`
 	User_Name          string    `json:"user_name,omitempty"`
 	Created_At         time.Time `json:"created_at,omitempty"`
