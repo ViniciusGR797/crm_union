@@ -23,6 +23,8 @@ type Remark struct {
 	Client_Email       string `json:"client_email,omitempty"`
 	User_Name          string `json:"user_name,omitempty"`
 	User_ID            uint64 `json:"user_id,omitempty"`
+	CreatedBy_id       uint64 `json:"createdBy_id,omitempty"`
+	CreatedBy_name     string `json:"createdBy_name,omitempty"`
 	Release_ID         uint64 `json:"release_id,omitempty"` //auterado
 	Release_Name       string `json:"release_name,omitempty"`
 	Subject_ID         uint64 `json:"subject_id,omitempty"` //auterado

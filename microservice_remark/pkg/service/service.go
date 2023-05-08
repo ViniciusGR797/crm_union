@@ -69,7 +69,7 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int, ctx context.Context) (*e
 		remark := entity.Remark{}
 
 		// pega dados da query e atribui a variável Remark, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&remark.ID, &remark.Remark_Name, &remark.User_Name, &remark.Subject_ID, &remark.Subject_Name, &remark.Client_ID, &remark.Client_Name, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.Status_Description, &remark.User_ID); err != nil {
+		if err := rows.Scan(&remark.ID, &remark.Remark_Name, &remark.User_Name, &remark.Subject_ID, &remark.Subject_Name, &remark.Client_ID, &remark.Client_Name, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.Status_Description, &remark.User_ID, &remark.CreatedBy_id, &remark.CreatedBy_name); err != nil {
 			return nil, errors.New("error scan remark")
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs
@@ -112,7 +112,7 @@ func (ps *remark_service) GetAllRemarkUser(ID *uint64, ctx context.Context) (*en
 
 	for rows.Next() {
 		remark := entity.Remark{}
-		err = rows.Scan(&remark.ID, &remark.Remark_Name, &remark.Subject_Name, &remark.Client_Name, &remark.Client_Email, &remark.Business_Name, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return)
+		err = rows.Scan(&remark.ID, &remark.Remark_Name, &remark.Subject_Name, &remark.Client_Name, &remark.Client_Email, &remark.Business_Name, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.CreatedBy_id, &remark.CreatedBy_name)
 		if err != nil {
 			return nil, errors.New("remark not found")
 		} else {
@@ -148,7 +148,7 @@ func (ps *remark_service) GetRemarkByID(ID *uint64, ctx context.Context) (*entit
 
 	remark := entity.Remark{}
 
-	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Subject_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.CreatedBy_id, &remark.CreatedBy_name, &remark.Status_Description)
 	if err != nil {
 		return nil, errors.New("remark not found")
 	}
@@ -177,7 +177,7 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int, 
 		return nil, errors.New("session variable error")
 	}
 
-	result, err := tx.ExecContext(ctx, "INSERT INTO tblRemark (remark_subject, remark_text, remark_date, remark_return, subject_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, 21)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblRemark (remark_subject, remark_text, remark_date, remark_return, subject_id, client_id, release_id, user_id, created_by, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, logID, 21)
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +211,8 @@ func (ps *remark_service) CreateRemark(remark *entity.RemarkUpdate, logID *int, 
 			&remarkID.Date,
 			&remarkID.Date_Return,
 			&remarkID.Text,
+			&remarkID.CreatedBy_id,
+			&remarkID.CreatedBy_name,
 			&remarkID.Status_Description,
 		); err != nil {
 			return nil, err
@@ -244,7 +246,7 @@ func (ps *remark_service) GetBarChartRemark(ID *uint64, ctx context.Context) (*e
 
 	remark := entity.Remark{}
 
-	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.CreatedBy_id, &remark.CreatedBy_name, &remark.Status_Description)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &entity.Remark{}, nil
@@ -282,7 +284,7 @@ func (ps *remark_service) GetPieChartRemark(ID *uint64, ctx context.Context) (*e
 
 	remark := entity.Remark{}
 
-	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.Status_Description)
+	err = stmt.QueryRow(ID).Scan(&remark.ID, &remark.Client_ID, &remark.Client_Name, &remark.Client_Email, &remark.Remark_Name, &remark.Subject_ID, &remark.Subject_Title, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Date, &remark.Date_Return, &remark.Text, &remark.CreatedBy_id, &remark.CreatedBy_name, &remark.Status_Description)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &entity.Remark{}, nil
