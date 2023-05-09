@@ -344,10 +344,10 @@ func (ps *remark_service) UpdateStatusRemark(ID *uint64, remark *entity.Remark, 
 	}
 
 	if statusRemark == statusID {
-		return errors.New("unable to update with the same id, 400")
+		return nil
 	}
 
-	_, err = tx.ExecContext(ctx, "UPDATE tblRemark SET status_id = ? WHERE remark_id = ?", statusID, ID)
+	_, err = tx.ExecContext(ctx, "UPDATE IGNORE tblRemark SET status_id = ? WHERE remark_id = ?", statusID, ID)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func (ps *remark_service) UpdateRemark(ID *uint64, remark *entity.RemarkUpdate, 
 		return errors.New("session variable error")
 	}
 
-	_, err = tx.ExecContext(ctx, "UPDATE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ?  WHERE remark_id = ?", remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, remark.Status_ID, ID)
+	_, err = tx.ExecContext(ctx, "UPDATE IGNORE tblRemark SET remark_subject = ?, remark_text = ?, remark_date = ?, remark_return = ?, subject_id = ?, client_id = ?, release_id = ?, user_id = ?, status_id = ?  WHERE remark_id = ?", remark.Remark_Name, remark.Text, remark.Date, remark.Date_Return, remark.Subject_ID, remark.Client_ID, remark.Release_ID, remark.User_ID, remark.Status_ID, ID)
 	if err != nil {
 		return err
 	}
