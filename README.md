@@ -228,6 +228,7 @@ Este projeto está sob a licença (MIT License) - veja o arquivo [LICENSE.md](ht
 
 ## 🎁 Agradecimentos
 
-* Gilberto Anderson (Giba)
+* [Gilberto Anderson (Giba)](https://www.linkedin.com/in/gilberto-anderson-936b46b3/)
+* [Isael Sousa Santos](https://www.linkedin.com/in/isael-sousa-bb519552/)
 
 [⬆ Voltar ao topo](#union-restful-api)<br>
