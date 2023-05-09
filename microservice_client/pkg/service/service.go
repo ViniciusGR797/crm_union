@@ -13,6 +13,7 @@ import (
 
 // Estrutura interface para padronizar comportamento de CRUD Client (tudo que tiver os métodos abaixo do CRUD são serviços de client)
 type ClientServiceInterface interface {
+	GetAllClients(ID *int, ctx context.Context) (*entity.ClientList, error)
 	GetClientsMyGroups(ID *int, ctx context.Context) (*entity.ClientList, error)
 	GetClientByID(ID *uint64, ctx context.Context) (*entity.Client, error)
 	GetClientByReleaseID(ID *uint64, ctx context.Context) (*entity.ClientList, error)
@@ -33,6 +34,60 @@ func NewClientService(dabase_pool database.DatabaseInterface) *Client_service {
 	return &Client_service{
 		dabase_pool,
 	}
+}
+
+func (ps *Client_service) GetAllClients(ID *int, ctx context.Context) (*entity.ClientList, error) {
+	database := ps.dbp.GetDB()
+
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("SELECT * FROM vwGetAllClients")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list_client := &entity.ClientList{}
+
+	for rows.Next() {
+		client := entity.Client{}
+
+		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role_ID, &client.Role, &client.Customer_ID, &client.Customer_Name, &client.Business_Name, &client.Business_ID, &client.Release_Name, &client.Release_ID, &client.Status_Description); err != nil {
+			return nil, errors.New("error scan client")
+		} else {
+			rowsTags, err := database.QueryContext(ctx, "SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", client.ID)
+			if err != nil {
+				return nil, errors.New("error get tag")
+			}
+
+			var tags []entity.Tag
+
+			for rowsTags.Next() {
+				tag := entity.Tag{}
+
+				if err := rowsTags.Scan(&tag.Tag_ID, &tag.Tag_Name); err != nil {
+					return nil, errors.New("error scan tag")
+				} else {
+					tags = append(tags, tag)
+				}
+			}
+
+			client.Tags = tags
+
+			list_client.List = append(list_client.List, &client)
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return list_client, nil
 }
 
 // GetClientsMyGroups: Retorna lista de client pelo group
