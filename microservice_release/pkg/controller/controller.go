@@ -104,7 +104,7 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 
 	ctx := c.Request.Context()
 
-	idResult, err := service.UpdateReleaseTrain(newID, release, &logID, ctx)
+	_, err = service.UpdateReleaseTrain(newID, release, &logID, ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -124,15 +124,6 @@ func UpdateReleaseTrain(c *gin.Context, service service.ReleaseServiceInterface)
 		return
 	}
 
-	_, err = service.GetReleaseTrainByID(idResult, ctx)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-			"code":    http.StatusInternalServerError,
-			"path":    "/releasetrains/id/:releasetrain_id",
-		})
-		return
-	}
 	c.JSON(http.StatusNoContent, nil)
 }
 
