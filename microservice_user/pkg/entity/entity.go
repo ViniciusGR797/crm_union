@@ -127,7 +127,7 @@ func (user *User) validate() error {
 	}
 
 	// Verifica se senha tem o tamanho mínimo de caracteres
-	if len(user.Password) < 8 {
+	if len(user.Password) > 1 && len(user.Password) < 8 {
 		return errors.New("password too short")
 	}
 

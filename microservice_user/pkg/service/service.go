@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -28,7 +29,7 @@ type UserServiceInterface interface {
 	// Altera status do user
 	UpdateStatusUser(ID *uint64, logID *int, ctx context.Context) (int64, error)
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
-	UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) (int, error)
+	UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) error
 	// Busca o hash do usuário por email
 	Login(user *entity.User, ctx context.Context) (string, error)
 }
@@ -361,7 +362,7 @@ func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int, ctx context.Con
 		statusID = 9
 	}
 
-	result, err := tx.ExecContext(ctx, "UPDATE tblUser SET status_id = ? WHERE user_id = ?", statusID, ID)
+	result, err := tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET status_id = ? WHERE user_id = ?", statusID, ID)
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error preparing statement")
@@ -382,45 +383,54 @@ func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int, ctx context.Con
 }
 
 // Função que altera o usuário
-func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) (int, error) {
+func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) error {
 	// pega database
 	database := ps.dbp.GetDB()
 
 	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer tx.Rollback()
 
 	// Definir a variável de sessão "@user"
 	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
-		return 0, errors.New("session variable error")
+		return errors.New("session variable error")
 	}
 
-	// prepara query para ser executada no database
-	result, err := tx.ExecContext(ctx, "UPDATE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, ID)
-	// verifica se teve erro
-	if err != nil {
-		log.Println(err.Error())
-		return 0, errors.New("error preparing statement")
+	var result sql.Result // declara a variável result antes do bloco if/else
+
+	if user.Password != "" {
+		// prepara query para ser executada no database
+		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, ID)
+		// verifica se teve erro
+		if err != nil {
+			return errors.New("error preparing statement")
+		}
+	} else {
+		// prepara query para ser executada no database
+		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_level = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Level, ID)
+		// verifica se teve erro
+		if err != nil {
+			return errors.New("error preparing statement")
+		}
 	}
 
 	// RowsAffected retorna número de linhas afetadas com update
-	rowsaff, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	// verifica se teve erro
 	if err != nil {
-		log.Println(err.Error())
-		return 0, errors.New("error fetching rows affected")
+		return errors.New("error fetching rows affected")
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	// retorna rowsaff (converte int64 para int)
-	return int(rowsaff), nil
+	return nil
 }
 
 func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, error) {

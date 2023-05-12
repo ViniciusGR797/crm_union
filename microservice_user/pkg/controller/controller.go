@@ -325,17 +325,13 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	ctx := c.Request.Context()
 
 	// Chama método UpdateUser passando user e id como parâmetro
-	idResult, err := service.UpdateUser(&newId, user, &logID, ctx)
+	err = service.UpdateUser(&newId, user, &logID, ctx)
 	// Verifica se teve erro na edição de user
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
-	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
-	if idResult == 0 {
-		sendError(c, http.StatusNotFound, errors.New("cannot update user"))
-		return
-	}
+
 	// Retorna json com o status 200
 	sendNoContent(c)
 }
