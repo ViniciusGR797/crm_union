@@ -234,7 +234,7 @@ func (ps *User_service) GetUsersNotInGroup(ctx context.Context) (*entity.UserLis
 
 // Função que retorna lista de users
 func (ps *User_service) GetSubmissiveUsers(ID *int, level int, ctx context.Context) (*entity.UserList, error) {
-	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
+	query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id IN (SELECT group_id FROM tblUserGroup WHERE user_id = ?) AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -246,60 +246,31 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int, ctx context.Conte
 	defer tx.Rollback()
 
 	// manda uma query para ser executada no database
-	rows, err := tx.Query(query, ID)
+	rows, err := tx.Query(query, ID, level)
 	// verifica se teve erro
 	if err != nil {
-		fmt.Println(err.Error())
-		return &entity.UserList{}, errors.New("error fetching user's groups")
-	}
-
-	// variável do tipo UserList (vazia)
-	groupIDList := &entity.GroupIDList{}
-
-	// Pega todo resultado da query linha por linha
-	for rows.Next() {
-		// variável do tipo User (vazia)
-		groupID := entity.GroupID{}
-
-		// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&groupID.ID); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			// caso não tenha erro, adiciona a lista de users
-			groupIDList.List = append(groupIDList.List, &groupID)
-		}
-	}
-
-	// variável do tipo UserList (vazia)
-	lista_users := &entity.UserList{}
-
-	for _, groupID := range groupIDList.List {
-		query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
-
-		// manda uma query para ser executada no database
-		rows, err := tx.Query(query, groupID.ID, level)
-		// verifica se teve erro
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-
-		// Pega todo resultado da query linha por linha
-		for rows.Next() {
-			// variável do tipo User (vazia)
-			user := entity.User{}
-
-			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
-				fmt.Println(err.Error())
-			} else {
-				// caso não tenha erro, adiciona a lista de users
-				lista_users.List = append(lista_users.List, &user)
-			}
-		}
+		return &entity.UserList{}, errors.New("error fetching submissive users")
 	}
 
 	// fecha linha da query, quando sair da função
 	defer rows.Close()
+
+	// variável do tipo UserList (vazia)
+	lista_users := &entity.UserList{}
+
+	// Pega todo resultado da query linha por linha
+	for rows.Next() {
+		// variável do tipo User (vazia)
+		user := entity.User{}
+
+		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+			return &entity.UserList{}, errors.New("error scanning submissive users")
+		} else {
+			// caso não tenha erro, adiciona a variável user na lista de users
+			lista_users.List = append(lista_users.List, &user)
+		}
+	}
 
 	err = tx.Commit()
 	if err != nil {
