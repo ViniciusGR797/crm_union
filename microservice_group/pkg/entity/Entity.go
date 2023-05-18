@@ -74,8 +74,9 @@ func (p *Custumer) String() string {
 }
 
 type User struct {
-	User_id   *int    `json:"user_id,omitempty"`
-	User_name *string `json:"user_name,omitempty"`
+	User_id    *int    `json:"user_id,omitempty"`
+	User_name  *string `json:"user_name,omitempty"`
+	User_IdTCS *int    `json:"user_IdTCS,omitempty"`
 }
 
 func (p *User) String() string {

@@ -81,7 +81,8 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 
 				if err := rows2.Scan(
 					&user.User_id,
-					&user.User_name); err != nil {
+					&user.User_name,
+					&user.User_IdTCS); err != nil {
 					return &entity.GroupList{}, err
 				} else {
 					user_list = append(user_list, user)
@@ -153,7 +154,8 @@ func (ps *Group_service) GetGroupByID(id uint64, ctx context.Context) (*entity.G
 
 		if err := result.Scan(
 			&user.User_id,
-			&user.User_name); err != nil {
+			&user.User_name,
+			&user.User_IdTCS); err != nil {
 			fmt.Println(err.Error())
 		} else {
 			user_list = append(user_list, user)
