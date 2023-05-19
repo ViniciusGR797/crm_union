@@ -18,6 +18,7 @@ func main() {
 		"microservice_user",
 		"microservice_subject",
 		"microservice_tags",
+		"microservice_spreadsheet",
 	}
 
 	for _, cmd := range cmds {
