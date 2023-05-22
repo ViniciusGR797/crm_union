@@ -45,7 +45,7 @@ func (ps *Client_service) GetAllClients(ID *int, ctx context.Context) (*entity.C
 	}
 	defer tx.Rollback()
 
-	rows, err := tx.Query("SELECT * FROM vwGetAllClients")
+	rows, err := tx.Query("SELECT * FROM vwGetAllClientsT")
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (ps *Client_service) GetAllClients(ID *int, ctx context.Context) (*entity.C
 	for rows.Next() {
 		client := entity.Client{}
 
-		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role_ID, &client.Role, &client.Customer_ID, &client.Customer_Name, &client.Business_Name, &client.Business_ID, &client.Release_Name, &client.Release_ID, &client.Status_Description); err != nil {
+		if err := rows.Scan(&client.ID, &client.Name, &client.Email, &client.Role_ID, &client.Role, &client.Customer_ID, &client.Customer_Name, &client.Business_Name, &client.Business_ID, &client.Release_Name, &client.Release_ID, &client.User_Name, &client.User_ID, &client.Status_Description); err != nil {
 			return nil, errors.New("error scan client")
 		} else {
 			rowsTags, err := database.QueryContext(ctx, "SELECT DISTINCT tT.tag_id, tT.tag_name FROM tblTags tT INNER JOIN tblClientTag tCT ON tT.tag_id = tCT.tag_id WHERE tCT.client_id = ? ORDER BY tT.tag_name", client.ID)
