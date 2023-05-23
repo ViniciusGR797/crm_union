@@ -46,14 +46,11 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 		return &entity.GroupList{}, err
 	}
 
-	hasResult := false
-
 	defer rows.Close()
 
 	list_groups := &entity.GroupList{}
 
 	for rows.Next() {
-		hasResult = true
 
 		group := entity.Group{}
 
@@ -69,34 +66,9 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 			&group.Customer.Customer_name,
 		); err != nil {
 			return &entity.GroupList{}, err
-		} else {
-			rows2, err := database.QueryContext(ctx, "call pcGetAllUserGroup (?)", group.Group_id)
-			if err != nil {
-				return &entity.GroupList{}, err
-			}
-			var user_list []entity.User
-
-			for rows2.Next() {
-				user := entity.User{}
-
-				if err := rows2.Scan(
-					&user.User_id,
-					&user.User_name,
-					&user.User_IdTCS); err != nil {
-					return &entity.GroupList{}, err
-				} else {
-					user_list = append(user_list, user)
-				}
-			}
-
-			group.Users = user_list
-
-			list_groups.List = append(list_groups.List, &group)
 		}
-	}
 
-	if !hasResult {
-		return &entity.GroupList{}, errors.New("no groups found")
+		list_groups.List = append(list_groups.List, &group)
 	}
 
 	err = tx.Commit()
@@ -139,30 +111,6 @@ func (ps *Group_service) GetGroupByID(id uint64, ctx context.Context) (*entity.G
 	if group.Group_id == 0 {
 		return nil, fmt.Errorf("no group found")
 	}
-
-	result, err := tx.Query("call pcGetAllUserGroup (?)", id)
-	if err != nil {
-		return nil, err
-	}
-
-	defer result.Close()
-
-	user_list := []entity.User{}
-
-	for result.Next() {
-		user := entity.User{}
-
-		if err := result.Scan(
-			&user.User_id,
-			&user.User_name,
-			&user.User_IdTCS); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			user_list = append(user_list, user)
-		}
-
-	}
-	group.User = user_list
 
 	err = tx.Commit()
 	if err != nil {
@@ -274,6 +222,7 @@ func (ps *Group_service) GetUsersGroup(id uint64, ctx context.Context) (*entity.
 		if err := rows.Scan(
 			&user.User_id,
 			&user.User_name,
+			&user.User_IdTCS,
 		); err != nil {
 			return nil, err
 		} else {
