@@ -18,7 +18,7 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 		user := main.Group("/v1")
 		{
 			// Rota que retorna lista de users (GET que dispara método GetUsers controller)
-			user.GET("/users", middlewares.AuthAdmin(), func(c *gin.Context) {
+			user.GET("/users", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetUsers(c, service)
 			})
 			// Rota que retorna user pelo ID (GET que dispara método GetUserByID controller)
