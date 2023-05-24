@@ -30,6 +30,7 @@ func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 		sendError(c, http.StatusNotFound, errors.New("no users found"))
 		return
 	}
+
 	//retorna sucesso 200 e retorna json da lista de users
 	send(c, http.StatusOK, list)
 }
@@ -213,6 +214,8 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
+
+	sendMail(user.Email, user.Password)
 
 	// Retorno json com o user
 	send(c, http.StatusCreated, gin.H{
