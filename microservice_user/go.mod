@@ -10,8 +10,11 @@ require (
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 )
 
+require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+
 require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/go-gomail/gomail v0.0.0-20160411212932-81ebce5c23df
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
