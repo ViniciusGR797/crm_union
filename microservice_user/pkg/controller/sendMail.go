@@ -20,7 +20,7 @@ type ConfigMail struct {
 
 func sendMail(to, password string) {
 
-	filePath := "microservice_user/env.json" // caminho para o arquivo JSON
+	filePath := "/home/appuser/app/env.json" // caminho para o arquivo JSON
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Erro ao ler o arquivo JSON:", err)
