@@ -400,9 +400,12 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	firstAccess := user.FirstAccess
+
 	// Retorna JSON com o token
 	send(c, http.StatusOK, gin.H{
-		"token": token,
+		"token":      token,
+		"firstAcess": firstAccess,
 	})
 }
 

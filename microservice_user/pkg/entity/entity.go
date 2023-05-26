@@ -15,15 +15,16 @@ type UserInterface interface {
 
 // Estrutura de dados de User
 type User struct {
-	ID         uint64 `json:"id,omitempty"`
-	TCS_ID     uint64 `json:"tcs_id,omitempty"`
-	Name       string `json:"name,omitempty"`
-	Email      string `json:"email,omitempty"`
-	Level      uint   `json:"level,omitempty"`
-	Created_At string `json:"created_at,omitempty"`
-	Status     string `json:"status,omitempty"`
-	Password   string `json:"password,omitempty"`
-	Hash       string `json:"-"`
+	ID          uint64 `json:"id,omitempty"`
+	TCS_ID      uint64 `json:"tcs_id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Email       string `json:"email,omitempty"`
+	Level       uint   `json:"level,omitempty"`
+	Created_At  string `json:"created_at,omitempty"`
+	Status      string `json:"status,omitempty"`
+	Password    string `json:"password,omitempty"`
+	Hash        string `json:"-"`
+	FirstAccess bool   `json:"firstAccess,omitempty"`
 }
 
 // Método de user - retorna string com json do user ou erro

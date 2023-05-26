@@ -403,14 +403,14 @@ func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int, ctx c
 
 	if user.Password != "" {
 		// prepara query para ser executada no database
-		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, ID)
+		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ?, first_access = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, user.FirstAccess, ID)
 		// verifica se teve erro
 		if err != nil {
 			return errors.New("error preparing statement")
 		}
 	} else {
 		// prepara query para ser executada no database
-		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_level = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Level, ID)
+		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_level = ?, first_access = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Level, user.FirstAccess, ID)
 		// verifica se teve erro
 		if err != nil {
 			return errors.New("error preparing statement")
@@ -444,7 +444,7 @@ func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, e
 	defer tx.Rollback()
 
 	// prepara query para ser executada no database
-	stmt, err := tx.Prepare("SELECT U.user_id, U.user_pwd, U.user_level, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE user_email = ?")
+	stmt, err := tx.Prepare("SELECT U.user_id, U.user_pwd, U.user_level, S.status_description, U.first_access FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE user_email = ?")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -455,7 +455,7 @@ func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, e
 
 	hash := ""
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	err = stmt.QueryRow(user.Email).Scan(&user.ID, &hash, &user.Level, &user.Status)
+	err = stmt.QueryRow(user.Email).Scan(&user.ID, &hash, &user.Level, &user.Status, &user.FirstAccess)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
