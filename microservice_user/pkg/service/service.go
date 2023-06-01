@@ -32,6 +32,8 @@ type UserServiceInterface interface {
 	UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) error
 	// Busca o hash do usuário por email
 	Login(user *entity.User, ctx context.Context) (string, error)
+
+	GetUserByEmail(user *entity.User, ctx context.Context) (*entity.User, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -468,4 +470,38 @@ func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, e
 	}
 
 	return hash, nil
+}
+
+func (ps *User_service) GetUserByEmail(user *entity.User, ctx context.Context) (*entity.User, error) {
+	// pega database
+	database := ps.dbp.GetDB()
+
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.User{}, err
+	}
+	defer tx.Rollback()
+
+	// prepara query para ser executada no database
+	stmt, err := tx.Prepare("SELECT user_id ,tcs_id, user_name, user_email, user_level, first_access FROM tblUser WHERE user_email = ?")
+	// verifica se teve erro
+	if err != nil {
+		return &entity.User{}, errors.New("error preparing statement")
+	}
+	// fecha linha da query, quando sair da função
+	defer stmt.Close()
+
+	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
+	err = stmt.QueryRow(user.Email).Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.FirstAccess)
+	// verifica se teve erro
+	if err != nil {
+		return &entity.User{}, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return &entity.User{}, err
+	}
+
+	return user, nil
 }
