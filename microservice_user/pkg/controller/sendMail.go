@@ -18,7 +18,7 @@ type ConfigMail struct {
 	} `json:"sendmail"`
 }
 
-func sendMail(to, password string) {
+func sendMail(to, subject, body string) {
 
 	filePath := "/home/appuser/app/env.json" // caminho para o arquivo JSON
 	content, err := ioutil.ReadFile(filePath)
@@ -45,8 +45,8 @@ func sendMail(to, password string) {
 	message := gomail.NewMessage()
 	message.SetHeader("From", smtpUsername)
 	message.SetHeader("To", to)
-	message.SetHeader("Subject", "Usuario criado no CRM.")
-	message.SetBody("text/plain", "Olá!\n\nFoi criado para você um usuário para o site CRM. \nPara acessar o site entre com seu email corporativo e a seguinte senha: "+password)
+	message.SetHeader("Subject", subject)
+	message.SetBody("text/plain", body)
 
 	// Configurar a autenticação OAuth2
 	d := gomail.NewDialer(smtpServer, smtpPort, smtpUsername, smtpPassword)

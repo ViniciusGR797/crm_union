@@ -57,6 +57,10 @@ func ConfigRoutes(router *gin.Engine, service service.UserServiceInterface) *gin
 			user.GET("/users/me", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetUserMe(c, service)
 			})
+			// Rota que troca a senha do usuario que esqueceu a senha, passando o email no corpo da requisicao
+			user.PUT("/users/forgotpwd", func(c *gin.Context) {
+				controller.ForgotPwd(c, service)
+			})
 		}
 	}
 	// retorna rota
