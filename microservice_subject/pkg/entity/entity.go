@@ -159,3 +159,7 @@ type UpdateSubject struct {
 	Subject_title string `json:"subject_title,omitempty"`
 	Subject_text  string `json:"subject_text,omitempty"`
 }
+
+type UpdateStatus struct {
+	Status_description string `json:"status_description,omitempty"`
+}
