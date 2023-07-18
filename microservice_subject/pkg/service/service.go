@@ -15,6 +15,7 @@ type SubjectServiceInterface interface {
 	UpdateStatusSubjectCanceled(id uint64, logID *int, ctx context.Context) (int64, error)
 	CreateSubject(subject *entity.CreateSubject, id uint64, logID *int, ctx context.Context) (*entity.SubjectID, error)
 	UpdateSubject(id uint64, subject *entity.UpdateSubject, logID *int, ctx context.Context) (int64, error)
+	UpdateStatusSubject(status *entity.UpdateStatus, id uint64, logID *int, ctx context.Context) (int64, error)
 }
 
 type Subject_service struct {
@@ -396,6 +397,53 @@ func (s *Subject_service) UpdateSubject(id uint64, subject *entity.UpdateSubject
 	}
 	if roww == 0 {
 		return 0, fmt.Errorf("no subject found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return roww, nil
+
+}
+
+func (s *Subject_service) UpdateStatusSubject(status *entity.UpdateStatus, id uint64, logID *int, ctx context.Context) (int64, error) {
+
+	database := s.dbp.GetDB()
+
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	// Definir a variável de sessão "@user"
+	_, err = tx.Exec("SET @user = ?", logID)
+	if err != nil {
+		return 0, errors.New("session variable error")
+	}
+
+	status_id_stmt, err := tx.Prepare("SELECT status_id FROM tblStatus WHERE status_dominio = ? AND status_description = ?")
+	if err != nil {
+		return 0, err
+	}
+	defer status_id_stmt.Close()
+
+	var status_id uint64
+	err = status_id_stmt.QueryRow("SUBJECT", &status.Status_description).Scan(&status_id)
+	if err != nil {
+		return 0, err
+	}
+
+	updt, err := tx.ExecContext(ctx, "UPDATE tblSubject SET status_id = ? WHERE subject_id = ?", status_id, id)
+	if err != nil {
+		return 0, err
+	}
+
+	roww, err := updt.RowsAffected()
+	if err != nil {
+		return 0, err
 	}
 
 	err = tx.Commit()
