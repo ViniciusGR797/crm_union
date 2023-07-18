@@ -271,3 +271,55 @@ func JSONMessenger(c *gin.Context, status int, path string, err error) {
 		"path":    path,
 	})
 }
+
+func UpdateStatusSubject(c *gin.Context, service service.SubjectServiceInterface) {
+
+	// pegar informamções do usuário
+	permissions, err := security.GetPermissions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// Pega id e nivel passada como token na rota
+	logID, err := strconv.Atoi(fmt.Sprint(permissions["userID"]))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	id := c.Param("id")
+
+	newid, err := strconv.ParseUint(id, 10, 64)
+
+	if err != nil {
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
+	}
+
+	var status entity.UpdateStatus
+
+	if err := c.ShouldBindJSON(&status); err != nil {
+		JSONMessenger(c, 400, c.Request.URL.Path, err)
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	_, err = service.UpdateStatusSubject(&status, newid, &logID, ctx)
+
+	if err != nil {
+		JSONMessenger(c, 500, c.Request.URL.Path, err)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Subject status updated successfully",
+		"code":    "200",
+		"path":    "/subjects/update/status/:id",
+	})
+
+}
