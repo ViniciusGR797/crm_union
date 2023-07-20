@@ -307,7 +307,7 @@ func (s *Subject_service) CreateSubject(subject *entity.CreateSubject, id uint64
 
 	var statusID uint64
 
-	err = status.QueryRow("SUBJECT", "IN PROGRESS").Scan(&statusID)
+	err = status.QueryRow("SUBJECT", "NOT STARTED").Scan(&statusID)
 	if err != nil {
 		return nil, err
 	}
