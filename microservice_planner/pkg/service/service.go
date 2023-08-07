@@ -372,7 +372,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int, ctx context
 			planner := entity.Planner{}
 
 			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.CreatedBy_id, &planner.CreatedBy_name, &planner.Status); err != nil {
+			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Client_role, &planner.Domain_value, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.CreatedBy_id, &planner.CreatedBy_name, &planner.Status); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan planners")
 			} else {
 				// caso não tenha erro, adiciona a lista de users
