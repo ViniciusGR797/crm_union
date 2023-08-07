@@ -23,6 +23,8 @@ type Planner struct {
 	Client_id      uint64   `json:"client_id,omitempty"`
 	Client         string   `json:"client,omitempty"`
 	Client_email   string   `json:"client_email,omitempty"`
+	Client_role    string   `json:"client_role,omitempty"`      // role id
+	Domain_value   string   `json:"client_role_name,omitempty"` // role name
 	Business_id    uint64   `json:"business_id,omitempty"`
 	Business       string   `json:"business,omitempty"`
 	Release_id     uint64   `json:"release_id,omitempty"`

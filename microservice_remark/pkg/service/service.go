@@ -69,7 +69,7 @@ func (ps *remark_service) GetSubmissiveRemarks(ID *int, ctx context.Context) (*e
 		remark := entity.Remark{}
 
 		// pega dados da query e atribui a variável Remark, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&remark.ID, &remark.Remark_Name, &remark.User_Name, &remark.Subject_ID, &remark.Subject_Name, &remark.Client_ID, &remark.Client_Name, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.Status_Description, &remark.User_ID, &remark.CreatedBy_id, &remark.CreatedBy_name); err != nil {
+		if err := rows.Scan(&remark.ID, &remark.Remark_Name, &remark.User_Name, &remark.Subject_ID, &remark.Subject_Name, &remark.Client_ID, &remark.Client_Name, &remark.Client_Role, &remark.Domain_Value, &remark.Business_ID, &remark.Business_Name, &remark.Release_ID, &remark.Release_Name, &remark.Text, &remark.Date, &remark.Date_Return, &remark.Status_Description, &remark.User_ID, &remark.CreatedBy_id, &remark.CreatedBy_name); err != nil {
 			return nil, errors.New("error scan remark")
 		} else {
 			// caso não tenha erro, adiciona a variável log na lista de logs

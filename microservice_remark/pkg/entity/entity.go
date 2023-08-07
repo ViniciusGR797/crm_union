@@ -18,19 +18,21 @@ type Remark struct {
 	Date               string `json:"date,omitempty"`
 	Date_Return        string `json:"date_return,omitempty"`
 	Status_Description string `json:"status_description,omitempty"`
-	Client_ID          uint64 `json:"client_id,omitempty"` //auterado
+	Client_ID          uint64 `json:"client_id,omitempty"`
 	Client_Name        string `json:"client_name,omitempty"`
 	Client_Email       string `json:"client_email,omitempty"`
+	Client_Role        string `json:"client_role,omitempty"`      // role id
+	Domain_Value       string `json:"client_role_name,omitempty"` // role name
 	User_Name          string `json:"user_name,omitempty"`
 	User_ID            uint64 `json:"user_id,omitempty"`
 	CreatedBy_id       uint64 `json:"createdBy_id,omitempty"`
 	CreatedBy_name     string `json:"createdBy_name,omitempty"`
-	Release_ID         uint64 `json:"release_id,omitempty"` //auterado
+	Release_ID         uint64 `json:"release_id,omitempty"`
 	Release_Name       string `json:"release_name,omitempty"`
-	Subject_ID         uint64 `json:"subject_id,omitempty"` //auterado
+	Subject_ID         uint64 `json:"subject_id,omitempty"`
 	Subject_Name       string `json:"subject_name,omitempty"`
 	Subject_Title      string `json:"subject_title,omitempty"`
-	Business_ID        uint64 `json:"business_id,omitempty"` //auterado
+	Business_ID        uint64 `json:"business_id,omitempty"`
 	Business_Name      string `json:"business_name,omitempty"`
 }
 
