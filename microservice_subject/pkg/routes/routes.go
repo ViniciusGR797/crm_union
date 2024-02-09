@@ -38,6 +38,10 @@ func ConfigRoutes(router *gin.Engine, service service.SubjectServiceInterface) *
 			subject.POST("/subjects/create/user/:id", func(c *gin.Context) {
 				controller.CreateSubject(c, service)
 			})
+
+			subject.PUT("/subjects/update/status/:id", middlewares.Auth(), func(c *gin.Context) {
+				controller.UpdateStatusSubject(c, service)
+			})
 		}
 	}
 

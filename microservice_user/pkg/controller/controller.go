@@ -30,6 +30,7 @@ func GetUsers(c *gin.Context, service service.UserServiceInterface) {
 		sendError(c, http.StatusNotFound, errors.New("no users found"))
 		return
 	}
+
 	//retorna sucesso 200 e retorna json da lista de users
 	send(c, http.StatusOK, list)
 }
@@ -186,7 +187,7 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
-	user.Password = security.RandStringRunes(12)
+	// user.Password = security.RandStringRunes(12)
 
 	// Prepara e valida dados
 	if err = user.Prepare(); err != nil {
@@ -213,6 +214,11 @@ func CreateUser(c *gin.Context, service service.UserServiceInterface) {
 		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
+
+	subject := "Usuario criado no CRM."
+	body := "Olá!\n\nFoi criado para você um usuário para o site CRM. \nPara acessar o site entre com seu email corporativo e a seguinte senha: " + user.Password
+
+	sendMail(user.Email, subject, body)
 
 	// Retorno json com o user
 	send(c, http.StatusCreated, gin.H{
@@ -325,17 +331,13 @@ func UpdateUser(c *gin.Context, service service.UserServiceInterface) {
 	ctx := c.Request.Context()
 
 	// Chama método UpdateUser passando user e id como parâmetro
-	idResult, err := service.UpdateUser(&newId, user, &logID, ctx)
+	err = service.UpdateUser(&newId, user, &logID, ctx)
 	// Verifica se teve erro na edição de user
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
-	// Verifica se o id é zero (caso for deu erro ao editar o user no banco)
-	if idResult == 0 {
-		sendError(c, http.StatusNotFound, errors.New("cannot update user"))
-		return
-	}
+
 	// Retorna json com o status 200
 	sendNoContent(c)
 }
@@ -401,9 +403,12 @@ func Login(c *gin.Context, service service.UserServiceInterface) {
 		return
 	}
 
+	firstAccess := user.FirstAccess
+
 	// Retorna JSON com o token
 	send(c, http.StatusOK, gin.H{
-		"token": token,
+		"token":      token,
+		"firstAcess": firstAccess,
 	})
 }
 
@@ -443,4 +448,66 @@ func GetUserMe(c *gin.Context, service service.UserServiceInterface) {
 
 	// Retorno json com user
 	send(c, http.StatusOK, user)
+}
+
+// Função que chama método forgotPwd do service e retorna msg de email enviado com sucesso
+func ForgotPwd(c *gin.Context, service service.UserServiceInterface) {
+	// Cria variável do tipo user (inicialmente vazia)
+	var user *entity.User
+
+	ctx := c.Request.Context()
+
+	// Converte json em user
+	err := c.ShouldBind(&user)
+	// Verifica se tem erro
+	if err != nil {
+		sendError(c, http.StatusBadRequest, err)
+		return
+	}
+
+	// Verifica se email formato válido
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		sendError(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userReturn, err := service.GetUserByEmail(user, ctx)
+
+	if err != nil || userReturn == nil {
+		sendError(c, http.StatusBadRequest, err)
+		return
+	}
+
+	userReturn.Password = security.RandStringRunes(12)
+
+	userReturn.FirstAccess = true
+
+	subject := "Recuperação de senha no CRM."
+	body := "Olá!\n\nSua senha de recuperação para o CRM: " + userReturn.Password
+
+	// Faz hash com a senha
+	user.Hash, err = security.HashPassword(user.Password)
+	// Verifica se teve erro ao fazer hash
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	logID := int(userReturn.ID)
+	ID := int(userReturn.ID)
+
+	// Chama método UpdateUser passando user e id como parâmetro
+	err = service.UpdateUser(&ID, userReturn, &logID, ctx)
+	// Verifica se teve erro na edição de user
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	sendMail(user.Email, subject, body)
+
+	// Retorna JSON com o token
+	send(c, http.StatusOK, gin.H{
+		"Message": "Senha de recuperação enviada para o email do usuário",
+	})
 }

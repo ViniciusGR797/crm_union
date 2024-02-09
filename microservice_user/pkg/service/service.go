@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -28,9 +29,11 @@ type UserServiceInterface interface {
 	// Altera status do user
 	UpdateStatusUser(ID *uint64, logID *int, ctx context.Context) (int64, error)
 	// Atualiza dados de um usuário, passando id do usuário e dados a serem alterados por parâmetro
-	UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) (int, error)
+	UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) error
 	// Busca o hash do usuário por email
 	Login(user *entity.User, ctx context.Context) (string, error)
+
+	GetUserByEmail(user *entity.User, ctx context.Context) (*entity.User, error)
 }
 
 // Estrutura de dados para armazenar a pool de conexão do Database, onde oferece os serviços de CRUD
@@ -234,7 +237,7 @@ func (ps *User_service) GetUsersNotInGroup(ctx context.Context) (*entity.UserLis
 
 // Função que retorna lista de users
 func (ps *User_service) GetSubmissiveUsers(ID *int, level int, ctx context.Context) (*entity.UserList, error) {
-	query := "SELECT group_id FROM tblUserGroup WHERE user_id = ?"
+	query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id IN (SELECT group_id FROM tblUserGroup WHERE user_id = ?) AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
 
 	// pega database
 	database := ps.dbp.GetDB()
@@ -246,60 +249,31 @@ func (ps *User_service) GetSubmissiveUsers(ID *int, level int, ctx context.Conte
 	defer tx.Rollback()
 
 	// manda uma query para ser executada no database
-	rows, err := tx.Query(query, ID)
+	rows, err := tx.Query(query, ID, level)
 	// verifica se teve erro
 	if err != nil {
-		fmt.Println(err.Error())
-		return &entity.UserList{}, errors.New("error fetching user's groups")
-	}
-
-	// variável do tipo UserList (vazia)
-	groupIDList := &entity.GroupIDList{}
-
-	// Pega todo resultado da query linha por linha
-	for rows.Next() {
-		// variável do tipo User (vazia)
-		groupID := entity.GroupID{}
-
-		// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-		if err := rows.Scan(&groupID.ID); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			// caso não tenha erro, adiciona a lista de users
-			groupIDList.List = append(groupIDList.List, &groupID)
-		}
-	}
-
-	// variável do tipo UserList (vazia)
-	lista_users := &entity.UserList{}
-
-	for _, groupID := range groupIDList.List {
-		query := "SELECT DISTINCT U.user_id, U.tcs_id, U.user_name, U.user_email, U.user_level, U.created_at, S.status_description FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE UG.group_id = ? AND U.user_level < ? ORDER BY U.user_level DESC, U.user_name"
-
-		// manda uma query para ser executada no database
-		rows, err := tx.Query(query, groupID.ID, level)
-		// verifica se teve erro
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-
-		// Pega todo resultado da query linha por linha
-		for rows.Next() {
-			// variável do tipo User (vazia)
-			user := entity.User{}
-
-			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
-				fmt.Println(err.Error())
-			} else {
-				// caso não tenha erro, adiciona a lista de users
-				lista_users.List = append(lista_users.List, &user)
-			}
-		}
+		return &entity.UserList{}, errors.New("error fetching submissive users")
 	}
 
 	// fecha linha da query, quando sair da função
 	defer rows.Close()
+
+	// variável do tipo UserList (vazia)
+	lista_users := &entity.UserList{}
+
+	// Pega todo resultado da query linha por linha
+	for rows.Next() {
+		// variável do tipo User (vazia)
+		user := entity.User{}
+
+		// pega dados da query e atribui a variável user, além de verificar se teve erro ao pegar dados
+		if err := rows.Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.Created_At, &user.Status); err != nil {
+			return &entity.UserList{}, errors.New("error scanning submissive users")
+		} else {
+			// caso não tenha erro, adiciona a variável user na lista de users
+			lista_users.List = append(lista_users.List, &user)
+		}
+	}
 
 	err = tx.Commit()
 	if err != nil {
@@ -390,7 +364,7 @@ func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int, ctx context.Con
 		statusID = 9
 	}
 
-	result, err := tx.ExecContext(ctx, "UPDATE tblUser SET status_id = ? WHERE user_id = ?", statusID, ID)
+	result, err := tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET status_id = ? WHERE user_id = ?", statusID, ID)
 	if err != nil {
 		log.Println(err.Error())
 		return 0, errors.New("error preparing statement")
@@ -411,45 +385,54 @@ func (ps *User_service) UpdateStatusUser(ID *uint64, logID *int, ctx context.Con
 }
 
 // Função que altera o usuário
-func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) (int, error) {
+func (ps *User_service) UpdateUser(ID *int, user *entity.User, logID *int, ctx context.Context) error {
 	// pega database
 	database := ps.dbp.GetDB()
 
 	tx, err := database.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer tx.Rollback()
 
 	// Definir a variável de sessão "@user"
 	_, err = tx.Exec("SET @user = ?", logID)
 	if err != nil {
-		return 0, errors.New("session variable error")
+		return errors.New("session variable error")
 	}
 
-	// prepara query para ser executada no database
-	result, err := tx.ExecContext(ctx, "UPDATE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, ID)
-	// verifica se teve erro
-	if err != nil {
-		log.Println(err.Error())
-		return 0, errors.New("error preparing statement")
+	var result sql.Result // declara a variável result antes do bloco if/else
+
+	if user.Password != "" {
+		// prepara query para ser executada no database
+		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_pwd = ?, user_level = ?, first_access = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Hash, user.Level, user.FirstAccess, ID)
+		// verifica se teve erro
+		if err != nil {
+			return errors.New("error preparing statement")
+		}
+	} else {
+		// prepara query para ser executada no database
+		result, err = tx.ExecContext(ctx, "UPDATE IGNORE tblUser SET tcs_id = ?, user_name = ?, user_email = ?, user_level = ?, first_access = ? WHERE user_id = ?", user.TCS_ID, user.Name, user.Email, user.Level, user.FirstAccess, ID)
+		// verifica se teve erro
+		if err != nil {
+			return errors.New("error preparing statement")
+		}
 	}
 
 	// RowsAffected retorna número de linhas afetadas com update
-	rowsaff, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	// verifica se teve erro
 	if err != nil {
-		log.Println(err.Error())
-		return 0, errors.New("error fetching rows affected")
+		return errors.New("error fetching rows affected")
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	// retorna rowsaff (converte int64 para int)
-	return int(rowsaff), nil
+	return nil
 }
 
 func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, error) {
@@ -463,7 +446,7 @@ func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, e
 	defer tx.Rollback()
 
 	// prepara query para ser executada no database
-	stmt, err := tx.Prepare("SELECT U.user_id, U.user_pwd, U.user_level, S.status_description FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE user_email = ?")
+	stmt, err := tx.Prepare("SELECT U.user_id, U.user_pwd, U.user_level, S.status_description, U.first_access FROM tblUser U INNER JOIN tblStatus S ON U.status_id = S.status_id WHERE user_email = ?")
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -474,7 +457,7 @@ func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, e
 
 	hash := ""
 	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
-	err = stmt.QueryRow(user.Email).Scan(&user.ID, &hash, &user.Level, &user.Status)
+	err = stmt.QueryRow(user.Email).Scan(&user.ID, &hash, &user.Level, &user.Status, &user.FirstAccess)
 	// verifica se teve erro
 	if err != nil {
 		log.Println(err.Error())
@@ -487,4 +470,38 @@ func (ps *User_service) Login(user *entity.User, ctx context.Context) (string, e
 	}
 
 	return hash, nil
+}
+
+func (ps *User_service) GetUserByEmail(user *entity.User, ctx context.Context) (*entity.User, error) {
+	// pega database
+	database := ps.dbp.GetDB()
+
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return &entity.User{}, err
+	}
+	defer tx.Rollback()
+
+	// prepara query para ser executada no database
+	stmt, err := tx.Prepare("SELECT user_id ,tcs_id, user_name, user_email, user_level, first_access FROM tblUser WHERE user_email = ?")
+	// verifica se teve erro
+	if err != nil {
+		return &entity.User{}, errors.New("error preparing statement")
+	}
+	// fecha linha da query, quando sair da função
+	defer stmt.Close()
+
+	// substitui ? da query pelos valores passados por parâmetro de Exec, executa a query e retorna um resultado
+	err = stmt.QueryRow(user.Email).Scan(&user.ID, &user.TCS_ID, &user.Name, &user.Email, &user.Level, &user.FirstAccess)
+	// verifica se teve erro
+	if err != nil {
+		return &entity.User{}, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return &entity.User{}, err
+	}
+
+	return user, nil
 }

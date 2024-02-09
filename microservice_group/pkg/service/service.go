@@ -16,7 +16,7 @@ type GroupServiceInterface interface {
 	CreateGroup(group *entity.CreateGroup, logID *int, ctx context.Context) (int64, error)
 	AttachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error)
 	DetachUserGroup(users *entity.GroupIDList, id uint64, logID *int, ctx context.Context) (int64, error)
-	CountUsersGroup(id uint64) (*entity.CountUsersList, error)
+	CountUsersGroup(id uint64, ctx context.Context) (*entity.CountUsersList, error)
 	EditGroup(group *entity.EditGroup, id uint64, logID *int, ctx context.Context) (int64, error)
 }
 
@@ -46,14 +46,11 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 		return &entity.GroupList{}, err
 	}
 
-	hasResult := false
-
 	defer rows.Close()
 
 	list_groups := &entity.GroupList{}
 
 	for rows.Next() {
-		hasResult = true
 
 		group := entity.Group{}
 
@@ -61,39 +58,17 @@ func (ps *Group_service) GetGroups(id uint64, ctx context.Context) (*entity.Grou
 			&group.Group_id,
 			&group.Group_name,
 			&group.Status.Status_id,
+			&group.Responsible,
+			&group.Responsible_name,
 			&group.Status.Status_description,
 			&group.Created_at,
 			&group.Customer.Customer_id,
 			&group.Customer.Customer_name,
 		); err != nil {
 			return &entity.GroupList{}, err
-		} else {
-			rows2, err := database.QueryContext(ctx, "call pcGetAllUserGroup (?)", group.Group_id)
-			if err != nil {
-				return &entity.GroupList{}, err
-			}
-			var user_list []entity.User
-
-			for rows2.Next() {
-				user := entity.User{}
-
-				if err := rows2.Scan(
-					&user.User_id,
-					&user.User_name); err != nil {
-					return &entity.GroupList{}, err
-				} else {
-					user_list = append(user_list, user)
-				}
-			}
-
-			group.Users = user_list
-
-			list_groups.List = append(list_groups.List, &group)
 		}
-	}
 
-	if !hasResult {
-		return &entity.GroupList{}, errors.New("no groups found")
+		list_groups.List = append(list_groups.List, &group)
 	}
 
 	err = tx.Commit()
@@ -127,6 +102,8 @@ func (ps *Group_service) GetGroupByID(id uint64, ctx context.Context) (*entity.G
 	stmt.QueryRow(id).Scan(
 		&group.Group_id,
 		&group.Group_name,
+		&group.Responsible,
+		&group.Responsible_name,
 		&group.Customer.Customer_id,
 		&group.Customer.Customer_name,
 	)
@@ -134,29 +111,6 @@ func (ps *Group_service) GetGroupByID(id uint64, ctx context.Context) (*entity.G
 	if group.Group_id == 0 {
 		return nil, fmt.Errorf("no group found")
 	}
-
-	result, err := tx.Query("call pcGetAllUserGroup (?)", id)
-	if err != nil {
-		return nil, err
-	}
-
-	defer result.Close()
-
-	user_list := []entity.User{}
-
-	for result.Next() {
-		user := entity.User{}
-
-		if err := result.Scan(
-			&user.User_id,
-			&user.User_name); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			user_list = append(user_list, user)
-		}
-
-	}
-	group.User = user_list
 
 	err = tx.Commit()
 	if err != nil {
@@ -268,6 +222,7 @@ func (ps *Group_service) GetUsersGroup(id uint64, ctx context.Context) (*entity.
 		if err := rows.Scan(
 			&user.User_id,
 			&user.User_name,
+			&user.User_IdTCS,
 		); err != nil {
 			return nil, err
 		} else {
@@ -321,7 +276,7 @@ func (ps *Group_service) CreateGroup(group *entity.CreateGroup, logID *int, ctx 
 		return 0, err
 	}
 
-	result, err := tx.ExecContext(ctx, "INSERT INTO tblGroup (group_name, customer_id, status_id) VALUES (?, ?, ?)", group.Group_name, group.Customer_id, statusID)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblGroup (group_name, customer_id, status_id, responsible) VALUES (?, ?, ?, ?)", group.Group_name, group.Customer_id, statusID, logID)
 	if err != nil {
 		return 0, err
 	}
@@ -421,11 +376,17 @@ func (ps *Group_service) DetachUserGroup(users *entity.GroupIDList, id uint64, l
 }
 
 // CountUsersGroup retorna a quantidade de usuarios do grupo
-func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, error) {
+func (ps *Group_service) CountUsersGroup(id uint64, ctx context.Context) (*entity.CountUsersList, error) {
 
 	database := ps.dbp.GetDB()
 
-	rows, err := database.Query("call pcCountUserGroup (?)", id)
+	tx, err := database.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("call pcCountUserGroup (?)", id)
 	if err != nil {
 		return nil, err
 	}
@@ -455,6 +416,11 @@ func (ps *Group_service) CountUsersGroup(id uint64) (*entity.CountUsersList, err
 
 	if !hasResult {
 		return nil, fmt.Errorf("no users found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return CountUserList, nil

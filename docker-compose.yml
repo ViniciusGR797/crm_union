@@ -50,3 +50,8 @@ services:
     build: ./microservice_tags
     ports:
       - 8090:8090
+
+  ms_spreadsheet:
+    build: ./microservice_spreadsheet
+    ports:
+      - 8091:8091

@@ -6,12 +6,14 @@ import (
 )
 
 type Group struct {
-	Group_id   uint64   `json:"group_id,omitempty"`
-	Group_name string   `json:"group_name,omitempty"`
-	Created_at string   `json:"created_at,omitempty"`
-	Status     Status   `json:"status,omitempty"`
-	Customer   Custumer `json:"customers,omitempty"`
-	Users      []User   `json:"users,omitempty"`
+	Group_id         uint64   `json:"group_id,omitempty"`
+	Group_name       string   `json:"group_name,omitempty"`
+	Created_at       string   `json:"created_at,omitempty"`
+	Status           Status   `json:"status,omitempty"`
+	Customer         Custumer `json:"customers,omitempty"`
+	Users            []User   `json:"users,omitempty"`
+	Responsible      int64    `json:"responsible_id,omitempty"`
+	Responsible_name string   `json:"responsible_name,omitempty"`
 }
 
 type EditGroup struct {
@@ -33,10 +35,12 @@ func (p *Group) String() string {
 }
 
 type GroupID struct {
-	Group_id   uint64   `json:"group_id,omitempty"`
-	Group_name string   `json:"group_name,omitempty"`
-	Customer   Custumer `json:"customers,omitempty"`
-	User       []User   `json:"users,omitempty"`
+	Group_id         uint64   `json:"group_id,omitempty"`
+	Group_name       string   `json:"group_name,omitempty"`
+	Customer         Custumer `json:"customers,omitempty"`
+	Responsible      uint64   `json:"responsible_id,omitempty"`
+	Responsible_name string   `json:"responsible_name,omitempty"`
+	User             []User   `json:"users,omitempty"`
 }
 
 func (p *GroupID) String() string {
@@ -70,8 +74,9 @@ func (p *Custumer) String() string {
 }
 
 type User struct {
-	User_id   *int    `json:"user_id,omitempty"`
-	User_name *string `json:"user_name,omitempty"`
+	User_id    *int    `json:"user_id,omitempty"`
+	User_name  *string `json:"user_name,omitempty"`
+	User_IdTCS *int    `json:"user_IdTCS,omitempty"`
 }
 
 func (p *User) String() string {

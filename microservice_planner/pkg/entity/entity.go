@@ -23,12 +23,16 @@ type Planner struct {
 	Client_id      uint64   `json:"client_id,omitempty"`
 	Client         string   `json:"client,omitempty"`
 	Client_email   string   `json:"client_email,omitempty"`
+	Client_role    string   `json:"client_role,omitempty"`      // role id
+	Domain_value   string   `json:"client_role_name,omitempty"` // role name
 	Business_id    uint64   `json:"business_id,omitempty"`
 	Business       string   `json:"business,omitempty"`
 	Release_id     uint64   `json:"release_id,omitempty"`
 	Release        string   `json:"release,omitempty"`
 	User_id        uint64   `json:"user_id,omitempty"`
 	User           string   `json:"user,omitempty"`
+	CreatedBy_id   uint64   `json:"createdBy_id,omitempty"`
+	CreatedBy_name string   `json:"createdBy_name,omitempty"`
 	Status         string   `json:"status"`
 	Created_At     string   `json:"created_at,omitempty"`
 	Guest          []Client `json:"guest,omitempty"`
@@ -61,6 +65,7 @@ type CreatePlanner struct {
 	Release    uint64   `json:"release,omitempty"`
 	User       uint64   `json:"user,omitempty"`
 	Status     uint64   `json:"status"`
+	Created_By uint64   `json:"created_by"`
 	Created_At string   `json:"created_at,omitempty"`
 	Guest      []Client `json:"guest,omitempty"`
 }

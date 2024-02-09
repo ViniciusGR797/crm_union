@@ -68,7 +68,7 @@ func (ps *customer_service) GetCustomers(ctx context.Context) (*entity.CustomerL
 		if err := rows.Scan(&customer.ID, &customer.Name, &customer.Status); err != nil {
 			return nil, errors.New("error scan customer")
 		} else {
-			rowsTags, err := database.Query("SELECT DISTINCT tblTags.tag_id, tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", customer.ID)
+			rowsTags, err := database.QueryContext(ctx, "SELECT DISTINCT tblTags.tag_id, tag_name FROM tblTags INNER JOIN tblCustomerTag tCT ON tblTags.tag_id = tCT.tag_id WHERE tCT.customer_id = ? ORDER BY tag_name", customer.ID)
 			if err != nil {
 				return nil, err
 			}

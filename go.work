@@ -12,4 +12,5 @@ use (
 	./microservice_subject
 	./microservice_user
 	./microservice_tags
+	./microservice_spreadsheet
 )

@@ -16,6 +16,9 @@ func ConfigRoutes(router *gin.Engine, service service.ClientServiceInterface) *g
 	{
 		clients := main.Group("/v1")
 		{
+			clients.GET("/clients/", middlewares.Auth(), func(c *gin.Context) {
+				controller.GetAllClients(c, service)
+			})
 			clients.GET("/clients/mygroups", middlewares.Auth(), func(c *gin.Context) {
 				controller.GetClientsMyGroups(c, service)
 			})

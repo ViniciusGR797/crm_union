@@ -54,9 +54,9 @@ func (ps *Planner_service) GetPlannerByID(ID *uint64, ctx context.Context) (*ent
 	planner := &entity.Planner{}
 
 	err = stmt.QueryRow(ID).Scan(
-		&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.Created_At, &planner.Status)
+		&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.CreatedBy_id, &planner.CreatedBy_name, &planner.Status)
 	if err != nil {
-		return &entity.Planner{}, errors.New("error scanning rows")
+		return &entity.Planner{}, err
 	}
 
 	rowsGuest, err := tx.Query("SELECT C.client_id, C.client_name FROM tblClient C INNER JOIN tblEngagementPlannerGuestInvite G ON C.client_id = G.client_id WHERE planner_id = ?", planner.ID)
@@ -117,7 +117,7 @@ func (ps *Planner_service) CreatePlanner(planner *entity.CreatePlanner, logID *i
 		return err
 	}
 
-	result, err := tx.ExecContext(ctx, "INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, remark_id, client_id, release_id, user_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", planner.Name, planner.Date, planner.Duration, planner.Subject, planner.Remark, planner.Client, planner.Release, planner.User, statusID)
+	result, err := tx.ExecContext(ctx, "INSERT INTO tblPlanner (planner_subject, planner_date, planner_duration, subject_id, remark_id, client_id, release_id, user_id, created_by, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", planner.Name, planner.Date, planner.Duration, planner.Subject, planner.Remark, planner.Client, planner.Release, planner.User, logID, statusID)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string, ct
 	defer tx.Rollback()
 
 	// manda uma query para ser executada no database
-	rows, err := database.Query(query, ID)
+	rows, err := tx.QueryContext(ctx, query, ID)
 	// verifica se teve erro
 	if err != nil {
 		return &entity.PlannerList{}, errors.New("error fetching user's groups")
@@ -192,7 +192,7 @@ func (ps *Planner_service) GetPlannerByName(ID *int, level int, name *string, ct
 		query := "SELECT DISTINCT U.user_id FROM tblUser U INNER JOIN tblUserGroup UG ON U.user_id = UG.user_id WHERE UG.group_id = ? AND U.user_level < ?"
 
 		// manda uma query para ser executada no database
-		rows, err := database.Query(query, groupID.ID, level)
+		rows, err := tx.QueryContext(ctx, query, groupID.ID, level)
 		// verifica se teve erro
 		if err != nil {
 			return &entity.PlannerList{}, errors.New("error fetching users")
@@ -372,7 +372,7 @@ func (ps *Planner_service) GetSubmissivePlanners(ID *int, level int, ctx context
 			planner := entity.Planner{}
 
 			// pega dados da query e atribui a variável groupID, além de verificar se teve erro ao pegar dados
-			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.Created_At, &planner.Status); err != nil {
+			if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Client_role, &planner.Domain_value, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.CreatedBy_id, &planner.CreatedBy_name, &planner.Status); err != nil {
 				return &entity.PlannerList{}, errors.New("error scan planners")
 			} else {
 				// caso não tenha erro, adiciona a lista de users
@@ -444,7 +444,7 @@ func (ps *Planner_service) GetPlannerByBusiness(name *string, ctx context.Contex
 
 		// O método Scan() atribui o valor das colunas da linha atual e atribui em ordem  as variáveis informadas
 		// no parâmetro. Se ocorrer um erro, este será atribuído a variável 'err'
-		if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.Created_At, &planner.Status); err != nil {
+		if err := rows.Scan(&planner.ID, &planner.Name, &planner.Date, &planner.Duration, &planner.Subject_id, &planner.Subject, &planner.Client_id, &planner.Client, &planner.Client_email, &planner.Business_id, &planner.Business, &planner.Release_id, &planner.Release, &planner.Remark_subject, &planner.Remark_text, &planner.User_id, &planner.User, &planner.CreatedBy_id, &planner.CreatedBy_name, &planner.Status); err != nil {
 
 			return nil, errors.New("error scan planner")
 
